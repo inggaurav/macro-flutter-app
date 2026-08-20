@@ -5,7 +5,9 @@ import 'providers/workspace_provider.dart';
 import 'repositories/auth_repository.dart';
 import 'theme/app_theme.dart';
 import 'views/auth/splash_screen.dart';
+import 'views/auth/onboarding_screen.dart';
 import 'views/auth/login_screen.dart';
+import 'views/profile_screen.dart';
 import 'widgets/sidebar_navigation.dart';
 import 'widgets/top_app_header.dart';
 import 'widgets/ai_copilot_drawer.dart';
@@ -39,33 +41,40 @@ class MacroApp extends StatefulWidget {
 }
 
 class _MacroAppState extends State<MacroApp> {
-  bool _isInitialized = false;
+  bool _isAppInitialized = false;
 
   @override
   Widget build(BuildContext context) {
+    final appConfig = Provider.of<AppConfig>(context);
+    final authRepo = Provider.of<AuthRepository>(context);
+
     return MaterialApp(
-      title: 'Macro Workspace App',
+      title: appConfig.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
-      home: !_isInitialized
+      home: !_isAppInitialized
           ? SplashScreen(
+              appConfig: appConfig,
+              authRepository: authRepo,
               onInitComplete: () {
                 setState(() {
-                  _isInitialized = true;
+                  _isAppInitialized = true;
                 });
               },
             )
-          : Consumer<AuthRepository>(
-              builder: (context, auth, child) {
-                if (!auth.isAuthenticated) {
-                  return LoginScreen(
-                    authRepository: auth,
-                    onLoginSuccess: () {},
-                  );
-                }
-                return const MacroMainScreen();
-              },
-            ),
+          : !authRepo.hasCompletedOnboarding
+              ? OnboardingScreen(
+                  appConfig: appConfig,
+                  onOnboardingComplete: () {
+                    authRepo.completeOnboarding();
+                  },
+                )
+              : !authRepo.isAuthenticated
+                  ? LoginScreen(
+                      authRepository: authRepo,
+                      onLoginSuccess: () {},
+                    )
+                  : const MacroMainScreen(),
     );
   }
 }
@@ -76,11 +85,12 @@ class MacroMainScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 768;
+    final authRepo = Provider.of<AuthRepository>(context);
 
     return Consumer<WorkspaceProvider>(
       builder: (context, provider, child) {
         if (isMobile) {
-          return _buildMobileShell(context, provider);
+          return _buildMobileShell(context, provider, authRepo);
         }
 
         // Desktop Widescreen Layout
@@ -105,7 +115,7 @@ class MacroMainScreen extends StatelessWidget {
                           CrmView(provider: provider),
                           AiMemoryView(provider: provider),
                           CallRoomView(provider: provider),
-                          _buildSettingsView(),
+                          ProfileScreen(authRepository: authRepo),
                         ],
                       ),
                     ),
@@ -122,7 +132,7 @@ class MacroMainScreen extends StatelessWidget {
   }
 
   // Native Mobile Shell with Top AppBar and Bottom Navigation Bar
-  Widget _buildMobileShell(BuildContext context, WorkspaceProvider provider) {
+  Widget _buildMobileShell(BuildContext context, WorkspaceProvider provider, AuthRepository authRepo) {
     int getBottomIndex() {
       switch (provider.activeTab) {
         case WorkspaceTab.dashboard:
@@ -218,7 +228,7 @@ class MacroMainScreen extends StatelessWidget {
               CrmView(provider: provider),
               AiMemoryView(provider: provider),
               CallRoomView(provider: provider),
-              _buildSettingsView(),
+              ProfileScreen(authRepository: authRepo),
             ],
           ),
 
@@ -289,7 +299,7 @@ class MacroMainScreen extends StatelessWidget {
                   _buildMoreTile(context, provider, WorkspaceTab.crm, Icons.pie_chart_outline, 'CRM & Deals'),
                   _buildMoreTile(context, provider, WorkspaceTab.aiMemory, Icons.auto_awesome_outlined, 'AI Memory'),
                   _buildMoreTile(context, provider, WorkspaceTab.calls, Icons.videocam_outlined, 'Calls & Notes'),
-                  _buildMoreTile(context, provider, WorkspaceTab.settings, Icons.settings_outlined, 'Settings'),
+                  _buildMoreTile(context, provider, WorkspaceTab.settings, Icons.person_outline, 'Profile'),
                 ],
               ),
             ],
@@ -318,30 +328,6 @@ class MacroMainScreen extends StatelessWidget {
             Icon(icon, color: AppTheme.primaryIndigo, size: 24),
             const SizedBox(height: 6),
             Text(label, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 11, fontWeight: FontWeight.w500), textAlign: TextAlign.center),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSettingsView() {
-    return Scaffold(
-      backgroundColor: AppTheme.bgDark,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Icon(Icons.settings, size: 48, color: AppTheme.primaryIndigo),
-            SizedBox(height: 16),
-            Text(
-              'Macro Mobile Settings',
-              style: TextStyle(color: AppTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Manage OpenAI, Anthropic, and Gemini API keys.',
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
-            ),
           ],
         ),
       ),

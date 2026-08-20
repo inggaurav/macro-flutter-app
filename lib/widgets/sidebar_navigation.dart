@@ -63,13 +63,16 @@ class SidebarNavigation extends StatelessWidget {
                       ),
                       Row(
                         children: const [
-                          Icon(Icons.circle, size: 8, color: AppTheme.accentEmerald),
-                          SizedBox(width: 4),
-                          Text(
-                            'Macro Inc. Team',
-                            style: TextStyle(
-                              color: AppTheme.textSecondary,
-                              fontSize: 11,
+                          const Icon(Icons.circle, size: 8, color: AppTheme.accentEmerald),
+                          const SizedBox(width: 4),
+                          const Flexible(
+                            child: Text(
+                              'Macro Inc. Team',
+                              style: TextStyle(
+                                color: AppTheme.textSecondary,
+                                fontSize: 11,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],

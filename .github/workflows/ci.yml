@@ -20,11 +20,11 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Setup Flutter SDK
+      - name: Setup Flutter SDK (Stable Channel)
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.x'
           channel: 'stable'
+          cache: true
 
       - name: Install Dependencies
         run: flutter pub get

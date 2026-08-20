@@ -1,24 +1,51 @@
 import 'package:flutter/material.dart';
+import '../../config/app_config.dart';
+import '../../repositories/auth_repository.dart';
 import '../../theme/app_theme.dart';
 
 class SplashScreen extends StatefulWidget {
+  final AppConfig appConfig;
+  final AuthRepository authRepository;
   final VoidCallback onInitComplete;
 
-  const SplashScreen({super.key, required this.onInitComplete});
+  const SplashScreen({
+    super.key,
+    required this.appConfig,
+    required this.authRepository,
+    required this.onInitComplete,
+  });
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  String _statusText = 'Initializing App Config...';
+
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(milliseconds: 1200), () {
-      if (mounted) {
-        widget.onInitComplete();
-      }
-    });
+    _initializeApp();
+  }
+
+  Future<void> _initializeApp() async {
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    if (mounted) {
+      setState(() => _statusText = 'Restoring Workspace Session...');
+    }
+
+    await widget.authRepository.restoreSession();
+
+    if (mounted) {
+      setState(() => _statusText = 'Connecting MCP Swarm Endpoints...');
+    }
+
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    if (mounted) {
+      widget.onInitComplete();
+    }
   }
 
   @override
@@ -33,43 +60,48 @@ class _SplashScreenState extends State<SplashScreen> {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: AppTheme.primaryIndigo,
+                color: widget.appConfig.primaryColor,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.primaryIndigo.withOpacity(0.4),
+                    color: widget.appConfig.primaryColor.withOpacity(0.4),
                     blurRadius: 24,
                     spreadRadius: 4,
                   ),
                 ],
               ),
-              child: const Center(
+              child: Center(
                 child: Text(
-                  'M',
-                  style: TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold),
+                  widget.appConfig.logoText,
+                  style: const TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
-              'MACRO WORKSPACE',
-              style: TextStyle(
+            Text(
+              widget.appConfig.appName.toUpperCase(),
+              style: const TextStyle(
                 color: AppTheme.textPrimary,
-                fontSize: 20,
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 2,
               ),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'Unified Team Intelligence & Swarm Memory',
-              style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
+            const SizedBox(height: 6),
+            Text(
+              widget.appConfig.workspaceName,
+              style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
             ),
             const SizedBox(height: 32),
             const SizedBox(
               width: 24,
               height: 24,
               child: CircularProgressIndicator(strokeWidth: 2.5, color: AppTheme.primaryIndigo),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _statusText,
+              style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
             ),
           ],
         ),

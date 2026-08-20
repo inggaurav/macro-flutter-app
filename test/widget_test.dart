@@ -23,9 +23,9 @@ void main() {
     );
 
     // Verify Splash Screen renders
-    expect(find.text('MACRO WORKSPACE'), findsOneWidget);
+    expect(find.text('MACRO UNIFIED WORKSPACE'), findsOneWidget);
 
-    // Advance splash screen timer (1200ms)
+    // Advance splash screen timer & initialization pipeline
     await tester.pumpAndSettle(const Duration(milliseconds: 1500));
 
     // Verify Main Screen renders
