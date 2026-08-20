@@ -21,15 +21,28 @@ class ChannelChatScreen extends StatefulWidget {
 class _ChannelChatScreenState extends State<ChannelChatScreen> {
   final TextEditingController _msgController = TextEditingController();
 
+  @override
+  void dispose() {
+    _msgController.dispose();
+    super.dispose();
+  }
+
   void _sendMessage() {
     if (_msgController.text.trim().isEmpty) return;
-    widget.provider.addChatMessage(_msgController.text);
+    widget.provider.addChatMessage(
+      _msgController.text,
+      targetChannelId: widget.channel.id,
+    );
     _msgController.clear();
     setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
+    final channelMessages = widget.provider.chatMessages
+        .where((m) => m.channelId == widget.channel.id)
+        .toList();
+
     return Scaffold(
       backgroundColor: AppTheme.bgDark,
       appBar: AppBar(
@@ -61,88 +74,101 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
         children: [
           // Chat Timeline
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: widget.provider.chatMessages.length,
-              itemBuilder: (context, index) {
-                final msg = widget.provider.chatMessages[index];
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      CircleAvatar(
-                        radius: 16,
-                        backgroundImage: NetworkImage(msg.senderAvatar),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
+            child: channelMessages.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.chat_bubble_outline, size: 40, color: AppTheme.textMuted.withOpacity(0.5)),
+                        const SizedBox(height: 12),
+                        Text('No messages in #${widget.channel.name} yet', style: const TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+                        const SizedBox(height: 4),
+                        const Text('Be the first to post a message or ask @AI', style: TextStyle(color: AppTheme.textMuted, fontSize: 11)),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: channelMessages.length,
+                    itemBuilder: (context, index) {
+                      final msg = channelMessages[index];
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              children: [
-                                Text(
-                                  msg.senderName,
-                                  style: TextStyle(
-                                    color: msg.isAgent ? AppTheme.accentPurple : AppTheme.textPrimary,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
+                            CircleAvatar(
+                              radius: 16,
+                              backgroundImage: NetworkImage(msg.senderAvatar),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        msg.senderName,
+                                        style: TextStyle(
+                                          color: msg.isAgent ? AppTheme.accentPurple : AppTheme.textPrimary,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                      if (msg.isAgent) ...[
+                                        const SizedBox(width: 4),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                          decoration: BoxDecoration(
+                                            color: AppTheme.accentPurple.withOpacity(0.2),
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: const Text(
+                                            'BOT',
+                                            style: TextStyle(color: AppTheme.accentPurple, fontSize: 8, fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                      ],
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        DateFormat('h:mm a').format(msg.timestamp),
+                                        style: const TextStyle(color: AppTheme.textMuted, fontSize: 10),
+                                      ),
+                                    ],
                                   ),
-                                ),
-                                if (msg.isAgent) ...[
-                                  const SizedBox(width: 4),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.accentPurple.withOpacity(0.2),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: const Text(
-                                      'BOT',
-                                      style: TextStyle(color: AppTheme.accentPurple, fontSize: 8, fontWeight: FontWeight.bold),
-                                    ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    msg.text,
+                                    style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13, height: 1.4),
                                   ),
+                                  if (msg.mentions.isNotEmpty) ...[
+                                    const SizedBox(height: 6),
+                                    Wrap(
+                                      spacing: 4,
+                                      children: msg.mentions.map((m) {
+                                        return Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: AppTheme.primaryIndigo.withOpacity(0.15),
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: Text(
+                                            m,
+                                            style: const TextStyle(color: AppTheme.primaryIndigo, fontSize: 10, fontWeight: FontWeight.bold),
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ],
                                 ],
-                                const SizedBox(width: 6),
-                                Text(
-                                  DateFormat('h:mm a').format(msg.timestamp),
-                                  style: const TextStyle(color: AppTheme.textMuted, fontSize: 10),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              msg.text,
-                              style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13, height: 1.4),
-                            ),
-                            if (msg.mentions.isNotEmpty) ...[
-                              const SizedBox(height: 6),
-                              Wrap(
-                                spacing: 4,
-                                children: msg.mentions.map((m) {
-                                  return Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.primaryIndigo.withOpacity(0.15),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      m,
-                                      style: const TextStyle(color: AppTheme.primaryIndigo, fontSize: 10, fontWeight: FontWeight.bold),
-                                    ),
-                                  );
-                                }).toList(),
                               ),
-                            ],
+                            ),
                           ],
                         ),
-                      ),
-                    ],
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           ),
 
           // Sticky Mobile Message Composer

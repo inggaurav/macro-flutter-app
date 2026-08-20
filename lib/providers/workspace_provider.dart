@@ -94,6 +94,7 @@ class WorkspaceProvider extends ChangeNotifier {
   List<ChatMessage> chatMessages = [
     ChatMessage(
       id: 'm1',
+      channelId: 'c1',
       senderName: 'Alex Rivera',
       senderAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
       text: 'Just deployed the updated CRDT collaborative document engine to production! @Task-102 is now complete. 🚀',
@@ -102,6 +103,7 @@ class WorkspaceProvider extends ChangeNotifier {
     ),
     ChatMessage(
       id: 'm2',
+      channelId: 'c1',
       senderName: 'Macro AI Agent',
       senderAvatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=200',
       text: '🤖 Automated Memory Synthesis: Linked @Task-102 to @Acme Corp ARR deal (\$120k). Updated workspace memory context.',
@@ -111,11 +113,40 @@ class WorkspaceProvider extends ChangeNotifier {
     ),
     ChatMessage(
       id: 'm3',
+      channelId: 'c1',
       senderName: 'Jordan Vance',
       senderAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
       text: 'Amazing! Sarah from @Acme Corp just confirmed they are ready to sign the 50-seat expansion proposal.',
       timestamp: DateTime.now().subtract(const Duration(minutes: 15)),
       mentions: ['@Acme Corp'],
+    ),
+    ChatMessage(
+      id: 'm4',
+      channelId: 'c2',
+      senderName: 'David Chen',
+      senderAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200',
+      text: 'PR #402 for Flutter CRDT state synchronization is ready for review.',
+      timestamp: DateTime.now().subtract(const Duration(hours: 2)),
+      mentions: ['@PR-402'],
+    ),
+    ChatMessage(
+      id: 'm5',
+      channelId: 'c3',
+      senderName: 'Elena Rostova',
+      senderAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200',
+      text: 'Acme Corp contract updated: \$120,000 ARR with 3-year term.',
+      timestamp: DateTime.now().subtract(const Duration(hours: 1)),
+      mentions: ['@Acme Corp'],
+    ),
+    ChatMessage(
+      id: 'm6',
+      channelId: 'c4',
+      senderName: 'Swarm Memory Bot',
+      senderAvatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=200',
+      text: '🤖 Agent Swarm: Embedded 4 new vector fragments into workspace memory.',
+      timestamp: DateTime.now().subtract(const Duration(hours: 3)),
+      isAgent: true,
+      mentions: [],
     ),
   ];
 
@@ -332,11 +363,13 @@ Macro combines Email, Team Chat, Collaborative Docs, Task Management, CRM, and A
     notifyListeners();
   }
 
-  void addChatMessage(String text) {
+  void addChatMessage(String text, {String? targetChannelId}) {
     if (text.trim().isEmpty) return;
     
+    final String cId = targetChannelId ?? selectedChannelId ?? 'c1';
     final newMsg = ChatMessage(
-      id: 'm_${DateTime.now().millisecondsSinceEpoch}',
+      id: 'msg_${DateTime.now().millisecondsSinceEpoch}',
+      channelId: cId,
       senderName: 'You (Alex)',
       senderAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
       text: text,
@@ -351,6 +384,7 @@ Macro combines Email, Team Chat, Collaborative Docs, Task Management, CRM, and A
       Future.delayed(const Duration(seconds: 1), () {
         chatMessages.add(ChatMessage(
           id: 'ai_${DateTime.now().millisecondsSinceEpoch}',
+          channelId: cId,
           senderName: 'Macro AI Agent ($_activeAiModel)',
           senderAvatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=200',
           text: '🤖 I synthesized team context from @Acme Corp and @Docs/PRD. Here is the response for "$text". All linked objects are synced.',

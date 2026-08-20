@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'config/app_config.dart';
 import 'providers/workspace_provider.dart';
+import 'repositories/auth_repository.dart';
 import 'theme/app_theme.dart';
+import 'views/auth/splash_screen.dart';
+import 'views/auth/login_screen.dart';
 import 'widgets/sidebar_navigation.dart';
 import 'widgets/top_app_header.dart';
 import 'widgets/ai_copilot_drawer.dart';
@@ -16,15 +20,26 @@ import 'views/call_room_view.dart';
 
 void main() {
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => WorkspaceProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => WorkspaceProvider()),
+        ChangeNotifierProvider(create: (_) => AuthRepository()),
+        Provider.value(value: AppConfig.defaultConfig),
+      ],
       child: const MacroApp(),
     ),
   );
 }
 
-class MacroApp extends StatelessWidget {
+class MacroApp extends StatefulWidget {
   const MacroApp({super.key});
+
+  @override
+  State<MacroApp> createState() => _MacroAppState();
+}
+
+class _MacroAppState extends State<MacroApp> {
+  bool _isInitialized = false;
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +47,25 @@ class MacroApp extends StatelessWidget {
       title: 'Macro Workspace App',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
-      home: const MacroMainScreen(),
+      home: !_isInitialized
+          ? SplashScreen(
+              onInitComplete: () {
+                setState(() {
+                  _isInitialized = true;
+                });
+              },
+            )
+          : Consumer<AuthRepository>(
+              builder: (context, auth, child) {
+                if (!auth.isAuthenticated) {
+                  return LoginScreen(
+                    authRepository: auth,
+                    onLoginSuccess: () {},
+                  );
+                }
+                return const MacroMainScreen();
+              },
+            ),
     );
   }
 }

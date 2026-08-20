@@ -42,8 +42,11 @@ class _AiCopilotDrawerState extends State<AiCopilotDrawer> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final drawerWidth = screenWidth < 768 ? screenWidth * 0.92 : 340.0;
+
     return Container(
-      width: 340,
+      width: drawerWidth,
       decoration: const BoxDecoration(
         color: AppTheme.surfaceDark,
         border: Border(left: BorderSide(color: AppTheme.borderDark)),

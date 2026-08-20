@@ -52,6 +52,7 @@ class EmailThread {
 
 class ChatMessage {
   final String id;
+  final String channelId;
   final String senderName;
   final String senderAvatar;
   final String text;
@@ -62,6 +63,7 @@ class ChatMessage {
 
   ChatMessage({
     required this.id,
+    required this.channelId,
     required this.senderName,
     required this.senderAvatar,
     required this.text,

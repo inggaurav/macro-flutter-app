@@ -17,6 +17,12 @@ class ChatView extends StatefulWidget {
 class _ChatViewState extends State<ChatView> {
   final TextEditingController _msgController = TextEditingController();
 
+  @override
+  void dispose() {
+    _msgController.dispose();
+    super.dispose();
+  }
+
   void _sendMessage() {
     if (_msgController.text.trim().isEmpty) return;
     widget.provider.addChatMessage(_msgController.text);
@@ -133,6 +139,10 @@ class _ChatViewState extends State<ChatView> {
       );
     }
 
+    final channelMessages = widget.provider.chatMessages
+        .where((m) => m.channelId == activeChannel.id)
+        .toList();
+
     // Desktop View
     return Scaffold(
       backgroundColor: AppTheme.bgDark,
@@ -170,94 +180,107 @@ class _ChatViewState extends State<ChatView> {
 
                 // Chat Messages Feed
                 Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(20),
-                    itemCount: widget.provider.chatMessages.length,
-                    itemBuilder: (context, index) {
-                      final msg = widget.provider.chatMessages[index];
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 20),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            CircleAvatar(
-                              radius: 18,
-                              backgroundImage: NetworkImage(msg.senderAvatar),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
+                  child: channelMessages.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.chat_bubble_outline, size: 40, color: AppTheme.textMuted.withOpacity(0.5)),
+                              const SizedBox(height: 12),
+                              Text('No messages in #${activeChannel.name} yet', style: const TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+                              const SizedBox(height: 4),
+                              const Text('Be the first to post a message or ask @AI', style: TextStyle(color: AppTheme.textMuted, fontSize: 11)),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(20),
+                          itemCount: channelMessages.length,
+                          itemBuilder: (context, index) {
+                            final msg = channelMessages[index];
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 20),
+                              child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        msg.senderName,
-                                        style: TextStyle(
-                                          color: msg.isAgent ? AppTheme.accentPurple : AppTheme.textPrimary,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13,
-                                        ),
-                                      ),
-                                      if (msg.isAgent) ...[
-                                        const SizedBox(width: 6),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                                          decoration: BoxDecoration(
-                                            color: AppTheme.accentPurple.withOpacity(0.2),
-                                            borderRadius: BorderRadius.circular(4),
-                                          ),
-                                          child: const Text(
-                                            'AGENT',
-                                            style: TextStyle(color: AppTheme.accentPurple, fontSize: 9, fontWeight: FontWeight.bold),
-                                          ),
-                                        ),
-                                      ],
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        DateFormat('h:mm a').format(msg.timestamp),
-                                        style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
-                                      ),
-                                    ],
+                                  CircleAvatar(
+                                    radius: 18,
+                                    backgroundImage: NetworkImage(msg.senderAvatar),
                                   ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    msg.text,
-                                    style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13, height: 1.4),
-                                  ),
-
-                                  if (msg.mentions.isNotEmpty) ...[
-                                    const SizedBox(height: 8),
-                                    Wrap(
-                                      spacing: 6,
-                                      children: msg.mentions.map((m) {
-                                        return Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                          decoration: BoxDecoration(
-                                            color: AppTheme.primaryIndigo.withOpacity(0.15),
-                                            borderRadius: BorderRadius.circular(6),
-                                            border: Border.all(color: AppTheme.primaryIndigo.withOpacity(0.3)),
-                                          ),
-                                          child: Text(
-                                            m,
-                                            style: const TextStyle(
-                                              color: AppTheme.primaryIndigo,
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.bold,
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Text(
+                                              msg.senderName,
+                                              style: TextStyle(
+                                                color: msg.isAgent ? AppTheme.accentPurple : AppTheme.textPrimary,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 13,
+                                              ),
                                             ),
+                                            if (msg.isAgent) ...[
+                                              const SizedBox(width: 6),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                                decoration: BoxDecoration(
+                                                  color: AppTheme.accentPurple.withOpacity(0.2),
+                                                  borderRadius: BorderRadius.circular(4),
+                                                ),
+                                                child: const Text(
+                                                  'AGENT',
+                                                  style: TextStyle(color: AppTheme.accentPurple, fontSize: 9, fontWeight: FontWeight.bold),
+                                                ),
+                                              ),
+                                            ],
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              DateFormat('h:mm a').format(msg.timestamp),
+                                              style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          msg.text,
+                                          style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13, height: 1.4),
+                                        ),
+
+                                        if (msg.mentions.isNotEmpty) ...[
+                                          const SizedBox(height: 8),
+                                          Wrap(
+                                            spacing: 6,
+                                            children: msg.mentions.map((m) {
+                                              return Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                                decoration: BoxDecoration(
+                                                  color: AppTheme.primaryIndigo.withOpacity(0.15),
+                                                  borderRadius: BorderRadius.circular(6),
+                                                  border: Border.all(color: AppTheme.primaryIndigo.withOpacity(0.3)),
+                                                ),
+                                                child: Text(
+                                                  m,
+                                                  style: const TextStyle(
+                                                    color: AppTheme.primaryIndigo,
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              );
+                                            }).toList(),
                                           ),
-                                        );
-                                      }).toList(),
+                                        ],
+                                      ],
                                     ),
-                                  ],
+                                  ),
                                 ],
                               ),
-                            ),
-                          ],
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
                 ),
 
                 // Message Input Box
