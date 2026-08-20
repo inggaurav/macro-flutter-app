@@ -37,12 +37,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _handleLogin() async {
     setState(() => _isLoading = true);
-    final success = await widget.authRepository.login(
+    final result = await widget.authRepository.login(
       _emailController.text,
       _passwordController.text,
     );
     setState(() => _isLoading = false);
-    if (success && mounted) {
+    if (result.isSuccess && mounted) {
       widget.onLoginSuccess();
     }
   }

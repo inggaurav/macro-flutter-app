@@ -89,6 +89,7 @@ class _MacroAppState extends State<MacroApp> {
       case 'forgot':
         return ForgotPasswordScreen(
           appConfig: appConfig,
+          authRepository: authRepo,
           onBackToLogin: () => setState(() => _authSubRoute = 'login'),
         );
       case 'login':

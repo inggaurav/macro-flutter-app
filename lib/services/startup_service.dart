@@ -24,12 +24,12 @@ class StartupService {
 
   Future<StartupResult> executeStartupPipeline(Function(String) onProgress) async {
     onProgress('Loading ${appConfig.appName} configuration...');
-    await Future.delayed(const Duration(milliseconds: 250));
+    await Future.delayed(const Duration(milliseconds: 200));
 
     onProgress('Evaluating feature flags (${appConfig.environment.name})...');
     await Future.delayed(const Duration(milliseconds: 200));
 
-    onProgress('Checking local secure session storage...');
+    onProgress('Restoring secure session storage...');
     final hasSession = await authRepository.restoreSession();
 
     onProgress('Verifying onboarding state...');
@@ -38,7 +38,7 @@ class StartupService {
     return StartupResult(
       hasSession: hasSession,
       hasOnboarded: authRepository.hasCompletedOnboarding,
-      statusMessage: 'Ready',
+      statusMessage: 'Initialization Complete',
     );
   }
 }

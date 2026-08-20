@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../config/app_config.dart';
 import '../../repositories/auth_repository.dart';
+import '../../services/startup_service.dart';
 import '../../theme/app_theme.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -20,28 +21,25 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  String _statusText = 'Initializing App Config...';
+  String _statusText = 'Booting Application Engine...';
 
   @override
   void initState() {
     super.initState();
-    _initializeApp();
+    _runStartupPipeline();
   }
 
-  Future<void> _initializeApp() async {
-    await Future.delayed(const Duration(milliseconds: 300));
+  Future<void> _runStartupPipeline() async {
+    final startupService = StartupService(
+      appConfig: widget.appConfig,
+      authRepository: widget.authRepository,
+    );
 
-    if (mounted) {
-      setState(() => _statusText = 'Restoring Workspace Session...');
-    }
-
-    await widget.authRepository.restoreSession();
-
-    if (mounted) {
-      setState(() => _statusText = 'Connecting MCP Swarm Endpoints...');
-    }
-
-    await Future.delayed(const Duration(milliseconds: 300));
+    await startupService.executeStartupPipeline((status) {
+      if (mounted) {
+        setState(() => _statusText = status);
+      }
+    });
 
     if (mounted) {
       widget.onInitComplete();
@@ -93,10 +91,10 @@ class _SplashScreenState extends State<SplashScreen> {
               style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
             ),
             const SizedBox(height: 32),
-            const SizedBox(
+            SizedBox(
               width: 24,
               height: 24,
-              child: CircularProgressIndicator(strokeWidth: 2.5, color: AppTheme.primaryIndigo),
+              child: CircularProgressIndicator(strokeWidth: 2.5, color: widget.appConfig.primaryColor),
             ),
             const SizedBox(height: 16),
             Text(

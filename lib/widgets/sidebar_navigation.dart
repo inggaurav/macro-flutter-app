@@ -231,18 +231,20 @@ class SidebarNavigation extends StatelessWidget {
   }) {
     final isSelected = provider.activeTab == tab;
 
+    final appConfig = Provider.of<AppConfig>(context);
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: ListTile(
         selected: isSelected,
-        selectedTileColor: AppTheme.primaryIndigo.withOpacity(0.15),
+        selectedTileColor: appConfig.primaryColor.withOpacity(0.15),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
         dense: true,
         leading: Icon(
           isSelected ? selectedIcon : icon,
           size: 18,
-          color: isSelected ? AppTheme.primaryIndigo : AppTheme.textMuted,
+          color: isSelected ? appConfig.primaryColor : AppTheme.textMuted,
         ),
         title: Text(
           label,
@@ -256,7 +258,7 @@ class SidebarNavigation extends StatelessWidget {
             ? Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppTheme.primaryIndigo : AppTheme.surfaceLightDark,
+                  color: isSelected ? appConfig.primaryColor : AppTheme.surfaceLightDark,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(

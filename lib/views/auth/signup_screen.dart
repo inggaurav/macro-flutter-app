@@ -24,6 +24,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -34,10 +35,31 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   void _handleSignup() async {
-    if (_emailController.text.trim().isEmpty) return;
-    setState(() => _isLoading = true);
-    await widget.authRepository.login(_emailController.text, _passwordController.text);
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (name.isEmpty || email.isEmpty || password.isEmpty) {
+      setState(() => _errorMessage = 'Please fill in all required fields.');
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    final result = await widget.authRepository.signup(
+      name: name,
+      email: email,
+      password: password,
+    );
+
     setState(() => _isLoading = false);
+
+    if (!result.isSuccess) {
+      setState(() => _errorMessage = result.message ?? 'Signup failed');
+    }
   }
 
   @override
@@ -85,6 +107,19 @@ class _SignupScreenState extends State<SignupScreen> {
                     style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
                   ),
                   const SizedBox(height: 24),
+
+                  if (_errorMessage != null) ...[
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppTheme.accentRose.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppTheme.accentRose.withOpacity(0.4)),
+                      ),
+                      child: Text(_errorMessage!, style: const TextStyle(color: AppTheme.accentRose, fontSize: 12)),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
 
                   TextField(
                     controller: _nameController,
@@ -145,7 +180,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   const SizedBox(height: 16),
                   TextButton(
                     onPressed: widget.onNavToLogin,
-                    child: const Text('Already have an account? Sign in', style: TextStyle(color: AppTheme.primaryIndigo)),
+                    child: Text('Already have an account? Sign in', style: TextStyle(color: widget.appConfig.primaryColor)),
                   ),
                 ],
               ),
