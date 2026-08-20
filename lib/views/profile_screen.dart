@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
+import '../config/app_config.dart';
 import '../repositories/auth_repository.dart';
 import '../theme/app_theme.dart';
 
 class ProfileScreen extends StatelessWidget {
+  final AppConfig appConfig;
   final AuthRepository authRepository;
 
-  const ProfileScreen({super.key, required this.authRepository});
+  const ProfileScreen({
+    super.key,
+    required this.appConfig,
+    required this.authRepository,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -23,9 +29,9 @@ class ProfileScreen extends StatelessWidget {
               style: TextStyle(color: AppTheme.textPrimary, fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
-            const Text(
-              'Manage your session tokens, API keys, and workspace profile.',
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+            Text(
+              'Manage your session and workspace preferences for ${appConfig.workspaceName}.',
+              style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
             ),
             const SizedBox(height: 24),
 
@@ -61,12 +67,12 @@ class ProfileScreen extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: AppTheme.primaryIndigo.withOpacity(0.2),
+                            color: appConfig.primaryColor.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
                             user?.role.toUpperCase() ?? 'LEAD ARCHITECT',
-                            style: const TextStyle(color: AppTheme.primaryIndigo, fontSize: 10, fontWeight: FontWeight.bold),
+                            style: TextStyle(color: appConfig.primaryColor, fontSize: 10, fontWeight: FontWeight.bold),
                           ),
                         ),
                       ],
@@ -78,7 +84,7 @@ class ProfileScreen extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // API Keys & Tokens Card
+            // Session Security Telemetry Card (NO raw JWT token displayed)
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -89,32 +95,27 @@ class ProfileScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Active Session Token',
-                    style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 14),
+                  const Row(
+                    children: [
+                      Icon(Icons.shield_outlined, color: AppTheme.accentEmerald, size: 20),
+                      SizedBox(width: 8),
+                      Text(
+                        'Session Security & Environment',
+                        style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 14),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppTheme.bgDark,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppTheme.borderDark),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            authRepository.authToken ?? 'macro_jwt_sec_mock_token_9402',
-                            style: const TextStyle(color: AppTheme.accentEmerald, fontSize: 12, fontFamily: 'monospace'),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const Icon(Icons.copy, size: 16, color: AppTheme.textMuted),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
+
+                  _buildInfoRow('Session State', 'Active & Encrypted', AppTheme.accentEmerald),
+                  const Divider(height: 20),
+                  _buildInfoRow('Token Storage', 'Secure System Keyring', AppTheme.textPrimary),
+                  const Divider(height: 20),
+                  _buildInfoRow('Environment', appConfig.environment.name.toUpperCase(), AppTheme.primaryIndigo),
+                  const Divider(height: 20),
+                  _buildInfoRow('API Endpoint', appConfig.apiBaseUrl, AppTheme.textSecondary),
+
+                  const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
@@ -134,6 +135,16 @@ class ProfileScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value, Color valueColor) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: const TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+        Text(value, style: TextStyle(color: valueColor, fontWeight: FontWeight.bold, fontSize: 13)),
+      ],
     );
   }
 }

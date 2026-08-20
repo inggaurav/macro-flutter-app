@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../config/app_config.dart';
 import '../models/models.dart';
 import '../providers/workspace_provider.dart';
+import '../repositories/auth_repository.dart';
 import '../theme/app_theme.dart';
 
 class SidebarNavigation extends StatelessWidget {
@@ -10,12 +13,20 @@ class SidebarNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appConfig = Provider.of<AppConfig>(context);
+    final authRepo = Provider.of<AuthRepository>(context);
+    final user = authRepo.currentUser;
+    final flags = appConfig.featureFlags;
+
     return Container(
       width: 240,
-      color: AppTheme.surfaceDark,
+      decoration: const BoxDecoration(
+        color: AppTheme.surfaceDark,
+        border: Border(right: BorderSide(color: AppTheme.borderDark)),
+      ),
       child: Column(
         children: [
-          // Macro Brand Header & Workspace Switcher
+          // Dynamic App Branding Header
           Container(
             padding: const EdgeInsets.all(16),
             decoration: const BoxDecoration(
@@ -27,20 +38,13 @@ class SidebarNavigation extends StatelessWidget {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryIndigo,
+                    color: appConfig.primaryColor,
                     borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.primaryIndigo.withOpacity(0.4),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      )
-                    ],
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Text(
-                      'M',
-                      style: TextStyle(
+                      appConfig.logoText,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 20,
@@ -53,22 +57,23 @@ class SidebarNavigation extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Macro Workspace',
-                        style: TextStyle(
+                      Text(
+                        appConfig.appName,
+                        style: const TextStyle(
                           color: AppTheme.textPrimary,
                           fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                          fontSize: 13,
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                       Row(
-                        children: const [
+                        children: [
                           const Icon(Icons.circle, size: 8, color: AppTheme.accentEmerald),
                           const SizedBox(width: 4),
-                          const Flexible(
+                          Flexible(
                             child: Text(
-                              'Macro Inc. Team',
-                              style: TextStyle(
+                              appConfig.workspaceName,
+                              style: const TextStyle(
                                 color: AppTheme.textSecondary,
                                 fontSize: 11,
                               ),
@@ -80,30 +85,27 @@ class SidebarNavigation extends StatelessWidget {
                     ],
                   ),
                 ),
-                const Icon(Icons.unfold_more, size: 18, color: AppTheme.textMuted),
               ],
             ),
           ),
 
-          const SizedBox(height: 12),
-
-          // Main Navigation Items
+          // Navigation Links
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
               children: [
                 _buildNavItem(
                   context,
                   tab: WorkspaceTab.dashboard,
                   icon: Icons.dashboard_outlined,
-                  activeIcon: Icons.dashboard,
+                  selectedIcon: Icons.dashboard,
                   label: 'Dashboard',
                 ),
                 _buildNavItem(
                   context,
                   tab: WorkspaceTab.inbox,
                   icon: Icons.mail_outline,
-                  activeIcon: Icons.mail,
+                  selectedIcon: Icons.mail,
                   label: 'Inbox',
                   badgeCount: provider.emails.where((e) => e.isUnread).length,
                 ),
@@ -111,47 +113,60 @@ class SidebarNavigation extends StatelessWidget {
                   context,
                   tab: WorkspaceTab.chat,
                   icon: Icons.chat_bubble_outline,
-                  activeIcon: Icons.chat_bubble,
-                  label: 'Chat & Channels',
+                  selectedIcon: Icons.chat_bubble,
+                  label: 'Channels & Chat',
                   badgeCount: provider.channels.fold(0, (sum, c) => sum + c.unreadCount),
                 ),
                 _buildNavItem(
                   context,
                   tab: WorkspaceTab.docs,
                   icon: Icons.description_outlined,
-                  activeIcon: Icons.description,
+                  selectedIcon: Icons.description,
                   label: 'Docs & Wiki',
                 ),
                 _buildNavItem(
                   context,
                   tab: WorkspaceTab.tasks,
                   icon: Icons.check_box_outlined,
-                  activeIcon: Icons.check_box,
-                  label: 'Tasks & Boards',
+                  selectedIcon: Icons.check_box,
+                  label: 'Engineering Tasks',
                   badgeCount: provider.tasks.where((t) => t.status != TaskStatus.done).length,
                 ),
+
+                if (flags['enableCrm'] ?? true)
+                  _buildNavItem(
+                    context,
+                    tab: WorkspaceTab.crm,
+                    icon: Icons.pie_chart_outline,
+                    selectedIcon: Icons.pie_chart,
+                    label: 'CRM & Deals',
+                  ),
+
+                if (flags['enableAiCopilot'] ?? true)
+                  _buildNavItem(
+                    context,
+                    tab: WorkspaceTab.aiMemory,
+                    icon: Icons.auto_awesome_outlined,
+                    selectedIcon: Icons.auto_awesome,
+                    label: 'AI Shared Memory',
+                  ),
+
+                if (flags['enableCalls'] ?? true)
+                  _buildNavItem(
+                    context,
+                    tab: WorkspaceTab.calls,
+                    icon: Icons.videocam_outlined,
+                    selectedIcon: Icons.videocam,
+                    label: 'Call Rooms & Notes',
+                  ),
+
+                const Divider(height: 24),
                 _buildNavItem(
                   context,
-                  tab: WorkspaceTab.crm,
-                  icon: Icons.pie_chart_outline,
-                  activeIcon: Icons.pie_chart,
-                  label: 'CRM & Deals',
-                ),
-                _buildNavItem(
-                  context,
-                  tab: WorkspaceTab.aiMemory,
-                  icon: Icons.auto_awesome_outlined,
-                  activeIcon: Icons.auto_awesome,
-                  label: 'AI Memory & Swarm',
-                  badgeColor: AppTheme.accentPurple,
-                ),
-                _buildNavItem(
-                  context,
-                  tab: WorkspaceTab.calls,
-                  icon: Icons.videocam_outlined,
-                  activeIcon: Icons.videocam,
-                  label: 'Calls & Notes',
-                  isLiveCall: provider.callSessions.any((c) => c.isLive),
+                  tab: WorkspaceTab.settings,
+                  icon: Icons.person_outline,
+                  selectedIcon: Icons.person,
+                  label: 'Profile & Settings',
                 ),
               ],
             ),
@@ -165,38 +180,38 @@ class SidebarNavigation extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 16,
-                  backgroundImage: NetworkImage(
-                    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
-                  ),
+                  backgroundImage: NetworkImage(user?.avatarUrl ?? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200'),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Text(
-                        'Alex Rivera',
-                        style: TextStyle(
+                        user?.name ?? 'Alex Rivera',
+                        style: const TextStyle(
                           color: AppTheme.textPrimary,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        'Lead Architect',
-                        style: TextStyle(
+                        user?.role ?? 'Lead Architect',
+                        style: const TextStyle(
                           color: AppTheme.textMuted,
-                          fontSize: 11,
+                          fontSize: 10,
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.settings_outlined, size: 18),
-                  onPressed: () => provider.setTab(WorkspaceTab.settings),
+                  icon: const Icon(Icons.logout, size: 16, color: AppTheme.textMuted),
+                  onPressed: () => authRepo.logout(),
                 ),
               ],
             ),
@@ -210,86 +225,51 @@ class SidebarNavigation extends StatelessWidget {
     BuildContext context, {
     required WorkspaceTab tab,
     required IconData icon,
-    required IconData activeIcon,
+    required IconData selectedIcon,
     required String label,
     int badgeCount = 0,
-    Color? badgeColor,
-    bool isLiveCall = false,
   }) {
-    final isActive = provider.activeTab == tab;
+    final isSelected = provider.activeTab == tab;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(8),
-          onTap: () => provider.setTab(tab),
-          hoverColor: AppTheme.surfaceLightDark,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: isActive ? AppTheme.primaryIndigo.withOpacity(0.15) : Colors.transparent,
-              borderRadius: BorderRadius.circular(8),
-              border: isActive
-                  ? Border.all(color: AppTheme.primaryIndigo.withOpacity(0.4))
-                  : null,
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  isActive ? activeIcon : icon,
-                  size: 20,
-                  color: isActive ? AppTheme.primaryIndigo : AppTheme.textSecondary,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      color: isActive ? AppTheme.textPrimary : AppTheme.textSecondary,
-                      fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-                if (isLiveCall)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppTheme.accentRose,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Text(
-                      'LIVE',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  )
-                else if (badgeCount > 0)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: badgeColor ?? AppTheme.primaryIndigo,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      '$badgeCount',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: ListTile(
+        selected: isSelected,
+        selectedTileColor: AppTheme.primaryIndigo.withOpacity(0.15),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+        dense: true,
+        leading: Icon(
+          isSelected ? selectedIcon : icon,
+          size: 18,
+          color: isSelected ? AppTheme.primaryIndigo : AppTheme.textMuted,
+        ),
+        title: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? AppTheme.textPrimary : AppTheme.textSecondary,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            fontSize: 12,
           ),
         ),
+        trailing: badgeCount > 0
+            ? Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppTheme.primaryIndigo : AppTheme.surfaceLightDark,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$badgeCount',
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : AppTheme.textSecondary,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              )
+            : null,
+        onTap: () => provider.setTab(tab),
       ),
     );
   }

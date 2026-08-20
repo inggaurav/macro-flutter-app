@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../config/app_config.dart';
 import '../providers/workspace_provider.dart';
 import '../theme/app_theme.dart';
 
@@ -9,6 +11,8 @@ class TopAppHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appConfig = Provider.of<AppConfig>(context);
+
     return Container(
       height: 60,
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -32,12 +36,12 @@ class TopAppHeader extends StatelessWidget {
                 children: [
                   const Icon(Icons.search, size: 18, color: AppTheme.textMuted),
                   const SizedBox(width: 8),
-                  const Expanded(
+                  Expanded(
                     child: TextField(
-                      style: TextStyle(color: AppTheme.textPrimary, fontSize: 13),
+                      style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13),
                       decoration: InputDecoration(
-                        hintText: 'Search or type @ to link Docs, Deals, Tasks, Emails...',
-                        hintStyle: TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                        hintText: 'Search ${appConfig.workspaceName} or type @ to link Docs, Deals, Tasks, Emails...',
+                        hintStyle: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
                         border: InputBorder.none,
                         isDense: true,
                       ),

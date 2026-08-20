@@ -7,6 +7,8 @@ import 'theme/app_theme.dart';
 import 'views/auth/splash_screen.dart';
 import 'views/auth/onboarding_screen.dart';
 import 'views/auth/login_screen.dart';
+import 'views/auth/signup_screen.dart';
+import 'views/auth/forgot_password_screen.dart';
 import 'views/profile_screen.dart';
 import 'widgets/sidebar_navigation.dart';
 import 'widgets/top_app_header.dart';
@@ -42,6 +44,7 @@ class MacroApp extends StatefulWidget {
 
 class _MacroAppState extends State<MacroApp> {
   bool _isAppInitialized = false;
+  String _authSubRoute = 'login'; // 'login', 'signup', 'forgot'
 
   @override
   Widget build(BuildContext context) {
@@ -70,12 +73,34 @@ class _MacroAppState extends State<MacroApp> {
                   },
                 )
               : !authRepo.isAuthenticated
-                  ? LoginScreen(
-                      authRepository: authRepo,
-                      onLoginSuccess: () {},
-                    )
+                  ? _buildAuthSubScreen(appConfig, authRepo)
                   : const MacroMainScreen(),
     );
+  }
+
+  Widget _buildAuthSubScreen(AppConfig appConfig, AuthRepository authRepo) {
+    switch (_authSubRoute) {
+      case 'signup':
+        return SignupScreen(
+          appConfig: appConfig,
+          authRepository: authRepo,
+          onNavToLogin: () => setState(() => _authSubRoute = 'login'),
+        );
+      case 'forgot':
+        return ForgotPasswordScreen(
+          appConfig: appConfig,
+          onBackToLogin: () => setState(() => _authSubRoute = 'login'),
+        );
+      case 'login':
+      default:
+        return LoginScreen(
+          appConfig: appConfig,
+          authRepository: authRepo,
+          onLoginSuccess: () {},
+          onNavToSignup: () => setState(() => _authSubRoute = 'signup'),
+          onNavToForgotPassword: () => setState(() => _authSubRoute = 'forgot'),
+        );
+    }
   }
 }
 
@@ -85,12 +110,13 @@ class MacroMainScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 768;
+    final appConfig = Provider.of<AppConfig>(context);
     final authRepo = Provider.of<AuthRepository>(context);
 
     return Consumer<WorkspaceProvider>(
       builder: (context, provider, child) {
         if (isMobile) {
-          return _buildMobileShell(context, provider, authRepo);
+          return _buildMobileShell(context, provider, appConfig, authRepo);
         }
 
         // Desktop Widescreen Layout
@@ -115,7 +141,7 @@ class MacroMainScreen extends StatelessWidget {
                           CrmView(provider: provider),
                           AiMemoryView(provider: provider),
                           CallRoomView(provider: provider),
-                          ProfileScreen(authRepository: authRepo),
+                          ProfileScreen(appConfig: appConfig, authRepository: authRepo),
                         ],
                       ),
                     ),
@@ -132,7 +158,12 @@ class MacroMainScreen extends StatelessWidget {
   }
 
   // Native Mobile Shell with Top AppBar and Bottom Navigation Bar
-  Widget _buildMobileShell(BuildContext context, WorkspaceProvider provider, AuthRepository authRepo) {
+  Widget _buildMobileShell(
+    BuildContext context,
+    WorkspaceProvider provider,
+    AppConfig appConfig,
+    AuthRepository authRepo,
+  ) {
     int getBottomIndex() {
       switch (provider.activeTab) {
         case WorkspaceTab.dashboard:
@@ -163,7 +194,7 @@ class MacroMainScreen extends StatelessWidget {
           provider.setTab(WorkspaceTab.tasks);
           break;
         case 4:
-          _showMobileMoreSheet(context, provider);
+          _showMobileMoreSheet(context, provider, appConfig);
           break;
       }
     }
@@ -179,28 +210,31 @@ class MacroMainScreen extends StatelessWidget {
               width: 28,
               height: 28,
               decoration: BoxDecoration(
-                color: AppTheme.primaryIndigo,
+                color: appConfig.primaryColor,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Center(
-                child: Text('M', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+              child: Center(
+                child: Text(
+                  appConfig.logoText,
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                ),
               ),
             ),
             const SizedBox(width: 8),
-            const Text(
-              'Macro',
-              style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 16),
+            Text(
+              appConfig.appName.split(' ')[0],
+              style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: AppTheme.primaryIndigo.withOpacity(0.2),
+                color: appConfig.primaryColor.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
                 provider.activeAiModel.split(' ')[0],
-                style: const TextStyle(color: AppTheme.primaryIndigo, fontSize: 10, fontWeight: FontWeight.bold),
+                style: TextStyle(color: appConfig.primaryColor, fontSize: 10, fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -209,7 +243,7 @@ class MacroMainScreen extends StatelessWidget {
           IconButton(
             icon: Icon(
               Icons.psychology,
-              color: provider.isCopilotDrawerOpen ? AppTheme.primaryIndigo : AppTheme.textSecondary,
+              color: provider.isCopilotDrawerOpen ? appConfig.primaryColor : AppTheme.textSecondary,
             ),
             onPressed: () => provider.toggleCopilotDrawer(),
           ),
@@ -228,7 +262,7 @@ class MacroMainScreen extends StatelessWidget {
               CrmView(provider: provider),
               AiMemoryView(provider: provider),
               CallRoomView(provider: provider),
-              ProfileScreen(authRepository: authRepo),
+              ProfileScreen(appConfig: appConfig, authRepository: authRepo),
             ],
           ),
 
@@ -249,7 +283,7 @@ class MacroMainScreen extends StatelessWidget {
         currentIndex: getBottomIndex(),
         onTap: setBottomIndex,
         backgroundColor: AppTheme.surfaceDark,
-        selectedItemColor: AppTheme.primaryIndigo,
+        selectedItemColor: appConfig.primaryColor,
         unselectedItemColor: AppTheme.textMuted,
         type: BottomNavigationBarType.fixed,
         selectedFontSize: 11,
@@ -272,7 +306,9 @@ class MacroMainScreen extends StatelessWidget {
     );
   }
 
-  void _showMobileMoreSheet(BuildContext context, WorkspaceProvider provider) {
+  void _showMobileMoreSheet(BuildContext context, WorkspaceProvider provider, AppConfig appConfig) {
+    final flags = appConfig.featureFlags;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: AppTheme.surfaceDark,
@@ -287,7 +323,7 @@ class MacroMainScreen extends StatelessWidget {
             children: [
               Container(width: 40, height: 4, decoration: BoxDecoration(color: AppTheme.borderDark, borderRadius: BorderRadius.circular(2))),
               const SizedBox(height: 16),
-              const Text('Macro Workspace Tools', style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 16)),
+              Text('${appConfig.appName} Tools', style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 16)),
               const SizedBox(height: 16),
               GridView.count(
                 shrinkWrap: true,
@@ -295,11 +331,14 @@ class MacroMainScreen extends StatelessWidget {
                 mainAxisSpacing: 12,
                 crossAxisSpacing: 12,
                 children: [
-                  _buildMoreTile(context, provider, WorkspaceTab.docs, Icons.description_outlined, 'Docs & Wiki'),
-                  _buildMoreTile(context, provider, WorkspaceTab.crm, Icons.pie_chart_outline, 'CRM & Deals'),
-                  _buildMoreTile(context, provider, WorkspaceTab.aiMemory, Icons.auto_awesome_outlined, 'AI Memory'),
-                  _buildMoreTile(context, provider, WorkspaceTab.calls, Icons.videocam_outlined, 'Calls & Notes'),
-                  _buildMoreTile(context, provider, WorkspaceTab.settings, Icons.person_outline, 'Profile'),
+                  _buildMoreTile(context, provider, appConfig, WorkspaceTab.docs, Icons.description_outlined, 'Docs & Wiki'),
+                  if (flags['enableCrm'] ?? true)
+                    _buildMoreTile(context, provider, appConfig, WorkspaceTab.crm, Icons.pie_chart_outline, 'CRM & Deals'),
+                  if (flags['enableAiCopilot'] ?? true)
+                    _buildMoreTile(context, provider, appConfig, WorkspaceTab.aiMemory, Icons.auto_awesome_outlined, 'AI Memory'),
+                  if (flags['enableCalls'] ?? true)
+                    _buildMoreTile(context, provider, appConfig, WorkspaceTab.calls, Icons.videocam_outlined, 'Calls & Notes'),
+                  _buildMoreTile(context, provider, appConfig, WorkspaceTab.settings, Icons.person_outline, 'Profile'),
                 ],
               ),
             ],
@@ -309,7 +348,14 @@ class MacroMainScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMoreTile(BuildContext context, WorkspaceProvider provider, WorkspaceTab tab, IconData icon, String label) {
+  Widget _buildMoreTile(
+    BuildContext context,
+    WorkspaceProvider provider,
+    AppConfig appConfig,
+    WorkspaceTab tab,
+    IconData icon,
+    String label,
+  ) {
     return InkWell(
       onTap: () {
         Navigator.pop(context);
@@ -325,7 +371,7 @@ class MacroMainScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: AppTheme.primaryIndigo, size: 24),
+            Icon(icon, color: appConfig.primaryColor, size: 24),
             const SizedBox(height: 6),
             Text(label, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 11, fontWeight: FontWeight.w500), textAlign: TextAlign.center),
           ],

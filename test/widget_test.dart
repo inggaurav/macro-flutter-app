@@ -7,29 +7,46 @@ import 'package:macro_app/providers/workspace_provider.dart';
 import 'package:macro_app/repositories/auth_repository.dart';
 
 void main() {
-  testWidgets('MacroApp renders splash and boots main screen successfully', (WidgetTester tester) async {
+  testWidgets('App Factory Boot Pipeline: Splash -> Onboarding -> Login -> Workspace', (WidgetTester tester) async {
     tester.view.physicalSize = const Size(1600, 1000);
     tester.view.devicePixelRatio = 1.0;
+
+    final authRepo = AuthRepository();
 
     await tester.pumpWidget(
       MultiProvider(
         providers: [
           ChangeNotifierProvider(create: (_) => WorkspaceProvider()),
-          ChangeNotifierProvider(create: (_) => AuthRepository()),
+          ChangeNotifierProvider.value(value: authRepo),
           Provider.value(value: AppConfig.defaultConfig),
         ],
         child: const MacroApp(),
       ),
     );
 
-    // Verify Splash Screen renders
+    // 1. Verify Splash Screen initializes
     expect(find.text('MACRO UNIFIED WORKSPACE'), findsOneWidget);
 
-    // Advance splash screen timer & initialization pipeline
+    // Advance startup pipeline timer
     await tester.pumpAndSettle(const Duration(milliseconds: 1500));
 
-    // Verify Main Screen renders
-    expect(find.text('Macro Workspace'), findsOneWidget);
+    // 2. Verify Onboarding Wizard appears on fresh install
+    expect(find.text('Unified Communication'), findsOneWidget);
+    expect(find.text('Skip'), findsOneWidget);
+
+    // Tap Skip on Onboarding
+    await tester.tap(find.text('Skip'));
+    await tester.pumpAndSettle();
+
+    // 3. Verify Login Screen appears
+    expect(find.text('Sign in to Macro Unified Workspace'), findsOneWidget);
+    expect(find.text('Continue to Workspace'), findsOneWidget);
+
+    // Tap 1-Tap Demo Sign In
+    await tester.tap(find.text('⚡ Demo 1-Tap Sign In'));
+    await tester.pumpAndSettle(const Duration(milliseconds: 1000));
+
+    // 4. Verify Main Workspace renders
     expect(find.text('Good morning, Alex 👋'), findsOneWidget);
 
     addTearDown(tester.view.resetPhysicalSize);

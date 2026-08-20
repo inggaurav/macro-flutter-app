@@ -3,48 +3,41 @@ import '../../config/app_config.dart';
 import '../../repositories/auth_repository.dart';
 import '../../theme/app_theme.dart';
 
-class LoginScreen extends StatefulWidget {
+class SignupScreen extends StatefulWidget {
   final AppConfig appConfig;
   final AuthRepository authRepository;
-  final VoidCallback onLoginSuccess;
-  final VoidCallback onNavToSignup;
-  final VoidCallback onNavToForgotPassword;
+  final VoidCallback onNavToLogin;
 
-  const LoginScreen({
+  const SignupScreen({
     super.key,
     required this.appConfig,
     required this.authRepository,
-    required this.onLoginSuccess,
-    required this.onNavToSignup,
-    required this.onNavToForgotPassword,
+    required this.onNavToLogin,
   });
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _emailController = TextEditingController(text: 'alex@macro.inc');
-  final TextEditingController _passwordController = TextEditingController(text: 'password123');
+class _SignupScreenState extends State<SignupScreen> {
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  void _handleLogin() async {
+  void _handleSignup() async {
+    if (_emailController.text.trim().isEmpty) return;
     setState(() => _isLoading = true);
-    final success = await widget.authRepository.login(
-      _emailController.text,
-      _passwordController.text,
-    );
+    await widget.authRepository.login(_emailController.text, _passwordController.text);
     setState(() => _isLoading = false);
-    if (success && mounted) {
-      widget.onLoginSuccess();
-    }
   }
 
   @override
@@ -55,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
+            constraints: const BoxConstraints(maxWidth: 420),
             child: Container(
               padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
@@ -82,16 +75,29 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'Sign in to ${widget.appConfig.appName}',
+                    'Create ${widget.appConfig.appName} Account',
                     style: const TextStyle(color: AppTheme.textPrimary, fontSize: 20, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Enter credentials for ${widget.appConfig.workspaceName}',
+                    'Join ${widget.appConfig.workspaceName} team workspace',
                     style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 24),
+
+                  TextField(
+                    controller: _nameController,
+                    style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14),
+                    decoration: const InputDecoration(
+                      labelText: 'Full Name',
+                      labelStyle: TextStyle(color: AppTheme.textMuted),
+                      filled: true,
+                      fillColor: AppTheme.bgDark,
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
 
                   TextField(
                     controller: _emailController,
@@ -104,7 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       border: OutlineInputBorder(),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
 
                   TextField(
                     controller: _passwordController,
@@ -118,17 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       border: OutlineInputBorder(),
                     ),
                   ),
-                  const SizedBox(height: 8),
-
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: widget.onNavToForgotPassword,
-                      child: const Text('Forgot password?', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
 
                   SizedBox(
                     width: double.infinity,
@@ -139,43 +135,17 @@ class _LoginScreenState extends State<LoginScreen> {
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
-                      onPressed: _isLoading ? null : _handleLogin,
+                      onPressed: _isLoading ? null : _handleSignup,
                       child: _isLoading
                           ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                          : const Text('Continue to Workspace', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                          : const Text('Create Account & Join', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                     ),
                   ),
 
-                  const SizedBox(height: 12),
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: 44,
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppTheme.textPrimary,
-                        side: const BorderSide(color: AppTheme.borderDark),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                      onPressed: _isLoading ? null : () => widget.authRepository.login('demo.guest@macro.inc', 'guest123'),
-                      child: const Text('⚡ Demo 1-Tap Sign In', style: TextStyle(fontSize: 13)),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text("Don't have an account? ", style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
-                      GestureDetector(
-                        onTap: widget.onNavToSignup,
-                        child: Text(
-                          'Sign up',
-                          style: TextStyle(color: widget.appConfig.primaryColor, fontWeight: FontWeight.bold, fontSize: 12),
-                        ),
-                      ),
-                    ],
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: widget.onNavToLogin,
+                    child: const Text('Already have an account? Sign in', style: TextStyle(color: AppTheme.primaryIndigo)),
                   ),
                 ],
               ),
