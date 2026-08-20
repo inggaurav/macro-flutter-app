@@ -251,45 +251,48 @@ class SidebarNavigation extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
-      child: ListTile(
-        selected: isSelected,
-        selectedTileColor: appConfig.primaryColor.withOpacity(0.15),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-        dense: true,
-        leading: Icon(
-          isSelected ? selectedIcon : icon,
-          size: 18,
-          color: isSelected ? appConfig.primaryColor : AppTheme.textMuted,
-        ),
-        title: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? AppTheme.textPrimary : AppTheme.textSecondary,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            fontSize: 12,
+      child: Material(
+        color: Colors.transparent,
+        child: ListTile(
+          selected: isSelected,
+          selectedTileColor: appConfig.primaryColor.withOpacity(0.15),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+          dense: true,
+          leading: Icon(
+            isSelected ? selectedIcon : icon,
+            size: 18,
+            color: isSelected ? appConfig.primaryColor : AppTheme.textMuted,
           ),
-        ),
-        trailing: badgeCount > 0
-            ? Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? appConfig.primaryColor
-                      : AppTheme.surfaceLightDark,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '$badgeCount',
-                  style: TextStyle(
-                    color: isSelected ? Colors.white : AppTheme.textSecondary,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
+          title: Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? AppTheme.textPrimary : AppTheme.textSecondary,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              fontSize: 12,
+            ),
+          ),
+          trailing: badgeCount > 0
+              ? Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? appConfig.primaryColor
+                        : AppTheme.surfaceLightDark,
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                ),
-              )
-            : null,
-        onTap: () => provider.setTab(tab),
+                  child: Text(
+                    '$badgeCount',
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : AppTheme.textSecondary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                )
+              : null,
+          onTap: () => provider.setTab(tab),
+        ),
       ),
     );
   }
