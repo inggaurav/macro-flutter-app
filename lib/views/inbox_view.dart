@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../models/models.dart';
 import '../providers/workspace_provider.dart';
 import '../theme/app_theme.dart';
+import 'mobile/email_detail_screen.dart';
 
 class InboxView extends StatelessWidget {
   final WorkspaceProvider provider;
@@ -10,185 +12,204 @@ class InboxView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 768;
+
     final selectedEmail = provider.emails.firstWhere(
       (e) => e.id == provider.selectedEmailId,
       orElse: () => provider.emails.first,
     );
 
-    return Scaffold(
-      backgroundColor: AppTheme.bgDark,
-      body: Row(
+    final emailListWidget = Container(
+      width: isMobile ? double.infinity : 340,
+      decoration: BoxDecoration(
+        border: isMobile ? null : const Border(right: BorderSide(color: AppTheme.borderDark)),
+      ),
+      child: Column(
         children: [
-          // Left Email Threads Sidebar List
           Container(
-            width: 340,
+            padding: const EdgeInsets.all(16),
             decoration: const BoxDecoration(
-              border: Border(right: BorderSide(color: AppTheme.borderDark)),
+              border: Border(bottom: BorderSide(color: AppTheme.borderDark)),
             ),
-            child: Column(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: const BoxDecoration(
-                    border: Border(bottom: BorderSide(color: AppTheme.borderDark)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          const Text(
-                            'Inbox',
-                            style: TextStyle(
-                              color: AppTheme.textPrimary,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryIndigo.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              '${provider.emails.where((e) => e.isUnread).length} unread',
-                              style: const TextStyle(
-                                color: AppTheme.primaryIndigo,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.edit_square, size: 20, color: AppTheme.primaryIndigo),
-                        onPressed: () {},
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Email Search
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: TextField(
-                    style: const TextStyle(color: AppTheme.textPrimary, fontSize: 12),
-                    decoration: InputDecoration(
-                      hintText: 'Search email threads...',
-                      hintStyle: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
-                      prefixIcon: const Icon(Icons.search, size: 16, color: AppTheme.textMuted),
-                      fillColor: AppTheme.surfaceDark,
-                      filled: true,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppTheme.borderDark),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppTheme.borderDark),
+                Row(
+                  children: [
+                    const Text(
+                      'Inbox',
+                      style: TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryIndigo.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '${provider.emails.where((e) => e.isUnread).length} unread',
+                        style: const TextStyle(
+                          color: AppTheme.primaryIndigo,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-
-                // Threads List
-                Expanded(
-                  child: ListView.separated(
-                    itemCount: provider.emails.length,
-                    separatorBuilder: (context, index) => const Divider(height: 1),
-                    itemBuilder: (context, index) {
-                      final email = provider.emails[index];
-                      final isSelected = email.id == selectedEmail.id;
-
-                      return ListTile(
-                        selected: isSelected,
-                        selectedTileColor: AppTheme.primaryIndigo.withOpacity(0.15),
-                        onTap: () => provider.selectEmail(email.id),
-                        leading: CircleAvatar(
-                          backgroundColor: isSelected
-                              ? AppTheme.primaryIndigo
-                              : AppTheme.surfaceLightDark,
-                          child: Text(
-                            email.senderName[0],
-                            style: TextStyle(
-                              color: isSelected ? Colors.white : AppTheme.textPrimary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        title: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                email.senderName,
-                                style: TextStyle(
-                                  color: AppTheme.textPrimary,
-                                  fontWeight: email.isUnread ? FontWeight.bold : FontWeight.w500,
-                                  fontSize: 13,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            Text(
-                              DateFormat('h:mm a').format(email.timestamp),
-                              style: const TextStyle(color: AppTheme.textMuted, fontSize: 10),
-                            ),
-                          ],
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 2),
-                            Text(
-                              email.subject,
-                              style: TextStyle(
-                                color: email.isUnread ? AppTheme.textPrimary : AppTheme.textSecondary,
-                                fontWeight: email.isUnread ? FontWeight.bold : FontWeight.normal,
-                                fontSize: 12,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              email.preview,
-                              style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 6),
-                            Wrap(
-                              spacing: 4,
-                              children: email.tags.map((tag) {
-                                return Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.surfaceLightDark,
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    tag,
-                                    style: const TextStyle(color: AppTheme.textMuted, fontSize: 9),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+                IconButton(
+                  icon: const Icon(Icons.edit_square, size: 20, color: AppTheme.primaryIndigo),
+                  onPressed: () {},
                 ),
               ],
             ),
           ),
 
-          // Right Email Details & Reply View
+          // Email Search
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: TextField(
+              style: const TextStyle(color: AppTheme.textPrimary, fontSize: 12),
+              decoration: InputDecoration(
+                hintText: 'Search email threads...',
+                hintStyle: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                prefixIcon: const Icon(Icons.search, size: 16, color: AppTheme.textMuted),
+                fillColor: AppTheme.surfaceDark,
+                filled: true,
+                contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: AppTheme.borderDark),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: AppTheme.borderDark),
+                ),
+              ),
+            ),
+          ),
+
+          // Threads List
+          Expanded(
+            child: ListView.separated(
+              itemCount: provider.emails.length,
+              separatorBuilder: (context, index) => const Divider(height: 1),
+              itemBuilder: (context, index) {
+                final email = provider.emails[index];
+                final isSelected = !isMobile && email.id == selectedEmail.id;
+
+                return ListTile(
+                  selected: isSelected,
+                  selectedTileColor: AppTheme.primaryIndigo.withOpacity(0.15),
+                  onTap: () {
+                    provider.selectEmail(email.id);
+                    if (isMobile) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => EmailDetailScreen(email: email),
+                        ),
+                      );
+                    }
+                  },
+                  leading: CircleAvatar(
+                    backgroundColor: isSelected
+                        ? AppTheme.primaryIndigo
+                        : AppTheme.surfaceLightDark,
+                    child: Text(
+                      email.senderName[0],
+                      style: TextStyle(
+                        color: isSelected ? Colors.white : AppTheme.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  title: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          email.senderName,
+                          style: TextStyle(
+                            color: AppTheme.textPrimary,
+                            fontWeight: email.isUnread ? FontWeight.bold : FontWeight.w500,
+                            fontSize: 13,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Text(
+                        DateFormat('h:mm a').format(email.timestamp),
+                        style: const TextStyle(color: AppTheme.textMuted, fontSize: 10),
+                      ),
+                    ],
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 2),
+                      Text(
+                        email.subject,
+                        style: TextStyle(
+                          color: email.isUnread ? AppTheme.textPrimary : AppTheme.textSecondary,
+                          fontWeight: email.isUnread ? FontWeight.bold : FontWeight.normal,
+                          fontSize: 12,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        email.preview,
+                        style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 4,
+                        children: email.tags.map((tag) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppTheme.surfaceLightDark,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              tag,
+                              style: const TextStyle(color: AppTheme.textMuted, fontSize: 9),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (isMobile) {
+      return Scaffold(
+        backgroundColor: AppTheme.bgDark,
+        body: emailListWidget,
+      );
+    }
+
+    // Desktop Split-Pane View
+    return Scaffold(
+      backgroundColor: AppTheme.bgDark,
+      body: Row(
+        children: [
+          emailListWidget,
           Expanded(
             child: Column(
               children: [

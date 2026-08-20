@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../models/models.dart';
 import '../providers/workspace_provider.dart';
 import '../theme/app_theme.dart';
+import 'mobile/doc_detail_screen.dart';
 
 class DocsView extends StatelessWidget {
   final WorkspaceProvider provider;
@@ -10,86 +12,105 @@ class DocsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 768;
+
     final selectedDoc = provider.documents.firstWhere(
       (d) => d.id == provider.selectedDocId,
       orElse: () => provider.documents.first,
     );
 
-    return Scaffold(
-      backgroundColor: AppTheme.bgDark,
-      body: Row(
+    final docsListWidget = Container(
+      width: isMobile ? double.infinity : 280,
+      decoration: BoxDecoration(
+        border: isMobile ? null : const Border(right: BorderSide(color: AppTheme.borderDark)),
+      ),
+      child: Column(
         children: [
-          // Docs List Sidebar
           Container(
-            width: 280,
+            padding: const EdgeInsets.all(16),
             decoration: const BoxDecoration(
-              border: Border(right: BorderSide(color: AppTheme.borderDark)),
+              border: Border(bottom: BorderSide(color: AppTheme.borderDark)),
             ),
-            child: Column(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: const BoxDecoration(
-                    border: Border(bottom: BorderSide(color: AppTheme.borderDark)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Docs & Specs',
-                        style: TextStyle(
-                          color: AppTheme.textPrimary,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.note_add_outlined, size: 20, color: AppTheme.primaryIndigo),
-                        onPressed: () {},
-                      ),
-                    ],
+                const Text(
+                  'Docs & Specs',
+                  style: TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: provider.documents.length,
-                    itemBuilder: (context, index) {
-                      final doc = provider.documents[index];
-                      final isSelected = doc.id == selectedDoc.id;
-
-                      return ListTile(
-                        selected: isSelected,
-                        selectedTileColor: AppTheme.primaryIndigo.withOpacity(0.15),
-                        leading: Icon(
-                          doc.isPinned ? Icons.push_pin : Icons.description_outlined,
-                          color: isSelected ? AppTheme.primaryIndigo : AppTheme.textMuted,
-                          size: 18,
-                        ),
-                        title: Text(
-                          doc.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: AppTheme.textPrimary,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            fontSize: 13,
-                          ),
-                        ),
-                        subtitle: Text(
-                          'Modified ${DateFormat('MMM d').format(doc.lastModified)} • v${doc.versionCount}',
-                          style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
-                        ),
-                        onTap: () => provider.selectDoc(doc.id),
-                      );
-                    },
-                  ),
+                IconButton(
+                  icon: const Icon(Icons.note_add_outlined, size: 20, color: AppTheme.primaryIndigo),
+                  onPressed: () {},
                 ),
               ],
             ),
           ),
 
-          // Main Interactive Document Editor & Workspace Canvas
+          Expanded(
+            child: ListView.builder(
+              itemCount: provider.documents.length,
+              itemBuilder: (context, index) {
+                final doc = provider.documents[index];
+                final isSelected = !isMobile && doc.id == selectedDoc.id;
+
+                return ListTile(
+                  selected: isSelected,
+                  selectedTileColor: AppTheme.primaryIndigo.withOpacity(0.15),
+                  leading: Icon(
+                    doc.isPinned ? Icons.push_pin : Icons.description_outlined,
+                    color: isSelected ? AppTheme.primaryIndigo : AppTheme.textMuted,
+                    size: 18,
+                  ),
+                  title: Text(
+                    doc.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontSize: 13,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Modified ${DateFormat('MMM d').format(doc.lastModified)} • v${doc.versionCount}',
+                    style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                  ),
+                  onTap: () {
+                    provider.selectDoc(doc.id);
+                    if (isMobile) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => DocDetailScreen(document: doc),
+                        ),
+                      );
+                    }
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (isMobile) {
+      return Scaffold(
+        backgroundColor: AppTheme.bgDark,
+        body: docsListWidget,
+      );
+    }
+
+    // Desktop View
+    return Scaffold(
+      backgroundColor: AppTheme.bgDark,
+      body: Row(
+        children: [
+          docsListWidget,
           Expanded(
             child: Column(
               children: [

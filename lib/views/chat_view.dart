@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../models/models.dart';
 import '../providers/workspace_provider.dart';
 import '../theme/app_theme.dart';
+import 'mobile/channel_chat_screen.dart';
 
 class ChatView extends StatefulWidget {
   final WorkspaceProvider provider;
@@ -23,99 +25,120 @@ class _ChatViewState extends State<ChatView> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 768;
+
     final activeChannel = widget.provider.channels.firstWhere(
       (c) => c.id == widget.provider.selectedChannelId,
       orElse: () => widget.provider.channels.first,
     );
 
-    return Scaffold(
-      backgroundColor: AppTheme.bgDark,
-      body: Row(
+    final channelsListWidget = Container(
+      width: isMobile ? double.infinity : 260,
+      decoration: BoxDecoration(
+        border: isMobile ? null : const Border(right: BorderSide(color: AppTheme.borderDark)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Channels & Direct Messages Left Sidebar
           Container(
-            width: 260,
+            padding: const EdgeInsets.all(16),
             decoration: const BoxDecoration(
-              border: Border(right: BorderSide(color: AppTheme.borderDark)),
+              border: Border(bottom: BorderSide(color: AppTheme.borderDark)),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: const BoxDecoration(
-                    border: Border(bottom: BorderSide(color: AppTheme.borderDark)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Channels & DMs',
-                        style: TextStyle(
-                          color: AppTheme.textPrimary,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.add, size: 20, color: AppTheme.primaryIndigo),
-                        onPressed: () {},
-                      ),
-                    ],
+                const Text(
+                  'Channels & DMs',
+                  style: TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-
-                // Channels Section
-                const Padding(
-                  padding: EdgeInsets.only(left: 16, top: 16, bottom: 8),
-                  child: Text(
-                    'CHANNELS',
-                    style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Expanded(
-                  child: ListView(
-                    children: widget.provider.channels.map((channel) {
-                      final isSelected = channel.id == activeChannel.id;
-                      return ListTile(
-                        selected: isSelected,
-                        selectedTileColor: AppTheme.primaryIndigo.withOpacity(0.15),
-                        dense: true,
-                        leading: Icon(
-                          channel.isPrivate ? Icons.lock : Icons.tag,
-                          size: 18,
-                          color: isSelected ? AppTheme.primaryIndigo : AppTheme.textMuted,
-                        ),
-                        title: Text(
-                          channel.name,
-                          style: TextStyle(
-                            color: isSelected ? AppTheme.textPrimary : AppTheme.textSecondary,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          ),
-                        ),
-                        trailing: channel.unreadCount > 0
-                            ? Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.primaryIndigo,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(
-                                  '${channel.unreadCount}',
-                                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                                ),
-                              )
-                            : null,
-                        onTap: () => widget.provider.selectChannel(channel.id),
-                      );
-                    }).toList(),
-                  ),
+                IconButton(
+                  icon: const Icon(Icons.add, size: 20, color: AppTheme.primaryIndigo),
+                  onPressed: () {},
                 ),
               ],
             ),
           ),
 
-          // Main Active Chat Area
+          const Padding(
+            padding: EdgeInsets.only(left: 16, top: 16, bottom: 8),
+            child: Text(
+              'CHANNELS',
+              style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.bold),
+            ),
+          ),
+          Expanded(
+            child: ListView(
+              children: widget.provider.channels.map((channel) {
+                final isSelected = !isMobile && channel.id == activeChannel.id;
+                return ListTile(
+                  selected: isSelected,
+                  selectedTileColor: AppTheme.primaryIndigo.withOpacity(0.15),
+                  dense: true,
+                  leading: Icon(
+                    channel.isPrivate ? Icons.lock : Icons.tag,
+                    size: 18,
+                    color: isSelected ? AppTheme.primaryIndigo : AppTheme.textMuted,
+                  ),
+                  title: Text(
+                    channel.name,
+                    style: TextStyle(
+                      color: isSelected ? AppTheme.textPrimary : AppTheme.textSecondary,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                  trailing: channel.unreadCount > 0
+                      ? Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryIndigo,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '${channel.unreadCount}',
+                            style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                          ),
+                        )
+                      : null,
+                  onTap: () {
+                    widget.provider.selectChannel(channel.id);
+                    if (isMobile) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ChannelChatScreen(
+                            channel: channel,
+                            provider: widget.provider,
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (isMobile) {
+      return Scaffold(
+        backgroundColor: AppTheme.bgDark,
+        body: channelsListWidget,
+      );
+    }
+
+    // Desktop View
+    return Scaffold(
+      backgroundColor: AppTheme.bgDark,
+      body: Row(
+        children: [
+          channelsListWidget,
           Expanded(
             child: Column(
               children: [
@@ -203,7 +226,6 @@ class _ChatViewState extends State<ChatView> {
                                     style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13, height: 1.4),
                                   ),
 
-                                  // Mention Chips
                                   if (msg.mentions.isNotEmpty) ...[
                                     const SizedBox(height: 8),
                                     Wrap(
