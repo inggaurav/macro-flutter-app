@@ -49,7 +49,7 @@ class AppConfig {
     packageName: 'com.macro.workspace',
     logoText: 'M',
     primaryColor: Color(0xFF6366F1), // Indigo
-    accentColor: Color(0xFFA855F7),  // Purple
+    accentColor: Color(0xFFA855F7), // Purple
     environment: AppEnvironment.prod,
     apiBaseUrl: 'https://api.macro.workspace/v1',
     mcpServerEndpoint: 'wss://mcp.macro.workspace/ws',
@@ -64,17 +64,20 @@ class AppConfig {
     onboardingPages: [
       OnboardingPageInfo(
         title: 'Unified Communication',
-        description: 'Email, channels, and direct messages in a single collaborative stream.',
+        description:
+            'Email, channels, and direct messages in a single collaborative stream.',
         icon: Icons.chat_bubble_outline,
       ),
       OnboardingPageInfo(
         title: 'AI Shared Memory',
-        description: 'Automatic knowledge synthesis across team conversations, PRs, and CRM deals.',
+        description:
+            'Automatic knowledge synthesis across team conversations, PRs, and CRM deals.',
         icon: Icons.auto_awesome_outlined,
       ),
       OnboardingPageInfo(
         title: 'Real-time CRDT Docs & Tasks',
-        description: 'Live document collaboration and engineering Kanban boards linked to customer data.',
+        description:
+            'Live document collaboration and engineering Kanban boards linked to customer data.',
         icon: Icons.description_outlined,
       ),
     ],

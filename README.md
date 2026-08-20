@@ -1,57 +1,37 @@
-# Macro Unified Workspace - Flutter Application 🚀
+# Macro Flutter App & App Factory Core
 
-A cross-platform Flutter application implementation converting [macro-inc/macro](https://github.com/macro-inc/macro)—the unified workspace for teams: email, team chat, collaborative docs, task boards, sales CRM, AI shared memory, and live call transcription.
+A production-quality native Flutter client for **Macro Unified Workspace** built on top of a reusable **App Factory Core architecture**.
+
+## Architecture & Implementation Status
+
+### ✅ IMPLEMENTED (Real Infrastructure)
+- **Platform Secure Storage**: Android Keystore & iOS Keychain token storage (`SecureKeyValueStore`).
+- **Startup Engine**: `StartupService` manages runtime config verification, secure storage restore, and route destination.
+- **App Factory Engine**: Runtime & build-time `AppConfig` supporting dynamic app name, logo, primary color palette, and environment configurations (`dev`, `staging`, `prod`).
+- **Typed Authentication Pipeline**: `AuthRepository` with sealed `AuthResult` types (`AuthSuccess`, `AuthInvalidCredentials`, `AuthNetworkFailure`, `AuthServerFailure`, `AuthValidationFailure`). Distinct `signup()` and `requestPasswordReset()` contracts.
+- **Typed Network Client**: `ApiClient` with auth header injection, timeout handling, secret-safe logging, and typed `ApiFailure` hierarchy.
+- **Local Persistence & Offline Cache**: `LocalCacheStore` supporting `cacheFirst`, `networkFirst`, and `staleWhileRevalidate` policies.
+- **Realtime Transport**: `RealtimeClient` supporting connection states (`connecting`, `connected`, `reconnecting`, `disconnected`).
+- **Cross-Entity Relationship Graph**: `EntityRef` and `EntityLink` supporting `@`-mention cross-linking between emails, messages, tasks, documents, deals, and PRs.
+- **Mobile & Desktop Shell**: Adaptive desktop sidebar & top header, responsive mobile top AppBar & 5-destination bottom navigation bar with push/pop single-screen detail views.
+- **GitHub Actions CI**: Automated CI workflow using Flutter `stable` channel.
+
+### 🛠️ DEVELOPMENT ADAPTERS (Mock Data Layer)
+- **Feature Repositories**: `MockInboxRepository`, `MockChatRepository`, `MockDocsRepository`, `MockTasksRepository`, `MockCrmRepository` (Ready to be swapped with `MacroApiXRepository` adapters).
+
+### 🔮 PLANNED (Next Phase Backend Vertical Slices)
+- Real WebSocket backend connection to Macro server.
+- Production CRDT document collaboration engine.
+- Real Gmail OAuth / IMAP sync.
+- Production MCP Swarm integration.
 
 ---
 
-## 🌟 Features
-
-- 📧 **Inbox & Email Client**: Unified thread inbox with `@`-linked company tags, starred flags, and AI Reply Draft generation.
-- 💬 **Team Chat & Channels**: Slack-style channels (`#general`, `#engineering`, `#sales-deals`, `#ai-agents-memory`), real-time messages with AI Agent auto-responses, code snippets, and `@`-mention shortcuts.
-- 📝 **Docs & Wiki**: Real-time collaborative CRDT document editor with tag chips, version history timeline, and AI rewrite & formatting assistant.
-- 📋 **Engineering Task Board**: 4-Column Kanban (`To Do`, `In Progress`, `In Review`, `Done`) with priority badges (`Urgent`, `High`, `Medium`), assignees, and due dates.
-- 💼 **Sales CRM & Deal Pipeline**: Stage pipeline (`Proposal`, `Negotiation`, `Closed Won`) with ARR monetary metrics and bidirectional conversation history links.
-- 🧠 **AI Memory Synthesis**: Persistent team memory synthesized daily from email, chat, docs, and CRM across GPT-4o, Claude 3.5 Sonnet, Gemini 1.5 Pro, and DeepSeek V3.
-- 📞 **Calls & Transcription**: Meeting call room interface with active speaker tiles, live AI transcription feed, and automated call summary notes.
-
----
-
-## 📸 Screenshots & Architecture
-
-Dark Glassmorphism Theme (Material 3 + Inter Typography) designed for Web, macOS, Windows, iOS, and Android.
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-- [Flutter SDK](https://flutter.dev/docs/get-started/install) (`>= 3.12.0`)
-
-### Installation & Run
-
+## Verification Commands
 ```bash
-# Clone the repository
-git clone https://github.com/inggaurav/macro-flutter-app.git
-cd macro-flutter-app
-
-# Install dependencies
 flutter pub get
-
-# Run on Web / Desktop / Mobile
-flutter run
-```
-
-### Build Android Mobile Package (APK)
-
-```bash
+dart format --output=none --set-exit-if-changed .
+flutter analyze
+flutter test
 flutter build apk --debug
 ```
-
----
-
-## 🛠️ Stack & Dependencies
-
-- **Framework**: Flutter (Material 3)
-- **State Management**: Provider (`ChangeNotifier`)
-- **Typography**: Google Fonts (Inter)
-- **Utilities**: `intl`, `uuid`, `cupertino_icons`

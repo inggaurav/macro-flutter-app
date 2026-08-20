@@ -39,7 +39,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               alignment: Alignment.topRight,
               child: TextButton(
                 onPressed: widget.onOnboardingComplete,
-                child: const Text('Skip', style: TextStyle(color: AppTheme.textMuted)),
+                child: const Text(
+                  'Skip',
+                  style: TextStyle(color: AppTheme.textMuted),
+                ),
               ),
             ),
             Expanded(
@@ -60,7 +63,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             color: AppTheme.primaryIndigo.withOpacity(0.15),
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(page.icon, size: 64, color: AppTheme.primaryIndigo),
+                          child: Icon(
+                            page.icon,
+                            size: 64,
+                            color: AppTheme.primaryIndigo,
+                          ),
                         ),
                         const SizedBox(height: 32),
                         Text(
@@ -103,7 +110,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         width: _currentPage == idx ? 20 : 8,
                         height: 8,
                         decoration: BoxDecoration(
-                          color: _currentPage == idx ? AppTheme.primaryIndigo : AppTheme.borderDark,
+                          color: _currentPage == idx
+                              ? AppTheme.primaryIndigo
+                              : AppTheme.borderDark,
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
@@ -113,7 +122,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryIndigo,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                     ),
                     onPressed: () {
                       if (_currentPage < pages.length - 1) {
@@ -125,7 +137,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         widget.onOnboardingComplete();
                       }
                     },
-                    child: Text(_currentPage == pages.length - 1 ? 'Get Started' : 'Next'),
+                    child: Text(
+                      _currentPage == pages.length - 1 ? 'Get Started' : 'Next',
+                    ),
                   ),
                 ],
               ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../models/models.dart';
 import '../providers/workspace_provider.dart';
 import '../theme/app_theme.dart';
 import 'mobile/doc_detail_screen.dart';
@@ -22,7 +21,9 @@ class DocsView extends StatelessWidget {
     final docsListWidget = Container(
       width: isMobile ? double.infinity : 280,
       decoration: BoxDecoration(
-        border: isMobile ? null : const Border(right: BorderSide(color: AppTheme.borderDark)),
+        border: isMobile
+            ? null
+            : const Border(right: BorderSide(color: AppTheme.borderDark)),
       ),
       child: Column(
         children: [
@@ -43,7 +44,11 @@ class DocsView extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.note_add_outlined, size: 20, color: AppTheme.primaryIndigo),
+                  icon: const Icon(
+                    Icons.note_add_outlined,
+                    size: 20,
+                    color: AppTheme.primaryIndigo,
+                  ),
                   onPressed: () {},
                 ),
               ],
@@ -62,7 +67,9 @@ class DocsView extends StatelessWidget {
                   selectedTileColor: AppTheme.primaryIndigo.withOpacity(0.15),
                   leading: Icon(
                     doc.isPinned ? Icons.push_pin : Icons.description_outlined,
-                    color: isSelected ? AppTheme.primaryIndigo : AppTheme.textMuted,
+                    color: isSelected
+                        ? AppTheme.primaryIndigo
+                        : AppTheme.textMuted,
                     size: 18,
                   ),
                   title: Text(
@@ -71,13 +78,18 @@ class DocsView extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: AppTheme.textPrimary,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                       fontSize: 13,
                     ),
                   ),
                   subtitle: Text(
                     'Modified ${DateFormat('MMM d').format(doc.lastModified)} • v${doc.versionCount}',
-                    style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                    style: const TextStyle(
+                      color: AppTheme.textMuted,
+                      fontSize: 11,
+                    ),
                   ),
                   onTap: () {
                     provider.selectDoc(doc.id);
@@ -99,10 +111,7 @@ class DocsView extends StatelessWidget {
     );
 
     if (isMobile) {
-      return Scaffold(
-        backgroundColor: AppTheme.bgDark,
-        body: docsListWidget,
-      );
+      return Scaffold(backgroundColor: AppTheme.bgDark, body: docsListWidget);
     }
 
     // Desktop View
@@ -116,30 +125,49 @@ class DocsView extends StatelessWidget {
               children: [
                 // Toolbar
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
                   decoration: const BoxDecoration(
-                    border: Border(bottom: BorderSide(color: AppTheme.borderDark)),
+                    border: Border(
+                      bottom: BorderSide(color: AppTheme.borderDark),
+                    ),
                   ),
                   child: Row(
                     children: [
                       Text(
                         'Author: ${selectedDoc.authorName}',
-                        style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                        style: const TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 12,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: AppTheme.accentEmerald.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: const Row(
                           children: [
-                            Icon(Icons.circle, size: 6, color: AppTheme.accentEmerald),
+                            Icon(
+                              Icons.circle,
+                              size: 6,
+                              color: AppTheme.accentEmerald,
+                            ),
                             SizedBox(width: 4),
                             Text(
                               'CRDT LIVE SYNC',
-                              style: TextStyle(color: AppTheme.accentEmerald, fontSize: 10, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                color: AppTheme.accentEmerald,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ],
                         ),
@@ -162,7 +190,10 @@ class DocsView extends StatelessWidget {
                 // Canvas Body
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 40,
+                      vertical: 32,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -180,8 +211,16 @@ class DocsView extends StatelessWidget {
                           children: selectedDoc.tags.map((t) {
                             return Chip(
                               backgroundColor: AppTheme.surfaceLightDark,
-                              side: const BorderSide(color: AppTheme.borderDark),
-                              label: Text(t, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
+                              side: const BorderSide(
+                                color: AppTheme.borderDark,
+                              ),
+                              label: Text(
+                                t,
+                                style: const TextStyle(
+                                  color: AppTheme.textSecondary,
+                                  fontSize: 11,
+                                ),
+                              ),
                             );
                           }).toList(),
                         ),

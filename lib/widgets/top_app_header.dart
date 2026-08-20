@@ -38,17 +38,27 @@ class TopAppHeader extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: TextField(
-                      style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13),
+                      style: const TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 13,
+                      ),
                       decoration: InputDecoration(
-                        hintText: 'Search ${appConfig.workspaceName} or type @ to link Docs, Deals, Tasks, Emails...',
-                        hintStyle: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                        hintText:
+                            'Search ${appConfig.workspaceName} or type @ to link Docs, Deals, Tasks, Emails...',
+                        hintStyle: const TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 12,
+                        ),
                         border: InputBorder.none,
                         isDense: true,
                       ),
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: AppTheme.surfaceLightDark,
                       borderRadius: BorderRadius.circular(4),
@@ -80,7 +90,11 @@ class TopAppHeader extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.auto_awesome, size: 16, color: AppTheme.accentPurple),
+                const Icon(
+                  Icons.auto_awesome,
+                  size: 16,
+                  color: AppTheme.accentPurple,
+                ),
                 const SizedBox(width: 8),
                 DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
@@ -91,7 +105,10 @@ class TopAppHeader extends StatelessWidget {
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
-                    icon: const Icon(Icons.arrow_drop_down, color: AppTheme.textMuted),
+                    icon: const Icon(
+                      Icons.arrow_drop_down,
+                      color: AppTheme.textMuted,
+                    ),
                     items: provider.availableAiModels.map((model) {
                       return DropdownMenuItem<String>(
                         value: model,
@@ -132,13 +149,17 @@ class TopAppHeader extends StatelessWidget {
                   Icon(
                     Icons.psychology,
                     size: 18,
-                    color: provider.isCopilotDrawerOpen ? Colors.white : AppTheme.primaryIndigo,
+                    color: provider.isCopilotDrawerOpen
+                        ? Colors.white
+                        : AppTheme.primaryIndigo,
                   ),
                   const SizedBox(width: 6),
                   Text(
                     'AI Copilot',
                     style: TextStyle(
-                      color: provider.isCopilotDrawerOpen ? Colors.white : AppTheme.primaryIndigo,
+                      color: provider.isCopilotDrawerOpen
+                          ? Colors.white
+                          : AppTheme.primaryIndigo,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),

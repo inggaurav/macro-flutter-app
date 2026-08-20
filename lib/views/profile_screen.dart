@@ -26,12 +26,19 @@ class ProfileScreen extends StatelessWidget {
           children: [
             const Text(
               'User Profile & Settings',
-              style: TextStyle(color: AppTheme.textPrimary, fontSize: 22, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: AppTheme.textPrimary,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
               'Manage your session and workspace preferences for ${appConfig.workspaceName}.',
-              style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+              style: const TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 13,
+              ),
             ),
             const SizedBox(height: 24),
 
@@ -47,7 +54,10 @@ class ProfileScreen extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 30,
-                    backgroundImage: NetworkImage(user?.avatarUrl ?? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200'),
+                    backgroundImage: NetworkImage(
+                      user?.avatarUrl ??
+                          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -56,23 +66,37 @@ class ProfileScreen extends StatelessWidget {
                       children: [
                         Text(
                           user?.name ?? 'Alex Rivera',
-                          style: const TextStyle(color: AppTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            color: AppTheme.textPrimary,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           user?.email ?? 'alex@macro.inc',
-                          style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                          style: const TextStyle(
+                            color: AppTheme.textMuted,
+                            fontSize: 12,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: appConfig.primaryColor.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
                             user?.role.toUpperCase() ?? 'LEAD ARCHITECT',
-                            style: TextStyle(color: appConfig.primaryColor, fontSize: 10, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              color: appConfig.primaryColor,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ],
@@ -97,23 +121,47 @@ class ProfileScreen extends StatelessWidget {
                 children: [
                   const Row(
                     children: [
-                      Icon(Icons.shield_outlined, color: AppTheme.accentEmerald, size: 20),
+                      Icon(
+                        Icons.shield_outlined,
+                        color: AppTheme.accentEmerald,
+                        size: 20,
+                      ),
                       SizedBox(width: 8),
                       Text(
                         'Session Security & Environment',
-                        style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 14),
+                        style: TextStyle(
+                          color: AppTheme.textPrimary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
 
-                  _buildInfoRow('Session State', 'Active & Encrypted', AppTheme.accentEmerald),
+                  _buildInfoRow(
+                    'Session State',
+                    'Active & Encrypted',
+                    AppTheme.accentEmerald,
+                  ),
                   const Divider(height: 20),
-                  _buildInfoRow('Token Storage', 'Secure System Keyring', AppTheme.textPrimary),
+                  _buildInfoRow(
+                    'Token Storage',
+                    'Secure System Keyring',
+                    AppTheme.textPrimary,
+                  ),
                   const Divider(height: 20),
-                  _buildInfoRow('Environment', appConfig.environment.name.toUpperCase(), AppTheme.primaryIndigo),
+                  _buildInfoRow(
+                    'Environment',
+                    appConfig.environment.name.toUpperCase(),
+                    AppTheme.primaryIndigo,
+                  ),
                   const Divider(height: 20),
-                  _buildInfoRow('API Endpoint', appConfig.apiBaseUrl, AppTheme.textSecondary),
+                  _buildInfoRow(
+                    'API Endpoint',
+                    appConfig.apiBaseUrl,
+                    AppTheme.textSecondary,
+                  ),
 
                   const SizedBox(height: 24),
                   SizedBox(
@@ -142,8 +190,18 @@ class ProfileScreen extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(color: AppTheme.textMuted, fontSize: 13)),
-        Text(value, style: TextStyle(color: valueColor, fontWeight: FontWeight.bold, fontSize: 13)),
+        Text(
+          label,
+          style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            color: valueColor,
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+          ),
+        ),
       ],
     );
   }

@@ -16,8 +16,9 @@ class _AiCopilotDrawerState extends State<AiCopilotDrawer> {
   final List<Map<String, String>> _copilotChat = [
     {
       'role': 'assistant',
-      'text': 'Hello Alex! I have synthesized today\'s team memory from Email, Chat, Docs, and CRM. How can I assist your workflow?'
-    }
+      'text':
+          'Hello Alex! I have synthesized today\'s team memory from Email, Chat, Docs, and CRM. How can I assist your workflow?',
+    },
   ];
 
   void _sendPrompt(String text) {
@@ -33,7 +34,8 @@ class _AiCopilotDrawerState extends State<AiCopilotDrawer> {
         setState(() {
           _copilotChat.add({
             'role': 'assistant',
-            'text': '🤖 [Model: ${widget.provider.activeAiModel}]\nI checked @Acme Corp (\$120k ARR) and linked @Doc/PRD. Action items updated across Workspace memory.'
+            'text':
+                '🤖 [Model: ${widget.provider.activeAiModel}]\nI checked @Acme Corp (\$120k ARR) and linked @Doc/PRD. Action items updated across Workspace memory.',
           });
         });
       }
@@ -87,14 +89,20 @@ class _AiCopilotDrawerState extends State<AiCopilotDrawer> {
             decoration: BoxDecoration(
               color: AppTheme.primaryIndigo.withOpacity(0.08),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppTheme.primaryIndigo.withOpacity(0.3)),
+              border: Border.all(
+                color: AppTheme.primaryIndigo.withOpacity(0.3),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: const [
-                    Icon(Icons.auto_awesome, size: 14, color: AppTheme.accentPurple),
+                    Icon(
+                      Icons.auto_awesome,
+                      size: 14,
+                      color: AppTheme.accentPurple,
+                    ),
                     SizedBox(width: 6),
                     Text(
                       'Team Shared Memory Context',
@@ -109,10 +117,7 @@ class _AiCopilotDrawerState extends State<AiCopilotDrawer> {
                 const SizedBox(height: 6),
                 const Text(
                   'Synthesized from 3 emails, 12 chat messages, and 2 CRM deals today. Confidence: 99%.',
-                  style: TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 11,
-                  ),
+                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 11),
                 ),
               ],
             ),
@@ -128,15 +133,21 @@ class _AiCopilotDrawerState extends State<AiCopilotDrawer> {
                 final isUser = msg['role'] == 'user';
 
                 return Align(
-                  alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                  alignment: isUser
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
                   child: Container(
                     margin: const EdgeInsets.only(bottom: 12),
                     padding: const EdgeInsets.all(12),
                     constraints: const BoxConstraints(maxWidth: 280),
                     decoration: BoxDecoration(
-                      color: isUser ? AppTheme.primaryIndigo : AppTheme.surfaceLightDark,
+                      color: isUser
+                          ? AppTheme.primaryIndigo
+                          : AppTheme.surfaceLightDark,
                       borderRadius: BorderRadius.circular(10),
-                      border: isUser ? null : Border.all(color: AppTheme.borderDark),
+                      border: isUser
+                          ? null
+                          : Border.all(color: AppTheme.borderDark),
                     ),
                     child: Text(
                       msg['text']!,
@@ -177,17 +188,27 @@ class _AiCopilotDrawerState extends State<AiCopilotDrawer> {
                   child: TextField(
                     controller: _promptController,
                     onSubmitted: _sendPrompt,
-                    style: const TextStyle(color: AppTheme.textPrimary, fontSize: 12),
+                    style: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 12,
+                    ),
                     decoration: const InputDecoration(
                       hintText: 'Ask AI Copilot or type @...',
-                      hintStyle: TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                      hintStyle: TextStyle(
+                        color: AppTheme.textMuted,
+                        fontSize: 12,
+                      ),
                       border: InputBorder.none,
                       isDense: true,
                     ),
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.send, size: 18, color: AppTheme.primaryIndigo),
+                  icon: const Icon(
+                    Icons.send,
+                    size: 18,
+                    color: AppTheme.primaryIndigo,
+                  ),
                   onPressed: () => _sendPrompt(_promptController.text),
                 ),
               ],

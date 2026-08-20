@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 enum TaskStatus { todo, inProgress, inReview, done }
+
 enum TaskPriority { low, medium, high, urgent }
+
 enum DealStage { lead, proposal, negotiation, closedWon, closedLost }
 
 class UserProfile {

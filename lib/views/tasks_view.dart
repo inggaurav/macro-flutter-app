@@ -29,7 +29,11 @@ class TasksView extends StatelessWidget {
                   children: const [
                     Text(
                       'Tasks & Engineering Board',
-                      style: TextStyle(color: AppTheme.textPrimary, fontSize: 20, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     SizedBox(height: 2),
                     Text(
@@ -57,10 +61,30 @@ class TasksView extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.all(20),
               children: [
-                _buildKanbanColumn(context, 'TO DO', TaskStatus.todo, AppTheme.textMuted),
-                _buildKanbanColumn(context, 'IN PROGRESS', TaskStatus.inProgress, AppTheme.primaryIndigo),
-                _buildKanbanColumn(context, 'IN REVIEW', TaskStatus.inReview, AppTheme.accentAmber),
-                _buildKanbanColumn(context, 'DONE', TaskStatus.done, AppTheme.accentEmerald),
+                _buildKanbanColumn(
+                  context,
+                  'TO DO',
+                  TaskStatus.todo,
+                  AppTheme.textMuted,
+                ),
+                _buildKanbanColumn(
+                  context,
+                  'IN PROGRESS',
+                  TaskStatus.inProgress,
+                  AppTheme.primaryIndigo,
+                ),
+                _buildKanbanColumn(
+                  context,
+                  'IN REVIEW',
+                  TaskStatus.inReview,
+                  AppTheme.accentAmber,
+                ),
+                _buildKanbanColumn(
+                  context,
+                  'DONE',
+                  TaskStatus.done,
+                  AppTheme.accentEmerald,
+                ),
               ],
             ),
           ),
@@ -69,8 +93,15 @@ class TasksView extends StatelessWidget {
     );
   }
 
-  Widget _buildKanbanColumn(BuildContext context, String title, TaskStatus status, Color accentColor) {
-    final columnTasks = provider.tasks.where((t) => t.status == status).toList();
+  Widget _buildKanbanColumn(
+    BuildContext context,
+    String title,
+    TaskStatus status,
+    Color accentColor,
+  ) {
+    final columnTasks = provider.tasks
+        .where((t) => t.status == status)
+        .toList();
 
     return Container(
       width: 300,
@@ -93,23 +124,41 @@ class TasksView extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Container(width: 8, height: 8, decoration: BoxDecoration(color: accentColor, shape: BoxShape.circle)),
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: accentColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       title,
-                      style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 12),
+                      style: const TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: AppTheme.surfaceLightDark,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     '${columnTasks.length}',
-                    style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
@@ -167,14 +216,31 @@ class TasksView extends StatelessWidget {
                 ),
               ),
               PopupMenuButton<TaskStatus>(
-                icon: const Icon(Icons.more_horiz, size: 16, color: AppTheme.textMuted),
+                icon: const Icon(
+                  Icons.more_horiz,
+                  size: 16,
+                  color: AppTheme.textMuted,
+                ),
                 color: AppTheme.surfaceDark,
-                onSelected: (newStatus) => provider.updateTaskStatus(task.id, newStatus),
+                onSelected: (newStatus) =>
+                    provider.updateTaskStatus(task.id, newStatus),
                 itemBuilder: (context) => [
-                  const PopupMenuItem(value: TaskStatus.todo, child: Text('Move to To Do')),
-                  const PopupMenuItem(value: TaskStatus.inProgress, child: Text('Move to In Progress')),
-                  const PopupMenuItem(value: TaskStatus.inReview, child: Text('Move to In Review')),
-                  const PopupMenuItem(value: TaskStatus.done, child: Text('Move to Done')),
+                  const PopupMenuItem(
+                    value: TaskStatus.todo,
+                    child: Text('Move to To Do'),
+                  ),
+                  const PopupMenuItem(
+                    value: TaskStatus.inProgress,
+                    child: Text('Move to In Progress'),
+                  ),
+                  const PopupMenuItem(
+                    value: TaskStatus.inReview,
+                    child: Text('Move to In Review'),
+                  ),
+                  const PopupMenuItem(
+                    value: TaskStatus.done,
+                    child: Text('Move to Done'),
+                  ),
                 ],
               ),
             ],
@@ -182,7 +248,11 @@ class TasksView extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             task.title,
-            style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 13),
+            style: const TextStyle(
+              color: AppTheme.textPrimary,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
@@ -204,17 +274,27 @@ class TasksView extends StatelessWidget {
                   const SizedBox(width: 6),
                   Text(
                     task.assigneeName.split(' ')[0],
-                    style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11),
+                    style: const TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 11,
+                    ),
                   ),
                 ],
               ),
               Row(
                 children: [
-                  const Icon(Icons.calendar_today, size: 12, color: AppTheme.textMuted),
+                  const Icon(
+                    Icons.calendar_today,
+                    size: 12,
+                    color: AppTheme.textMuted,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     DateFormat('MMM d').format(task.dueDate),
-                    style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                    style: const TextStyle(
+                      color: AppTheme.textMuted,
+                      fontSize: 11,
+                    ),
                   ),
                 ],
               ),

@@ -59,22 +59,22 @@ class _MacroAppState extends State<MacroApp> {
           ? SplashScreen(
               appConfig: appConfig,
               authRepository: authRepo,
-              onInitComplete: () {
+              onInitComplete: (result) {
                 setState(() {
                   _isAppInitialized = true;
                 });
               },
             )
           : !authRepo.hasCompletedOnboarding
-              ? OnboardingScreen(
-                  appConfig: appConfig,
-                  onOnboardingComplete: () {
-                    authRepo.completeOnboarding();
-                  },
-                )
-              : !authRepo.isAuthenticated
-                  ? _buildAuthSubScreen(appConfig, authRepo)
-                  : const MacroMainScreen(),
+          ? OnboardingScreen(
+              appConfig: appConfig,
+              onOnboardingComplete: () {
+                authRepo.completeOnboarding();
+              },
+            )
+          : !authRepo.isAuthenticated
+          ? _buildAuthSubScreen(appConfig, authRepo)
+          : const MacroMainScreen(),
     );
   }
 
@@ -142,7 +142,10 @@ class MacroMainScreen extends StatelessWidget {
                           CrmView(provider: provider),
                           AiMemoryView(provider: provider),
                           CallRoomView(provider: provider),
-                          ProfileScreen(appConfig: appConfig, authRepository: authRepo),
+                          ProfileScreen(
+                            appConfig: appConfig,
+                            authRepository: authRepo,
+                          ),
                         ],
                       ),
                     ),
@@ -217,14 +220,22 @@ class MacroMainScreen extends StatelessWidget {
               child: Center(
                 child: Text(
                   appConfig.logoText,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
               ),
             ),
             const SizedBox(width: 8),
             Text(
               appConfig.appName.split(' ')[0],
-              style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 16),
+              style: const TextStyle(
+                color: AppTheme.textPrimary,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
             ),
             const SizedBox(width: 8),
             Container(
@@ -235,7 +246,11 @@ class MacroMainScreen extends StatelessWidget {
               ),
               child: Text(
                 provider.activeAiModel.split(' ')[0],
-                style: TextStyle(color: appConfig.primaryColor, fontSize: 10, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: appConfig.primaryColor,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],
@@ -244,7 +259,9 @@ class MacroMainScreen extends StatelessWidget {
           IconButton(
             icon: Icon(
               Icons.psychology,
-              color: provider.isCopilotDrawerOpen ? appConfig.primaryColor : AppTheme.textSecondary,
+              color: provider.isCopilotDrawerOpen
+                  ? appConfig.primaryColor
+                  : AppTheme.textSecondary,
             ),
             onPressed: () => provider.toggleCopilotDrawer(),
           ),
@@ -290,7 +307,11 @@ class MacroMainScreen extends StatelessWidget {
         selectedFontSize: 11,
         unselectedFontSize: 11,
         items: [
-          const BottomNavigationBarItem(icon: Icon(Icons.dashboard_outlined), activeIcon: Icon(Icons.dashboard), label: 'Home'),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard_outlined),
+            activeIcon: Icon(Icons.dashboard),
+            label: 'Home',
+          ),
           BottomNavigationBarItem(
             icon: Badge(
               label: Text('${provider.emails.where((e) => e.isUnread).length}'),
@@ -299,15 +320,30 @@ class MacroMainScreen extends StatelessWidget {
             activeIcon: const Icon(Icons.mail),
             label: 'Inbox',
           ),
-          const BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline), activeIcon: Icon(Icons.chat_bubble), label: 'Chat'),
-          const BottomNavigationBarItem(icon: Icon(Icons.check_box_outlined), activeIcon: Icon(Icons.check_box), label: 'Tasks'),
-          const BottomNavigationBarItem(icon: Icon(Icons.grid_view_rounded), label: 'More'),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.chat_bubble_outline),
+            activeIcon: Icon(Icons.chat_bubble),
+            label: 'Chat',
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.check_box_outlined),
+            activeIcon: Icon(Icons.check_box),
+            label: 'Tasks',
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.grid_view_rounded),
+            label: 'More',
+          ),
         ],
       ),
     );
   }
 
-  void _showMobileMoreSheet(BuildContext context, WorkspaceProvider provider, AppConfig appConfig) {
+  void _showMobileMoreSheet(
+    BuildContext context,
+    WorkspaceProvider provider,
+    AppConfig appConfig,
+  ) {
     final flags = appConfig.featureFlags;
 
     showModalBottomSheet(
@@ -322,9 +358,23 @@ class MacroMainScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(width: 40, height: 4, decoration: BoxDecoration(color: AppTheme.borderDark, borderRadius: BorderRadius.circular(2))),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppTheme.borderDark,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
               const SizedBox(height: 16),
-              Text('${appConfig.appName} Tools', style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 16)),
+              Text(
+                '${appConfig.appName} Tools',
+                style: const TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
               const SizedBox(height: 16),
               GridView.count(
                 shrinkWrap: true,
@@ -332,14 +382,49 @@ class MacroMainScreen extends StatelessWidget {
                 mainAxisSpacing: 12,
                 crossAxisSpacing: 12,
                 children: [
-                  _buildMoreTile(context, provider, appConfig, WorkspaceTab.docs, Icons.description_outlined, 'Docs & Wiki'),
+                  _buildMoreTile(
+                    context,
+                    provider,
+                    appConfig,
+                    WorkspaceTab.docs,
+                    Icons.description_outlined,
+                    'Docs & Wiki',
+                  ),
                   if (flags['enableCrm'] ?? true)
-                    _buildMoreTile(context, provider, appConfig, WorkspaceTab.crm, Icons.pie_chart_outline, 'CRM & Deals'),
+                    _buildMoreTile(
+                      context,
+                      provider,
+                      appConfig,
+                      WorkspaceTab.crm,
+                      Icons.pie_chart_outline,
+                      'CRM & Deals',
+                    ),
                   if (flags['enableAiCopilot'] ?? true)
-                    _buildMoreTile(context, provider, appConfig, WorkspaceTab.aiMemory, Icons.auto_awesome_outlined, 'AI Memory'),
+                    _buildMoreTile(
+                      context,
+                      provider,
+                      appConfig,
+                      WorkspaceTab.aiMemory,
+                      Icons.auto_awesome_outlined,
+                      'AI Memory',
+                    ),
                   if (flags['enableCalls'] ?? true)
-                    _buildMoreTile(context, provider, appConfig, WorkspaceTab.calls, Icons.videocam_outlined, 'Calls & Notes'),
-                  _buildMoreTile(context, provider, appConfig, WorkspaceTab.settings, Icons.person_outline, 'Profile'),
+                    _buildMoreTile(
+                      context,
+                      provider,
+                      appConfig,
+                      WorkspaceTab.calls,
+                      Icons.videocam_outlined,
+                      'Calls & Notes',
+                    ),
+                  _buildMoreTile(
+                    context,
+                    provider,
+                    appConfig,
+                    WorkspaceTab.settings,
+                    Icons.person_outline,
+                    'Profile',
+                  ),
                 ],
               ),
             ],
@@ -374,7 +459,15 @@ class MacroMainScreen extends StatelessWidget {
           children: [
             Icon(icon, color: appConfig.primaryColor, size: 24),
             const SizedBox(height: 6),
-            Text(label, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 11, fontWeight: FontWeight.w500), textAlign: TextAlign.center),
+            Text(
+              label,
+              style: const TextStyle(
+                color: AppTheme.textPrimary,
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),

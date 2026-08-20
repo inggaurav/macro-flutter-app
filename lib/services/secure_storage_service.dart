@@ -1,49 +1,20 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../core/storage/secure_key_value_store.dart';
 
-class SecureStorageService {
-  final FlutterSecureStorage _storage = const FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
-    iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
-  );
+class SecureStorageService implements SecureKeyValueStore {
+  final SecureKeyValueStore _innerStore;
 
-  static final Map<String, String> _memoryFallback = {};
+  SecureStorageService([SecureKeyValueStore? store])
+    : _innerStore = store ?? PlatformSecureStorageService();
 
-  Future<void> write({required String key, required String value}) async {
-    try {
-      await _storage.write(key: key, value: value);
-    } catch (e) {
-      debugPrint('SecureStorage write fallback: $e');
-      _memoryFallback[key] = value;
-    }
-  }
+  @override
+  Future<void> write(String key, String value) => _innerStore.write(key, value);
 
-  Future<String?> read({required String key}) async {
-    try {
-      final value = await _storage.read(key: key);
-      if (value != null) return value;
-      return _memoryFallback[key];
-    } catch (e) {
-      debugPrint('SecureStorage read fallback: $e');
-      return _memoryFallback[key];
-    }
-  }
+  @override
+  Future<String?> read(String key) => _innerStore.read(key);
 
-  Future<void> delete({required String key}) async {
-    try {
-      await _storage.delete(key: key);
-    } catch (e) {
-      debugPrint('SecureStorage delete fallback: $e');
-    }
-    _memoryFallback.remove(key);
-  }
+  @override
+  Future<void> delete(String key) => _innerStore.delete(key);
 
-  Future<void> clear() async {
-    try {
-      await _storage.deleteAll();
-    } catch (e) {
-      debugPrint('SecureStorage clear fallback: $e');
-    }
-    _memoryFallback.clear();
-  }
+  @override
+  Future<void> clear() => _innerStore.clear();
 }

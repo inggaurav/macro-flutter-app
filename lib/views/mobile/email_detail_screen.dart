@@ -45,7 +45,9 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
     _replyController.clear();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Reply sent to ${widget.email.senderName}: "${textSent.substring(0, textSent.length > 30 ? 30 : textSent.length)}..."'),
+        content: Text(
+          'Reply sent to ${widget.email.senderName}: "${textSent.substring(0, textSent.length > 30 ? 30 : textSent.length)}..."',
+        ),
         backgroundColor: AppTheme.accentEmerald,
       ),
     );
@@ -64,24 +66,33 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.archive_outlined, color: AppTheme.textSecondary),
+            icon: const Icon(
+              Icons.archive_outlined,
+              color: AppTheme.textSecondary,
+            ),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Thread archived')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Thread archived')));
               Navigator.pop(context);
             },
           ),
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: AppTheme.textSecondary),
+            icon: const Icon(
+              Icons.delete_outline,
+              color: AppTheme.textSecondary,
+            ),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Thread deleted')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Thread deleted')));
               Navigator.pop(context);
             },
           ),
-          IconButton(icon: const Icon(Icons.more_vert, color: AppTheme.textSecondary), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.more_vert, color: AppTheme.textSecondary),
+            onPressed: () {},
+          ),
         ],
       ),
       body: Column(
@@ -108,7 +119,10 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
                         backgroundColor: AppTheme.primaryIndigo,
                         child: Text(
                           widget.email.senderName[0],
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -126,14 +140,22 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
                             ),
                             Text(
                               '<${widget.email.senderEmail}>',
-                              style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                              style: const TextStyle(
+                                color: AppTheme.textMuted,
+                                fontSize: 11,
+                              ),
                             ),
                           ],
                         ),
                       ),
                       Text(
-                        DateFormat('MMM d, h:mm a').format(widget.email.timestamp),
-                        style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                        DateFormat(
+                          'MMM d, h:mm a',
+                        ).format(widget.email.timestamp),
+                        style: const TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 11,
+                        ),
                       ),
                     ],
                   ),
@@ -141,16 +163,25 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
                   if (widget.email.linkedCompanyName != null) ...[
                     const SizedBox(height: 12),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: AppTheme.accentEmerald.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: AppTheme.accentEmerald.withOpacity(0.4)),
+                        border: Border.all(
+                          color: AppTheme.accentEmerald.withOpacity(0.4),
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.link, size: 14, color: AppTheme.accentEmerald),
+                          const Icon(
+                            Icons.link,
+                            size: 14,
+                            color: AppTheme.accentEmerald,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             '@${widget.email.linkedCompanyName}',
@@ -193,7 +224,11 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
                       children: [
                         Row(
                           children: const [
-                            Icon(Icons.auto_awesome, size: 16, color: AppTheme.accentPurple),
+                            Icon(
+                              Icons.auto_awesome,
+                              size: 16,
+                              color: AppTheme.accentPurple,
+                            ),
                             SizedBox(width: 6),
                             Text(
                               'Macro AI Reply Assistant',
@@ -210,7 +245,10 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
                           _aiDraftText != null
                               ? 'AI Draft generated below! Edit or send.'
                               : 'Generate a response with updated CRM contract terms.',
-                          style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                          style: const TextStyle(
+                            color: AppTheme.textSecondary,
+                            fontSize: 12,
+                          ),
                         ),
                         const SizedBox(height: 12),
                         SizedBox(
@@ -225,10 +263,17 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
                                 ? const SizedBox(
                                     width: 16,
                                     height: 16,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
                                   )
                                 : const Icon(Icons.flash_on, size: 16),
-                            label: Text(_isDraftingAi ? 'Synthesizing...' : 'Generate AI Draft'),
+                            label: Text(
+                              _isDraftingAi
+                                  ? 'Synthesizing...'
+                                  : 'Generate AI Draft',
+                            ),
                             onPressed: _isDraftingAi ? null : _generateAiDraft,
                           ),
                         ),
@@ -260,15 +305,24 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
                       ),
                       child: TextField(
                         controller: _replyController,
-                        style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13),
+                        style: const TextStyle(
+                          color: AppTheme.textPrimary,
+                          fontSize: 13,
+                        ),
                         maxLines: 3,
                         minLines: 1,
                         decoration: InputDecoration(
-                          hintText: 'Reply to ${widget.email.senderName.split(' ')[0]}...',
-                          hintStyle: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
+                          hintText:
+                              'Reply to ${widget.email.senderName.split(' ')[0]}...',
+                          hintStyle: const TextStyle(
+                            color: AppTheme.textMuted,
+                            fontSize: 13,
+                          ),
                           border: InputBorder.none,
                           isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 10,
+                          ),
                         ),
                       ),
                     ),
@@ -277,7 +331,11 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
                   CircleAvatar(
                     backgroundColor: AppTheme.primaryIndigo,
                     child: IconButton(
-                      icon: const Icon(Icons.send, color: Colors.white, size: 18),
+                      icon: const Icon(
+                        Icons.send,
+                        color: Colors.white,
+                        size: 18,
+                      ),
                       onPressed: _sendReply,
                     ),
                   ),

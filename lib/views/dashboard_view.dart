@@ -11,7 +11,10 @@ class DashboardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currencyFormatter = NumberFormat.currency(symbol: '\$', decimalDigits: 0);
+    final currencyFormatter = NumberFormat.currency(
+      symbol: '\$',
+      decimalDigits: 0,
+    );
     final totalArr = provider.deals.fold(0.0, (sum, d) => sum + d.value);
 
     return Scaffold(
@@ -50,11 +53,19 @@ class DashboardView extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryIndigo,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   icon: const Icon(Icons.add, size: 18),
-                  label: const Text('New Item', style: TextStyle(fontWeight: FontWeight.bold)),
+                  label: const Text(
+                    'New Item',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   onPressed: () => provider.setTab(WorkspaceTab.docs),
                 ),
               ],
@@ -73,7 +84,9 @@ class DashboardView extends StatelessWidget {
                   ],
                 ),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.primaryIndigo.withOpacity(0.4)),
+                border: Border.all(
+                  color: AppTheme.primaryIndigo.withOpacity(0.4),
+                ),
               ),
               child: Row(
                 children: [
@@ -83,7 +96,11 @@ class DashboardView extends StatelessWidget {
                       color: AppTheme.primaryIndigo,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.auto_awesome, color: Colors.white, size: 24),
+                    child: const Icon(
+                      Icons.auto_awesome,
+                      color: Colors.white,
+                      size: 24,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -102,7 +119,10 @@ class DashboardView extends StatelessWidget {
                             ),
                             const SizedBox(width: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppTheme.accentEmerald.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(4),
@@ -121,7 +141,10 @@ class DashboardView extends StatelessWidget {
                         const SizedBox(height: 4),
                         const Text(
                           'Acme Corp (\$120k ARR) proposal confirmed. CRDT Document sync benchmark passed SOC2 Type II compliance testing.',
-                          style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                          style: TextStyle(
+                            color: AppTheme.textSecondary,
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),
@@ -160,7 +183,8 @@ class DashboardView extends StatelessWidget {
                     width: 220,
                     child: _buildMetricCard(
                       title: 'Unread Emails',
-                      value: '${provider.emails.where((e) => e.isUnread).length}',
+                      value:
+                          '${provider.emails.where((e) => e.isUnread).length}',
                       icon: Icons.mail_outline,
                       color: AppTheme.primaryIndigo,
                       subtitle: 'Linked to CRM contacts',
@@ -171,7 +195,8 @@ class DashboardView extends StatelessWidget {
                     width: 220,
                     child: _buildMetricCard(
                       title: 'Open Tasks',
-                      value: '${provider.tasks.where((t) => t.status != TaskStatus.done).length}',
+                      value:
+                          '${provider.tasks.where((t) => t.status != TaskStatus.done).length}',
                       icon: Icons.check_box_outlined,
                       color: AppTheme.accentAmber,
                       subtitle: '1 Urgent priority',
@@ -182,7 +207,9 @@ class DashboardView extends StatelessWidget {
                     width: 220,
                     child: _buildMetricCard(
                       title: 'Active Call Room',
-                      value: provider.callSessions.any((c) => c.isLive) ? 'LIVE' : 'Idle',
+                      value: provider.callSessions.any((c) => c.isLive)
+                          ? 'LIVE'
+                          : 'Idle',
                       icon: Icons.videocam_outlined,
                       color: AppTheme.accentRose,
                       subtitle: 'AI Live Transcript',
@@ -210,27 +237,44 @@ class DashboardView extends StatelessWidget {
                         child: Column(
                           children: provider.emails.take(2).map((email) {
                             return ListTile(
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 4,
+                              ),
                               leading: CircleAvatar(
-                                backgroundColor: AppTheme.primaryIndigo.withOpacity(0.2),
+                                backgroundColor: AppTheme.primaryIndigo
+                                    .withOpacity(0.2),
                                 child: Text(
                                   email.senderName[0],
-                                  style: const TextStyle(color: AppTheme.primaryIndigo, fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                    color: AppTheme.primaryIndigo,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                               title: Text(
                                 email.subject,
-                                style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w600, fontSize: 13),
+                                style: const TextStyle(
+                                  color: AppTheme.textPrimary,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                ),
                               ),
                               subtitle: Text(
                                 email.preview,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                                style: const TextStyle(
+                                  color: AppTheme.textSecondary,
+                                  fontSize: 12,
+                                ),
                               ),
                               trailing: Text(
                                 DateFormat('h:mm a').format(email.timestamp),
-                                style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                                style: const TextStyle(
+                                  color: AppTheme.textMuted,
+                                  fontSize: 11,
+                                ),
                               ),
                               onTap: () {
                                 provider.selectEmail(email.id);
@@ -248,7 +292,10 @@ class DashboardView extends StatelessWidget {
                         child: Column(
                           children: provider.tasks.map((task) {
                             return Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
                               child: Row(
                                 children: [
                                   Icon(
@@ -263,29 +310,38 @@ class DashboardView extends StatelessWidget {
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           task.title,
                                           style: TextStyle(
                                             color: AppTheme.textPrimary,
                                             fontWeight: FontWeight.w500,
-                                            decoration: task.status == TaskStatus.done
+                                            decoration:
+                                                task.status == TaskStatus.done
                                                 ? TextDecoration.lineThrough
                                                 : null,
                                           ),
                                         ),
                                         Text(
                                           'Assignee: ${task.assigneeName}',
-                                          style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                                          style: const TextStyle(
+                                            color: AppTheme.textMuted,
+                                            fontSize: 11,
+                                          ),
                                         ),
                                       ],
                                     ),
                                   ),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
                                     decoration: BoxDecoration(
-                                      color: task.priority == TaskPriority.urgent
+                                      color:
+                                          task.priority == TaskPriority.urgent
                                           ? AppTheme.accentRose.withOpacity(0.2)
                                           : AppTheme.surfaceLightDark,
                                       borderRadius: BorderRadius.circular(4),
@@ -293,7 +349,8 @@ class DashboardView extends StatelessWidget {
                                     child: Text(
                                       task.priority.name.toUpperCase(),
                                       style: TextStyle(
-                                        color: task.priority == TaskPriority.urgent
+                                        color:
+                                            task.priority == TaskPriority.urgent
                                             ? AppTheme.accentRose
                                             : AppTheme.textSecondary,
                                         fontSize: 10,
@@ -325,14 +382,24 @@ class DashboardView extends StatelessWidget {
                         child: Column(
                           children: provider.deals.map((deal) {
                             return ListTile(
-                              leading: const Icon(Icons.business, color: AppTheme.primaryIndigo),
+                              leading: const Icon(
+                                Icons.business,
+                                color: AppTheme.primaryIndigo,
+                              ),
                               title: Text(
                                 deal.companyName,
-                                style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 13),
+                                style: const TextStyle(
+                                  color: AppTheme.textPrimary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
                               ),
                               subtitle: Text(
                                 deal.title,
-                                style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                                style: const TextStyle(
+                                  color: AppTheme.textSecondary,
+                                  fontSize: 12,
+                                ),
                               ),
                               trailing: Text(
                                 currencyFormatter.format(deal.value),
@@ -355,16 +422,26 @@ class DashboardView extends StatelessWidget {
                         child: Column(
                           children: provider.documents.map((doc) {
                             return ListTile(
-                              leading: const Icon(Icons.article_outlined, color: AppTheme.accentCyan),
+                              leading: const Icon(
+                                Icons.article_outlined,
+                                color: AppTheme.accentCyan,
+                              ),
                               title: Text(
                                 doc.title,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13, fontWeight: FontWeight.w500),
+                                style: const TextStyle(
+                                  color: AppTheme.textPrimary,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                               subtitle: Text(
                                 'Author: ${doc.authorName} • v${doc.versionCount}',
-                                style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                                style: const TextStyle(
+                                  color: AppTheme.textMuted,
+                                  fontSize: 11,
+                                ),
                               ),
                               onTap: () {
                                 provider.selectDoc(doc.id);
@@ -408,7 +485,11 @@ class DashboardView extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12, fontWeight: FontWeight.w500),
+                  style: const TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -418,7 +499,11 @@ class DashboardView extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             value,
-            style: const TextStyle(color: AppTheme.textPrimary, fontSize: 24, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              color: AppTheme.textPrimary,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
@@ -453,7 +538,11 @@ class DashboardView extends StatelessWidget {
                 Expanded(
                   child: Text(
                     title,
-                    style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 14),
+                    style: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -461,7 +550,10 @@ class DashboardView extends StatelessWidget {
                   onPressed: onAction,
                   child: Text(
                     actionLabel,
-                    style: const TextStyle(color: AppTheme.primaryIndigo, fontSize: 12),
+                    style: const TextStyle(
+                      color: AppTheme.primaryIndigo,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
               ],

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../models/models.dart';
 import '../providers/workspace_provider.dart';
 import '../theme/app_theme.dart';
 import 'mobile/email_detail_screen.dart';
@@ -22,7 +21,9 @@ class InboxView extends StatelessWidget {
     final emailListWidget = Container(
       width: isMobile ? double.infinity : 340,
       decoration: BoxDecoration(
-        border: isMobile ? null : const Border(right: BorderSide(color: AppTheme.borderDark)),
+        border: isMobile
+            ? null
+            : const Border(right: BorderSide(color: AppTheme.borderDark)),
       ),
       child: Column(
         children: [
@@ -46,7 +47,10 @@ class InboxView extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: AppTheme.primaryIndigo.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(10),
@@ -63,7 +67,11 @@ class InboxView extends StatelessWidget {
                   ],
                 ),
                 IconButton(
-                  icon: const Icon(Icons.edit_square, size: 20, color: AppTheme.primaryIndigo),
+                  icon: const Icon(
+                    Icons.edit_square,
+                    size: 20,
+                    color: AppTheme.primaryIndigo,
+                  ),
                   onPressed: () {},
                 ),
               ],
@@ -77,8 +85,15 @@ class InboxView extends StatelessWidget {
               style: const TextStyle(color: AppTheme.textPrimary, fontSize: 12),
               decoration: InputDecoration(
                 hintText: 'Search email threads...',
-                hintStyle: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
-                prefixIcon: const Icon(Icons.search, size: 16, color: AppTheme.textMuted),
+                hintStyle: const TextStyle(
+                  color: AppTheme.textMuted,
+                  fontSize: 12,
+                ),
+                prefixIcon: const Icon(
+                  Icons.search,
+                  size: 16,
+                  color: AppTheme.textMuted,
+                ),
                 fillColor: AppTheme.surfaceDark,
                 filled: true,
                 contentPadding: const EdgeInsets.symmetric(vertical: 8),
@@ -137,7 +152,9 @@ class InboxView extends StatelessWidget {
                           email.senderName,
                           style: TextStyle(
                             color: AppTheme.textPrimary,
-                            fontWeight: email.isUnread ? FontWeight.bold : FontWeight.w500,
+                            fontWeight: email.isUnread
+                                ? FontWeight.bold
+                                : FontWeight.w500,
                             fontSize: 13,
                           ),
                           overflow: TextOverflow.ellipsis,
@@ -145,7 +162,10 @@ class InboxView extends StatelessWidget {
                       ),
                       Text(
                         DateFormat('h:mm a').format(email.timestamp),
-                        style: const TextStyle(color: AppTheme.textMuted, fontSize: 10),
+                        style: const TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 10,
+                        ),
                       ),
                     ],
                   ),
@@ -156,8 +176,12 @@ class InboxView extends StatelessWidget {
                       Text(
                         email.subject,
                         style: TextStyle(
-                          color: email.isUnread ? AppTheme.textPrimary : AppTheme.textSecondary,
-                          fontWeight: email.isUnread ? FontWeight.bold : FontWeight.normal,
+                          color: email.isUnread
+                              ? AppTheme.textPrimary
+                              : AppTheme.textSecondary,
+                          fontWeight: email.isUnread
+                              ? FontWeight.bold
+                              : FontWeight.normal,
                           fontSize: 12,
                         ),
                         maxLines: 1,
@@ -166,7 +190,10 @@ class InboxView extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         email.preview,
-                        style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                        style: const TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 11,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -175,14 +202,20 @@ class InboxView extends StatelessWidget {
                         spacing: 4,
                         children: email.tags.map((tag) {
                           return Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: AppTheme.surfaceLightDark,
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
                               tag,
-                              style: const TextStyle(color: AppTheme.textMuted, fontSize: 9),
+                              style: const TextStyle(
+                                color: AppTheme.textMuted,
+                                fontSize: 9,
+                              ),
                             ),
                           );
                         }).toList(),
@@ -198,10 +231,7 @@ class InboxView extends StatelessWidget {
     );
 
     if (isMobile) {
-      return Scaffold(
-        backgroundColor: AppTheme.bgDark,
-        body: emailListWidget,
-      );
+      return Scaffold(backgroundColor: AppTheme.bgDark, body: emailListWidget);
     }
 
     // Desktop Split-Pane View
@@ -215,27 +245,53 @@ class InboxView extends StatelessWidget {
               children: [
                 // Mail Detail Top Header Toolbar
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
                   decoration: const BoxDecoration(
-                    border: Border(bottom: BorderSide(color: AppTheme.borderDark)),
+                    border: Border(
+                      bottom: BorderSide(color: AppTheme.borderDark),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      IconButton(icon: const Icon(Icons.archive_outlined, size: 20), onPressed: () {}),
-                      IconButton(icon: const Icon(Icons.delete_outline, size: 20), onPressed: () {}),
-                      IconButton(icon: const Icon(Icons.mark_email_unread_outlined, size: 20), onPressed: () {}),
+                      IconButton(
+                        icon: const Icon(Icons.archive_outlined, size: 20),
+                        onPressed: () {},
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, size: 20),
+                        onPressed: () {},
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.mark_email_unread_outlined,
+                          size: 20,
+                        ),
+                        onPressed: () {},
+                      ),
                       const Spacer(),
                       if (selectedEmail.linkedCompanyName != null)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: AppTheme.accentEmerald.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: AppTheme.accentEmerald.withOpacity(0.4)),
+                            border: Border.all(
+                              color: AppTheme.accentEmerald.withOpacity(0.4),
+                            ),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.link, size: 14, color: AppTheme.accentEmerald),
+                              const Icon(
+                                Icons.link,
+                                size: 14,
+                                color: AppTheme.accentEmerald,
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 '@${selectedEmail.linkedCompanyName}',
@@ -275,7 +331,10 @@ class InboxView extends StatelessWidget {
                               backgroundColor: AppTheme.primaryIndigo,
                               child: Text(
                                 selectedEmail.senderName[0],
-                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -292,14 +351,22 @@ class InboxView extends StatelessWidget {
                                 ),
                                 Text(
                                   '<${selectedEmail.senderEmail}> to me',
-                                  style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                                  style: const TextStyle(
+                                    color: AppTheme.textMuted,
+                                    fontSize: 12,
+                                  ),
                                 ),
                               ],
                             ),
                             const Spacer(),
                             Text(
-                              DateFormat('MMM d, yyyy • h:mm a').format(selectedEmail.timestamp),
-                              style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                              DateFormat(
+                                'MMM d, yyyy • h:mm a',
+                              ).format(selectedEmail.timestamp),
+                              style: const TextStyle(
+                                color: AppTheme.textMuted,
+                                fontSize: 12,
+                              ),
                             ),
                           ],
                         ),
@@ -331,7 +398,11 @@ class InboxView extends StatelessWidget {
                             children: [
                               Row(
                                 children: [
-                                  const Icon(Icons.auto_awesome, size: 18, color: AppTheme.accentPurple),
+                                  const Icon(
+                                    Icons.auto_awesome,
+                                    size: 18,
+                                    color: AppTheme.accentPurple,
+                                  ),
                                   const SizedBox(width: 8),
                                   Text(
                                     'AI Reply Assistant (${provider.activeAiModel})',
@@ -346,7 +417,10 @@ class InboxView extends StatelessWidget {
                               const SizedBox(height: 8),
                               const Text(
                                 'Macro AI can draft an email response incorporating your recent CRM deals, docs, and calendar availability.',
-                                style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                                style: TextStyle(
+                                  color: AppTheme.textSecondary,
+                                  fontSize: 12,
+                                ),
                               ),
                               const SizedBox(height: 12),
                               Row(
@@ -357,14 +431,18 @@ class InboxView extends StatelessWidget {
                                       foregroundColor: Colors.white,
                                     ),
                                     icon: const Icon(Icons.flash_on, size: 16),
-                                    label: const Text('Generate Order Form Reply'),
+                                    label: const Text(
+                                      'Generate Order Form Reply',
+                                    ),
                                     onPressed: () {},
                                   ),
                                   const SizedBox(width: 8),
                                   OutlinedButton(
                                     style: OutlinedButton.styleFrom(
                                       foregroundColor: AppTheme.textPrimary,
-                                      side: const BorderSide(color: AppTheme.borderDark),
+                                      side: const BorderSide(
+                                        color: AppTheme.borderDark,
+                                      ),
                                     ),
                                     onPressed: () {},
                                     child: const Text('Schedule Meeting Link'),

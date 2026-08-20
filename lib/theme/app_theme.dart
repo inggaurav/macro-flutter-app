@@ -7,7 +7,7 @@ class AppTheme {
   static const Color surfaceDark = Color(0xFF141720);
   static const Color surfaceLightDark = Color(0xFF1C212E);
   static const Color borderDark = Color(0xFF282F42);
-  
+
   static const Color primaryIndigo = Color(0xFF6366F1);
   static const Color primaryHover = Color(0xFF4F46E5);
   static const Color accentEmerald = Color(0xFF10B981);
@@ -35,14 +35,24 @@ class AppTheme {
         onSurface: textPrimary,
         onBackground: textPrimary,
       ),
-      textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme).copyWith(
-        displayLarge: GoogleFonts.inter(color: textPrimary, fontWeight: FontWeight.bold),
-        titleLarge: GoogleFonts.inter(color: textPrimary, fontWeight: FontWeight.w600),
-        titleMedium: GoogleFonts.inter(color: textPrimary, fontWeight: FontWeight.w600),
-        bodyLarge: GoogleFonts.inter(color: textPrimary),
-        bodyMedium: GoogleFonts.inter(color: textSecondary),
-        bodySmall: GoogleFonts.inter(color: textMuted),
-      ),
+      textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme)
+          .copyWith(
+            displayLarge: GoogleFonts.inter(
+              color: textPrimary,
+              fontWeight: FontWeight.bold,
+            ),
+            titleLarge: GoogleFonts.inter(
+              color: textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+            titleMedium: GoogleFonts.inter(
+              color: textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+            bodyLarge: GoogleFonts.inter(color: textPrimary),
+            bodyMedium: GoogleFonts.inter(color: textSecondary),
+            bodySmall: GoogleFonts.inter(color: textMuted),
+          ),
       cardTheme: CardThemeData(
         color: surfaceDark,
         elevation: 0,
@@ -51,13 +61,8 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
         ),
       ),
-      dividerTheme: const DividerThemeData(
-        color: borderDark,
-        thickness: 1,
-      ),
-      iconTheme: const IconThemeData(
-        color: textSecondary,
-      ),
+      dividerTheme: const DividerThemeData(color: borderDark, thickness: 1),
+      iconTheme: const IconThemeData(color: textSecondary),
     );
   }
 }

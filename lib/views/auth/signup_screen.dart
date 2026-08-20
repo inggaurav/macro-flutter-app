@@ -91,20 +91,31 @@ class _SignupScreenState extends State<SignupScreen> {
                     child: Center(
                       child: Text(
                         widget.appConfig.logoText,
-                        style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(height: 20),
                   Text(
                     'Create ${widget.appConfig.appName} Account',
-                    style: const TextStyle(color: AppTheme.textPrimary, fontSize: 20, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 6),
                   Text(
                     'Join ${widget.appConfig.workspaceName} team workspace',
-                    style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                    style: const TextStyle(
+                      color: AppTheme.textMuted,
+                      fontSize: 12,
+                    ),
                   ),
                   const SizedBox(height: 24),
 
@@ -114,16 +125,27 @@ class _SignupScreenState extends State<SignupScreen> {
                       decoration: BoxDecoration(
                         color: AppTheme.accentRose.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppTheme.accentRose.withOpacity(0.4)),
+                        border: Border.all(
+                          color: AppTheme.accentRose.withOpacity(0.4),
+                        ),
                       ),
-                      child: Text(_errorMessage!, style: const TextStyle(color: AppTheme.accentRose, fontSize: 12)),
+                      child: Text(
+                        _errorMessage!,
+                        style: const TextStyle(
+                          color: AppTheme.accentRose,
+                          fontSize: 12,
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 16),
                   ],
 
                   TextField(
                     controller: _nameController,
-                    style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14),
+                    style: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 14,
+                    ),
                     decoration: const InputDecoration(
                       labelText: 'Full Name',
                       labelStyle: TextStyle(color: AppTheme.textMuted),
@@ -136,7 +158,10 @@ class _SignupScreenState extends State<SignupScreen> {
 
                   TextField(
                     controller: _emailController,
-                    style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14),
+                    style: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 14,
+                    ),
                     decoration: const InputDecoration(
                       labelText: 'Work Email',
                       labelStyle: TextStyle(color: AppTheme.textMuted),
@@ -150,7 +175,10 @@ class _SignupScreenState extends State<SignupScreen> {
                   TextField(
                     controller: _passwordController,
                     obscureText: true,
-                    style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14),
+                    style: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 14,
+                    ),
                     decoration: const InputDecoration(
                       labelText: 'Password',
                       labelStyle: TextStyle(color: AppTheme.textMuted),
@@ -168,19 +196,37 @@ class _SignupScreenState extends State<SignupScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: widget.appConfig.primaryColor,
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                       onPressed: _isLoading ? null : _handleSignup,
                       child: _isLoading
-                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                          : const Text('Create Account & Join', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              'Create Account & Join',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
                     ),
                   ),
 
                   const SizedBox(height: 16),
                   TextButton(
                     onPressed: widget.onNavToLogin,
-                    child: Text('Already have an account? Sign in', style: TextStyle(color: widget.appConfig.primaryColor)),
+                    child: Text(
+                      'Already have an account? Sign in',
+                      style: TextStyle(color: widget.appConfig.primaryColor),
+                    ),
                   ),
                 ],
               ),

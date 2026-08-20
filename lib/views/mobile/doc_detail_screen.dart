@@ -52,12 +52,18 @@ class DocDetailScreen extends StatelessWidget {
               children: [
                 Text(
                   'Author: ${document.authorName}',
-                  style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                  style: const TextStyle(
+                    color: AppTheme.textMuted,
+                    fontSize: 12,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Text(
                   '• Updated ${DateFormat('MMM d').format(document.lastModified)}',
-                  style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                  style: const TextStyle(
+                    color: AppTheme.textMuted,
+                    fontSize: 12,
+                  ),
                 ),
               ],
             ),
@@ -68,7 +74,13 @@ class DocDetailScreen extends StatelessWidget {
                 return Chip(
                   backgroundColor: AppTheme.surfaceDark,
                   side: const BorderSide(color: AppTheme.borderDark),
-                  label: Text(t, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 10)),
+                  label: Text(
+                    t,
+                    style: const TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 10,
+                    ),
+                  ),
                 );
               }).toList(),
             ),

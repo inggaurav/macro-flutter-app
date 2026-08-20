@@ -11,7 +11,10 @@ class CrmView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currencyFormatter = NumberFormat.currency(symbol: '\$', decimalDigits: 0);
+    final currencyFormatter = NumberFormat.currency(
+      symbol: '\$',
+      decimalDigits: 0,
+    );
 
     return Scaffold(
       backgroundColor: AppTheme.bgDark,
@@ -31,7 +34,11 @@ class CrmView extends StatelessWidget {
                   children: const [
                     Text(
                       'CRM & Deal Pipeline',
-                      style: TextStyle(color: AppTheme.textPrimary, fontSize: 20, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     SizedBox(height: 2),
                     Text(
@@ -59,9 +66,27 @@ class CrmView extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.all(20),
               children: [
-                _buildCrmColumn(context, 'PROPOSAL', DealStage.proposal, AppTheme.primaryIndigo, currencyFormatter),
-                _buildCrmColumn(context, 'NEGOTIATION', DealStage.negotiation, AppTheme.accentAmber, currencyFormatter),
-                _buildCrmColumn(context, 'CLOSED WON', DealStage.closedWon, AppTheme.accentEmerald, currencyFormatter),
+                _buildCrmColumn(
+                  context,
+                  'PROPOSAL',
+                  DealStage.proposal,
+                  AppTheme.primaryIndigo,
+                  currencyFormatter,
+                ),
+                _buildCrmColumn(
+                  context,
+                  'NEGOTIATION',
+                  DealStage.negotiation,
+                  AppTheme.accentAmber,
+                  currencyFormatter,
+                ),
+                _buildCrmColumn(
+                  context,
+                  'CLOSED WON',
+                  DealStage.closedWon,
+                  AppTheme.accentEmerald,
+                  currencyFormatter,
+                ),
               ],
             ),
           ),
@@ -104,24 +129,42 @@ class CrmView extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Container(width: 8, height: 8, decoration: BoxDecoration(color: accentColor, shape: BoxShape.circle)),
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: accentColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           title,
-                          style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 13),
+                          style: const TextStyle(
+                            color: AppTheme.textPrimary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
                         ),
                       ],
                     ),
                     Text(
                       '${stageDeals.length} deals',
-                      style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                      style: const TextStyle(
+                        color: AppTheme.textMuted,
+                        fontSize: 11,
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 6),
                 Text(
                   currencyFormatter.format(columnTotal),
-                  style: TextStyle(color: accentColor, fontWeight: FontWeight.bold, fontSize: 16),
+                  style: TextStyle(
+                    color: accentColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
               ],
             ),
@@ -150,16 +193,34 @@ class CrmView extends StatelessWidget {
                         children: [
                           Text(
                             deal.companyName,
-                            style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 14),
+                            style: const TextStyle(
+                              color: AppTheme.textPrimary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
                           ),
                           PopupMenuButton<DealStage>(
-                            icon: const Icon(Icons.more_vert, size: 16, color: AppTheme.textMuted),
+                            icon: const Icon(
+                              Icons.more_vert,
+                              size: 16,
+                              color: AppTheme.textMuted,
+                            ),
                             color: AppTheme.surfaceDark,
-                            onSelected: (newStage) => provider.updateDealStage(deal.id, newStage),
+                            onSelected: (newStage) =>
+                                provider.updateDealStage(deal.id, newStage),
                             itemBuilder: (context) => [
-                              const PopupMenuItem(value: DealStage.proposal, child: Text('Move to Proposal')),
-                              const PopupMenuItem(value: DealStage.negotiation, child: Text('Move to Negotiation')),
-                              const PopupMenuItem(value: DealStage.closedWon, child: Text('Move to Closed Won')),
+                              const PopupMenuItem(
+                                value: DealStage.proposal,
+                                child: Text('Move to Proposal'),
+                              ),
+                              const PopupMenuItem(
+                                value: DealStage.negotiation,
+                                child: Text('Move to Negotiation'),
+                              ),
+                              const PopupMenuItem(
+                                value: DealStage.closedWon,
+                                child: Text('Move to Closed Won'),
+                              ),
                             ],
                           ),
                         ],
@@ -167,21 +228,35 @@ class CrmView extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         deal.title,
-                        style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                        style: const TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 12,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       Text(
                         currencyFormatter.format(deal.value),
-                        style: const TextStyle(color: AppTheme.accentEmerald, fontWeight: FontWeight.bold, fontSize: 18),
+                        style: const TextStyle(
+                          color: AppTheme.accentEmerald,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       Row(
                         children: [
-                          const Icon(Icons.person_outline, size: 14, color: AppTheme.textMuted),
+                          const Icon(
+                            Icons.person_outline,
+                            size: 14,
+                            color: AppTheme.textMuted,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             '${deal.contactName} (${deal.lastInteraction})',
-                            style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                            style: const TextStyle(
+                              color: AppTheme.textMuted,
+                              fontSize: 11,
+                            ),
                           ),
                         ],
                       ),

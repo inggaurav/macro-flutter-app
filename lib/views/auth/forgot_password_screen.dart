@@ -63,11 +63,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.lock_reset, size: 48, color: widget.appConfig.primaryColor),
+                  Icon(
+                    Icons.lock_reset,
+                    size: 48,
+                    color: widget.appConfig.primaryColor,
+                  ),
                   const SizedBox(height: 16),
                   const Text(
                     'Reset Password',
-                    style: TextStyle(color: AppTheme.textPrimary, fontSize: 20, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   const Text(
@@ -81,17 +89,35 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: _isSuccess ? AppTheme.accentEmerald.withOpacity(0.15) : AppTheme.accentRose.withOpacity(0.15),
+                        color: _isSuccess
+                            ? AppTheme.accentEmerald.withOpacity(0.15)
+                            : AppTheme.accentRose.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: _isSuccess ? AppTheme.accentEmerald.withOpacity(0.4) : AppTheme.accentRose.withOpacity(0.4)),
+                        border: Border.all(
+                          color: _isSuccess
+                              ? AppTheme.accentEmerald.withOpacity(0.4)
+                              : AppTheme.accentRose.withOpacity(0.4),
+                        ),
                       ),
                       child: Column(
                         children: [
-                          Icon(_isSuccess ? Icons.check_circle_outline : Icons.error_outline, color: _isSuccess ? AppTheme.accentEmerald : AppTheme.accentRose, size: 32),
+                          Icon(
+                            _isSuccess
+                                ? Icons.check_circle_outline
+                                : Icons.error_outline,
+                            color: _isSuccess
+                                ? AppTheme.accentEmerald
+                                : AppTheme.accentRose,
+                            size: 32,
+                          ),
                           const SizedBox(height: 8),
                           Text(
                             _statusMessage!,
-                            style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                              color: AppTheme.textPrimary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
                             textAlign: TextAlign.center,
                           ),
                         ],
@@ -101,7 +127,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ] else ...[
                     TextField(
                       controller: _emailController,
-                      style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14),
+                      style: const TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 14,
+                      ),
                       decoration: const InputDecoration(
                         labelText: 'Work Email',
                         labelStyle: TextStyle(color: AppTheme.textMuted),
@@ -118,12 +147,27 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: widget.appConfig.primaryColor,
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                         onPressed: _isLoading ? null : _handleReset,
                         child: _isLoading
-                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                            : const Text('Send Reset Link', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                'Send Reset Link',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
                       ),
                     ),
                   ],
@@ -131,7 +175,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   const SizedBox(height: 16),
                   TextButton(
                     onPressed: widget.onBackToLogin,
-                    child: Text('Back to Sign in', style: TextStyle(color: widget.appConfig.primaryColor)),
+                    child: Text(
+                      'Back to Sign in',
+                      style: TextStyle(color: widget.appConfig.primaryColor),
+                    ),
                   ),
                 ],
               ),

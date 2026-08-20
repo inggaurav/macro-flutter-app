@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../models/models.dart';
 import '../providers/workspace_provider.dart';
 import '../theme/app_theme.dart';
 import 'mobile/channel_chat_screen.dart';
@@ -41,7 +40,9 @@ class _ChatViewState extends State<ChatView> {
     final channelsListWidget = Container(
       width: isMobile ? double.infinity : 260,
       decoration: BoxDecoration(
-        border: isMobile ? null : const Border(right: BorderSide(color: AppTheme.borderDark)),
+        border: isMobile
+            ? null
+            : const Border(right: BorderSide(color: AppTheme.borderDark)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,7 +64,11 @@ class _ChatViewState extends State<ChatView> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.add, size: 20, color: AppTheme.primaryIndigo),
+                  icon: const Icon(
+                    Icons.add,
+                    size: 20,
+                    color: AppTheme.primaryIndigo,
+                  ),
                   onPressed: () {},
                 ),
               ],
@@ -74,7 +79,11 @@ class _ChatViewState extends State<ChatView> {
             padding: EdgeInsets.only(left: 16, top: 16, bottom: 8),
             child: Text(
               'CHANNELS',
-              style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: AppTheme.textMuted,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           Expanded(
@@ -88,25 +97,38 @@ class _ChatViewState extends State<ChatView> {
                   leading: Icon(
                     channel.isPrivate ? Icons.lock : Icons.tag,
                     size: 18,
-                    color: isSelected ? AppTheme.primaryIndigo : AppTheme.textMuted,
+                    color: isSelected
+                        ? AppTheme.primaryIndigo
+                        : AppTheme.textMuted,
                   ),
                   title: Text(
                     channel.name,
                     style: TextStyle(
-                      color: isSelected ? AppTheme.textPrimary : AppTheme.textSecondary,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected
+                          ? AppTheme.textPrimary
+                          : AppTheme.textSecondary,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
                   ),
                   trailing: channel.unreadCount > 0
                       ? Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: AppTheme.primaryIndigo,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
                             '${channel.unreadCount}',
-                            style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         )
                       : null,
@@ -154,26 +176,48 @@ class _ChatViewState extends State<ChatView> {
               children: [
                 // Active Channel Bar
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 14,
+                  ),
                   decoration: const BoxDecoration(
-                    border: Border(bottom: BorderSide(color: AppTheme.borderDark)),
+                    border: Border(
+                      bottom: BorderSide(color: AppTheme.borderDark),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.tag, color: AppTheme.primaryIndigo, size: 20),
+                      const Icon(
+                        Icons.tag,
+                        color: AppTheme.primaryIndigo,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         activeChannel.name,
-                        style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 16),
+                        style: const TextStyle(
+                          color: AppTheme.textPrimary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Text(
                         activeChannel.description,
-                        style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                        style: const TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 12,
+                        ),
                       ),
                       const Spacer(),
-                      IconButton(icon: const Icon(Icons.people_outline, size: 20), onPressed: () {}),
-                      IconButton(icon: const Icon(Icons.pin_drop_outlined, size: 20), onPressed: () {}),
+                      IconButton(
+                        icon: const Icon(Icons.people_outline, size: 20),
+                        onPressed: () {},
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.pin_drop_outlined, size: 20),
+                        onPressed: () {},
+                      ),
                     ],
                   ),
                 ),
@@ -185,11 +229,27 @@ class _ChatViewState extends State<ChatView> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.chat_bubble_outline, size: 40, color: AppTheme.textMuted.withOpacity(0.5)),
+                              Icon(
+                                Icons.chat_bubble_outline,
+                                size: 40,
+                                color: AppTheme.textMuted.withOpacity(0.5),
+                              ),
                               const SizedBox(height: 12),
-                              Text('No messages in #${activeChannel.name} yet', style: const TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+                              Text(
+                                'No messages in #${activeChannel.name} yet',
+                                style: const TextStyle(
+                                  color: AppTheme.textMuted,
+                                  fontSize: 13,
+                                ),
+                              ),
                               const SizedBox(height: 4),
-                              const Text('Be the first to post a message or ask @AI', style: TextStyle(color: AppTheme.textMuted, fontSize: 11)),
+                              const Text(
+                                'Be the first to post a message or ask @AI',
+                                style: TextStyle(
+                                  color: AppTheme.textMuted,
+                                  fontSize: 11,
+                                ),
+                              ),
                             ],
                           ),
                         )
@@ -205,19 +265,24 @@ class _ChatViewState extends State<ChatView> {
                                 children: [
                                   CircleAvatar(
                                     radius: 18,
-                                    backgroundImage: NetworkImage(msg.senderAvatar),
+                                    backgroundImage: NetworkImage(
+                                      msg.senderAvatar,
+                                    ),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Row(
                                           children: [
                                             Text(
                                               msg.senderName,
                                               style: TextStyle(
-                                                color: msg.isAgent ? AppTheme.accentPurple : AppTheme.textPrimary,
+                                                color: msg.isAgent
+                                                    ? AppTheme.accentPurple
+                                                    : AppTheme.textPrimary,
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 13,
                                               ),
@@ -225,28 +290,48 @@ class _ChatViewState extends State<ChatView> {
                                             if (msg.isAgent) ...[
                                               const SizedBox(width: 6),
                                               Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 6,
+                                                      vertical: 1,
+                                                    ),
                                                 decoration: BoxDecoration(
-                                                  color: AppTheme.accentPurple.withOpacity(0.2),
-                                                  borderRadius: BorderRadius.circular(4),
+                                                  color: AppTheme.accentPurple
+                                                      .withOpacity(0.2),
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
                                                 ),
                                                 child: const Text(
                                                   'AGENT',
-                                                  style: TextStyle(color: AppTheme.accentPurple, fontSize: 9, fontWeight: FontWeight.bold),
+                                                  style: TextStyle(
+                                                    color:
+                                                        AppTheme.accentPurple,
+                                                    fontSize: 9,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
                                                 ),
                                               ),
                                             ],
                                             const SizedBox(width: 8),
                                             Text(
-                                              DateFormat('h:mm a').format(msg.timestamp),
-                                              style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                                              DateFormat(
+                                                'h:mm a',
+                                              ).format(msg.timestamp),
+                                              style: const TextStyle(
+                                                color: AppTheme.textMuted,
+                                                fontSize: 11,
+                                              ),
                                             ),
                                           ],
                                         ),
                                         const SizedBox(height: 6),
                                         Text(
                                           msg.text,
-                                          style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13, height: 1.4),
+                                          style: const TextStyle(
+                                            color: AppTheme.textPrimary,
+                                            fontSize: 13,
+                                            height: 1.4,
+                                          ),
                                         ),
 
                                         if (msg.mentions.isNotEmpty) ...[
@@ -255,16 +340,27 @@ class _ChatViewState extends State<ChatView> {
                                             spacing: 6,
                                             children: msg.mentions.map((m) {
                                               return Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 3,
+                                                    ),
                                                 decoration: BoxDecoration(
-                                                  color: AppTheme.primaryIndigo.withOpacity(0.15),
-                                                  borderRadius: BorderRadius.circular(6),
-                                                  border: Border.all(color: AppTheme.primaryIndigo.withOpacity(0.3)),
+                                                  color: AppTheme.primaryIndigo
+                                                      .withOpacity(0.15),
+                                                  borderRadius:
+                                                      BorderRadius.circular(6),
+                                                  border: Border.all(
+                                                    color: AppTheme
+                                                        .primaryIndigo
+                                                        .withOpacity(0.3),
+                                                  ),
                                                 ),
                                                 child: Text(
                                                   m,
                                                   style: const TextStyle(
-                                                    color: AppTheme.primaryIndigo,
+                                                    color:
+                                                        AppTheme.primaryIndigo,
                                                     fontSize: 11,
                                                     fontWeight: FontWeight.bold,
                                                   ),
@@ -290,7 +386,10 @@ class _ChatViewState extends State<ChatView> {
                     border: Border(top: BorderSide(color: AppTheme.borderDark)),
                   ),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: AppTheme.surfaceDark,
                       borderRadius: BorderRadius.circular(12),
@@ -301,18 +400,46 @@ class _ChatViewState extends State<ChatView> {
                         TextField(
                           controller: _msgController,
                           onSubmitted: (val) => _sendMessage(),
-                          style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13),
+                          style: const TextStyle(
+                            color: AppTheme.textPrimary,
+                            fontSize: 13,
+                          ),
                           decoration: InputDecoration(
-                            hintText: 'Message #${activeChannel.name} (type @ to link Doc, Task, or Deal)...',
-                            hintStyle: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
+                            hintText:
+                                'Message #${activeChannel.name} (type @ to link Doc, Task, or Deal)...',
+                            hintStyle: const TextStyle(
+                              color: AppTheme.textMuted,
+                              fontSize: 13,
+                            ),
                             border: InputBorder.none,
                           ),
                         ),
                         Row(
                           children: [
-                            IconButton(icon: const Icon(Icons.alternate_email, size: 18, color: AppTheme.primaryIndigo), onPressed: () {}),
-                            IconButton(icon: const Icon(Icons.attach_file, size: 18, color: AppTheme.textMuted), onPressed: () {}),
-                            IconButton(icon: const Icon(Icons.sentiment_satisfied_alt, size: 18, color: AppTheme.textMuted), onPressed: () {}),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.alternate_email,
+                                size: 18,
+                                color: AppTheme.primaryIndigo,
+                              ),
+                              onPressed: () {},
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.attach_file,
+                                size: 18,
+                                color: AppTheme.textMuted,
+                              ),
+                              onPressed: () {},
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.sentiment_satisfied_alt,
+                                size: 18,
+                                color: AppTheme.textMuted,
+                              ),
+                              onPressed: () {},
+                            ),
                             const Spacer(),
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(

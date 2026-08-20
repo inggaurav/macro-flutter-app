@@ -25,18 +25,29 @@ class AiMemoryView extends StatelessWidget {
                   children: [
                     Row(
                       children: const [
-                        Icon(Icons.auto_awesome, color: AppTheme.accentPurple, size: 24),
+                        Icon(
+                          Icons.auto_awesome,
+                          color: AppTheme.accentPurple,
+                          size: 24,
+                        ),
                         SizedBox(width: 8),
                         Text(
                           'Agents & Unified Team-Level Memory',
-                          style: TextStyle(color: AppTheme.textPrimary, fontSize: 22, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            color: AppTheme.textPrimary,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 4),
                     const Text(
                       'Synthesized automatically from company channels, emails, tasks, and CRDT docs into persistent LLM memory.',
-                      style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                      style: TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                 ),
@@ -77,23 +88,38 @@ class AiMemoryView extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: AppTheme.accentPurple.withOpacity(0.15),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
                               mem.category.replaceAll('_', ' ').toUpperCase(),
-                              style: const TextStyle(color: AppTheme.accentPurple, fontSize: 11, fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                color: AppTheme.accentPurple,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                           Row(
                             children: [
-                              const Icon(Icons.analytics_outlined, size: 14, color: AppTheme.accentEmerald),
+                              const Icon(
+                                Icons.analytics_outlined,
+                                size: 14,
+                                color: AppTheme.accentEmerald,
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 '${(mem.confidence * 100).toInt()}% Confidence',
-                                style: const TextStyle(color: AppTheme.accentEmerald, fontSize: 11, fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                  color: AppTheme.accentEmerald,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ],
                           ),
@@ -102,26 +128,44 @@ class AiMemoryView extends StatelessWidget {
                       const SizedBox(height: 12),
                       Text(
                         mem.title,
-                        style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 16),
+                        style: const TextStyle(
+                          color: AppTheme.textPrimary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         mem.summary,
-                        style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13, height: 1.5),
+                        style: const TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 13,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       Row(
                         children: [
-                          const Icon(Icons.source, size: 14, color: AppTheme.textMuted),
+                          const Icon(
+                            Icons.source,
+                            size: 14,
+                            color: AppTheme.textMuted,
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             'Source: ${mem.source}',
-                            style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                            style: const TextStyle(
+                              color: AppTheme.textMuted,
+                              fontSize: 11,
+                            ),
                           ),
                           const Spacer(),
                           Text(
                             'Updated ${DateFormat('h:mm a').format(mem.updatedAt)}',
-                            style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                            style: const TextStyle(
+                              color: AppTheme.textMuted,
+                              fontSize: 11,
+                            ),
                           ),
                         ],
                       ),

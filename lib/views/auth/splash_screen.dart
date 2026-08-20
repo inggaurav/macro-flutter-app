@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../config/app_config.dart';
-import '../../repositories/auth_repository.dart';
-import '../../services/startup_service.dart';
+import '../../core/auth/auth_repository.dart';
+import '../../core/startup/startup_service.dart';
 import '../../theme/app_theme.dart';
 
 class SplashScreen extends StatefulWidget {
   final AppConfig appConfig;
   final AuthRepository authRepository;
-  final VoidCallback onInitComplete;
+  final Function(StartupResult) onInitComplete;
 
   const SplashScreen({
     super.key,
@@ -35,14 +35,17 @@ class _SplashScreenState extends State<SplashScreen> {
       authRepository: widget.authRepository,
     );
 
-    await startupService.executeStartupPipeline((status) {
+    final result = await startupService.executeStartupPipeline((
+      state,
+      message,
+    ) {
       if (mounted) {
-        setState(() => _statusText = status);
+        setState(() => _statusText = message);
       }
     });
 
     if (mounted) {
-      widget.onInitComplete();
+      widget.onInitComplete(result);
     }
   }
 
@@ -71,7 +74,11 @@ class _SplashScreenState extends State<SplashScreen> {
               child: Center(
                 child: Text(
                   widget.appConfig.logoText,
-                  style: const TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 40,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
@@ -88,13 +95,19 @@ class _SplashScreenState extends State<SplashScreen> {
             const SizedBox(height: 6),
             Text(
               widget.appConfig.workspaceName,
-              style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+              style: const TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 13,
+              ),
             ),
             const SizedBox(height: 32),
             SizedBox(
               width: 24,
               height: 24,
-              child: CircularProgressIndicator(strokeWidth: 2.5, color: widget.appConfig.primaryColor),
+              child: CircularProgressIndicator(
+                strokeWidth: 2.5,
+                color: widget.appConfig.primaryColor,
+              ),
             ),
             const SizedBox(height: 16),
             Text(

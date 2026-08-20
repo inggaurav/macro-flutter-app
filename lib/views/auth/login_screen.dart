@@ -24,8 +24,12 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _emailController = TextEditingController(text: 'alex@macro.inc');
-  final TextEditingController _passwordController = TextEditingController(text: 'password123');
+  final TextEditingController _emailController = TextEditingController(
+    text: 'alex@macro.inc',
+  );
+  final TextEditingController _passwordController = TextEditingController(
+    text: 'password123',
+  );
   bool _isLoading = false;
 
   @override
@@ -76,26 +80,40 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Center(
                       child: Text(
                         widget.appConfig.logoText,
-                        style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(height: 20),
                   Text(
                     'Sign in to ${widget.appConfig.appName}',
-                    style: const TextStyle(color: AppTheme.textPrimary, fontSize: 20, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 6),
                   Text(
                     'Enter credentials for ${widget.appConfig.workspaceName}',
-                    style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                    style: const TextStyle(
+                      color: AppTheme.textMuted,
+                      fontSize: 12,
+                    ),
                   ),
                   const SizedBox(height: 28),
 
                   TextField(
                     controller: _emailController,
-                    style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14),
+                    style: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 14,
+                    ),
                     decoration: const InputDecoration(
                       labelText: 'Work Email',
                       labelStyle: TextStyle(color: AppTheme.textMuted),
@@ -109,7 +127,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextField(
                     controller: _passwordController,
                     obscureText: true,
-                    style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14),
+                    style: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 14,
+                    ),
                     decoration: const InputDecoration(
                       labelText: 'Password',
                       labelStyle: TextStyle(color: AppTheme.textMuted),
@@ -124,7 +145,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     alignment: Alignment.centerRight,
                     child: TextButton(
                       onPressed: widget.onNavToForgotPassword,
-                      child: const Text('Forgot password?', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                      child: const Text(
+                        'Forgot password?',
+                        style: TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 12,
+                        ),
+                      ),
                     ),
                   ),
 
@@ -137,42 +164,78 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: widget.appConfig.primaryColor,
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                       onPressed: _isLoading ? null : _handleLogin,
                       child: _isLoading
-                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                          : const Text('Continue to Workspace', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              'Continue to Workspace',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
                     ),
                   ),
 
-                  const SizedBox(height: 12),
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: 44,
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppTheme.textPrimary,
-                        side: const BorderSide(color: AppTheme.borderDark),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  if (widget.appConfig.environment == AppEnvironment.dev) ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 44,
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppTheme.textPrimary,
+                          side: const BorderSide(color: AppTheme.borderDark),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        onPressed: _isLoading
+                            ? null
+                            : () => widget.authRepository.login(
+                                'demo.guest@macro.inc',
+                                'guest123',
+                              ),
+                        child: const Text(
+                          '⚡ Demo 1-Tap Sign In (DEV ONLY)',
+                          style: TextStyle(fontSize: 13),
+                        ),
                       ),
-                      onPressed: _isLoading ? null : () => widget.authRepository.login('demo.guest@macro.inc', 'guest123'),
-                      child: const Text('⚡ Demo 1-Tap Sign In', style: TextStyle(fontSize: 13)),
                     ),
-                  ),
+                  ],
 
                   const SizedBox(height: 20),
 
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text("Don't have an account? ", style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                      const Text(
+                        "Don't have an account? ",
+                        style: TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 12,
+                        ),
+                      ),
                       GestureDetector(
                         onTap: widget.onNavToSignup,
                         child: Text(
                           'Sign up',
-                          style: TextStyle(color: widget.appConfig.primaryColor, fontWeight: FontWeight.bold, fontSize: 12),
+                          style: TextStyle(
+                            color: widget.appConfig.primaryColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
                         ),
                       ),
                     ],

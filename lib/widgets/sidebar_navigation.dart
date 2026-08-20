@@ -68,7 +68,11 @@ class SidebarNavigation extends StatelessWidget {
                       ),
                       Row(
                         children: [
-                          const Icon(Icons.circle, size: 8, color: AppTheme.accentEmerald),
+                          const Icon(
+                            Icons.circle,
+                            size: 8,
+                            color: AppTheme.accentEmerald,
+                          ),
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
@@ -115,7 +119,10 @@ class SidebarNavigation extends StatelessWidget {
                   icon: Icons.chat_bubble_outline,
                   selectedIcon: Icons.chat_bubble,
                   label: 'Channels & Chat',
-                  badgeCount: provider.channels.fold(0, (sum, c) => sum + c.unreadCount),
+                  badgeCount: provider.channels.fold(
+                    0,
+                    (sum, c) => sum + c.unreadCount,
+                  ),
                 ),
                 _buildNavItem(
                   context,
@@ -130,7 +137,9 @@ class SidebarNavigation extends StatelessWidget {
                   icon: Icons.check_box_outlined,
                   selectedIcon: Icons.check_box,
                   label: 'Engineering Tasks',
-                  badgeCount: provider.tasks.where((t) => t.status != TaskStatus.done).length,
+                  badgeCount: provider.tasks
+                      .where((t) => t.status != TaskStatus.done)
+                      .length,
                 ),
 
                 if (flags['enableCrm'] ?? true)
@@ -182,7 +191,10 @@ class SidebarNavigation extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 16,
-                  backgroundImage: NetworkImage(user?.avatarUrl ?? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200'),
+                  backgroundImage: NetworkImage(
+                    user?.avatarUrl ??
+                        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -210,7 +222,11 @@ class SidebarNavigation extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.logout, size: 16, color: AppTheme.textMuted),
+                  icon: const Icon(
+                    Icons.logout,
+                    size: 16,
+                    color: AppTheme.textMuted,
+                  ),
                   onPressed: () => authRepo.logout(),
                 ),
               ],
@@ -258,7 +274,9 @@ class SidebarNavigation extends StatelessWidget {
             ? Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: isSelected ? appConfig.primaryColor : AppTheme.surfaceLightDark,
+                  color: isSelected
+                      ? appConfig.primaryColor
+                      : AppTheme.surfaceLightDark,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
