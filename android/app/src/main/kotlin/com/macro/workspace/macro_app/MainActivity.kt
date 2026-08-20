@@ -1,0 +1,5 @@
+package com.macro.workspace.macro_app
+
+import io.flutter.embedding.android.FlutterActivity
+
+class MainActivity : FlutterActivity()
