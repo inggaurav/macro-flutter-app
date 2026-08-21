@@ -29,7 +29,7 @@ class MockAgentRepository implements AgentRepository {
 
   @override
   Future<String> queryCopilot(String prompt) async {
-    return 'Based on team context: We use FlutterSecureStorage backed by Android Keystore / iOS Keychain. Target sync latency is <45ms.';
+    return 'Based on team context: We use FlutterSecureStorage backed by Android Keystore / iOS Keychain.';
   }
 }
 
@@ -49,9 +49,10 @@ class MacroAgentRepository implements AgentRepository {
     if (token == null || token.isEmpty) return [];
 
     try {
+      // Verified Upstream Route: GET cognitionHost/memory
       final response = await http
           .get(
-            Uri.parse('${_config.cognitionHost}/v1/memory'),
+            Uri.parse('${_config.cognitionHost}/memory'),
             headers: {
               'Authorization': 'Bearer $token',
               'Content-Type': 'application/json',
@@ -71,26 +72,36 @@ class MacroAgentRepository implements AgentRepository {
   @override
   Future<String> queryCopilot(String prompt) async {
     final token = _tokenProvider();
-    if (token == null || token.isEmpty) return 'No active Macro session token.';
+    if (token == null || token.isEmpty) {
+      throw Exception(
+        'Unauthenticated: Cannot query AI without active session token',
+      );
+    }
 
     try {
+      // Verified Upstream Route: POST cognitionHost/stream/chat/message
       final response = await http
           .post(
-            Uri.parse('${_config.cognitionHost}/v1/chat'),
+            Uri.parse('${_config.cognitionHost}/stream/chat/message'),
             headers: {
               'Authorization': 'Bearer $token',
               'Content-Type': 'application/json',
             },
             body: jsonEncode({'prompt': prompt}),
           )
-          .timeout(const Duration(seconds: 5));
+          .timeout(const Duration(seconds: 6));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return data['text'] ?? data['response'] ?? 'Query processed.';
+        return data['text'] ??
+            data['response'] ??
+            data['stream_id'] ??
+            'Query processed.';
+      } else {
+        throw Exception('HTTP ${response.statusCode} from cognition service');
       }
-    } catch (_) {}
-
-    return 'AI Cognition service offline or unavailable.';
+    } catch (e) {
+      throw Exception('AI Cognition service unavailable: $e');
+    }
   }
 }

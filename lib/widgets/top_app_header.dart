@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../config/app_config.dart';
+import '../design/tokens/app_colors.dart';
+import '../design/tokens/app_typography.dart';
 import '../providers/workspace_provider.dart';
 import '../theme/app_theme.dart';
 
@@ -96,28 +98,11 @@ class TopAppHeader extends StatelessWidget {
                   color: AppTheme.accentPurple,
                 ),
                 const SizedBox(width: 8),
-                DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: provider.activeAiModel,
-                    dropdownColor: AppTheme.surfaceDark,
-                    style: const TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    icon: const Icon(
-                      Icons.arrow_drop_down,
-                      color: AppTheme.textMuted,
-                    ),
-                    items: provider.availableAiModels.map((model) {
-                      return DropdownMenuItem<String>(
-                        value: model,
-                        child: Text(model),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null) provider.setAiModel(val);
-                    },
+                Text(
+                  'Macro Cognition AI',
+                  style: AppTypography.caption(
+                    context,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ],

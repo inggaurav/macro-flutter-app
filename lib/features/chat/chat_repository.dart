@@ -48,7 +48,8 @@ class MockChatRepository implements ChatRepository {
       id: 'm1',
       channelId: 'c1',
       senderName: 'Alex Rivera',
-      senderAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+      senderAvatar:
+          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
       text: 'Welcome to Macro Unified Workspace!',
       timestamp: DateTime.now().subtract(const Duration(hours: 3)),
       isAgent: false,
@@ -57,7 +58,8 @@ class MockChatRepository implements ChatRepository {
       id: 'm2',
       channelId: 'c2',
       senderName: 'Dev Agent',
-      senderAvatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=200',
+      senderAvatar:
+          'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=200',
       text: 'Build #482 passed successfully on Flutter stable channel.',
       timestamp: DateTime.now().subtract(const Duration(minutes: 45)),
       isAgent: true,
@@ -66,7 +68,8 @@ class MockChatRepository implements ChatRepository {
       id: 'm3',
       channelId: 'c2',
       senderName: 'Alex Rivera',
-      senderAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+      senderAvatar:
+          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
       text: 'Great! Let\'s verify secure storage on physical devices.',
       timestamp: DateTime.now().subtract(const Duration(minutes: 10)),
       isAgent: false,
@@ -121,9 +124,10 @@ class MacroChatRepository implements ChatRepository {
     if (token == null || token.isEmpty) return [];
 
     try {
+      // Verified Upstream Route: GET storageHost/comms/channels
       final response = await http
           .get(
-            Uri.parse('${_config.emailHost}/v1/channels'),
+            Uri.parse('${_config.storageHost}/comms/channels'),
             headers: {
               'Authorization': 'Bearer $token',
               'Content-Type': 'application/json',
@@ -146,9 +150,10 @@ class MacroChatRepository implements ChatRepository {
     if (token == null || token.isEmpty) return [];
 
     try {
+      // Verified Upstream Route: GET storageHost/channels/{channel_id}/messages
       final response = await http
           .get(
-            Uri.parse('${_config.emailHost}/v1/channels/$channelId/messages'),
+            Uri.parse('${_config.storageHost}/channels/$channelId/messages'),
             headers: {
               'Authorization': 'Bearer $token',
               'Content-Type': 'application/json',
@@ -174,41 +179,36 @@ class MacroChatRepository implements ChatRepository {
     bool isAgent = false,
   }) async {
     final token = _tokenProvider();
-    final fallbackMsg = ChatMessage(
-      id: 'm_${DateTime.now().millisecondsSinceEpoch}',
-      channelId: channelId,
-      senderName: senderName,
-      senderAvatar: senderAvatar,
-      text: text,
-      timestamp: DateTime.now(),
-      isAgent: isAgent,
-    );
+    if (token == null || token.isEmpty) {
+      throw Exception(
+        'Unauthenticated: Cannot send message without session token',
+      );
+    }
 
-    if (token == null || token.isEmpty) return fallbackMsg;
+    // Verified Upstream Route: POST storageHost/channels/{channel_id}/messages
+    final response = await http
+        .post(
+          Uri.parse('${_config.storageHost}/channels/$channelId/messages'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'text': text,
+            'sender_name': senderName,
+            'sender_avatar': senderAvatar,
+            'is_agent': isAgent,
+          }),
+        )
+        .timeout(const Duration(seconds: 4));
 
-    try {
-      final response = await http
-          .post(
-            Uri.parse('${_config.emailHost}/v1/channels/$channelId/messages'),
-            headers: {
-              'Authorization': 'Bearer $token',
-              'Content-Type': 'application/json',
-            },
-            body: jsonEncode({
-              'text': text,
-              'sender_name': senderName,
-              'sender_avatar': senderAvatar,
-              'is_agent': isAgent,
-            }),
-          )
-          .timeout(const Duration(seconds: 4));
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final data = jsonDecode(response.body);
-        return ChatMessage.fromJson(data);
-      }
-    } catch (_) {}
-
-    return fallbackMsg;
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final data = jsonDecode(response.body);
+      return ChatMessage.fromJson(data);
+    } else {
+      throw Exception(
+        'HTTP ${response.statusCode} while sending channel message',
+      );
+    }
   }
 }

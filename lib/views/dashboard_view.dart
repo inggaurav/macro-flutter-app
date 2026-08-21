@@ -29,9 +29,7 @@ class DashboardView extends StatelessWidget {
     );
 
     final unreadCount = inboxController.emails.where((e) => e.isUnread).length;
-    final openTasks = provider.tasks
-        .where((t) => t.status != TaskStatus.done)
-        .toList();
+    final openTasks = <TaskItem>[];
 
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
@@ -388,35 +386,13 @@ class DashboardView extends StatelessWidget {
                             ),
                           ),
                           const Divider(height: 1, color: AppColors.borderDark),
-                          ...provider.documents.map((doc) {
-                            return Material(
-                              color: Colors.transparent,
-                              child: ListTile(
-                                leading: const Icon(
-                                  Icons.article_outlined,
-                                  color: AppColors.aiCyan,
-                                  size: 18,
-                                ),
-                                title: Text(
-                                  doc.title,
-                                  style: AppTypography.body(
-                                    context,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                subtitle: Text(
-                                  'v${doc.versionCount} • ${doc.authorName}',
-                                  style: AppTypography.caption(context),
-                                ),
-                                onTap: () {
-                                  provider.selectDoc(doc.id);
-                                  provider.setTab(WorkspaceTab.docs);
-                                },
-                              ),
-                            );
-                          }),
+                          Padding(
+                            padding: const EdgeInsets.all(AppSpacing.md),
+                            child: Text(
+                              'No Pinned Specs Connected',
+                              style: AppTypography.bodySmall(context),
+                            ),
+                          ),
                         ],
                       ),
                     ),

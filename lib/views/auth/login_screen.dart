@@ -65,7 +65,10 @@ class _LoginScreenState extends State<LoginScreen> {
     if (mounted) {
       if (authUrl != null) {
         // Authenticate session via Google Workspace token
-        await widget.authRepository?.login('google_user@gmail.com', 'google_workspace_oauth_token');
+        await widget.authRepository?.login(
+          'google_user@gmail.com',
+          'google_workspace_oauth_token',
+        );
         widget.onLoginSuccess();
       } else {
         setState(() {
@@ -345,7 +348,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         Flexible(
                           child: Text(
                             'Continue with Google Workspace',
-                            style: AppTypography.body(context, color: AppColors.textPrimary),
+                            style: AppTypography.body(
+                              context,
+                              color: AppColors.textPrimary,
+                            ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),

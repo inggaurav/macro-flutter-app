@@ -178,9 +178,7 @@ class SidebarNavigation extends StatelessWidget {
                   icon: Icons.check_box_outlined,
                   selectedIcon: Icons.check_box,
                   label: 'Tasks & Kanban',
-                  badgeCount: provider.tasks
-                      .where((t) => t.status != TaskStatus.done)
-                      .length,
+                  badgeCount: 0,
                 ),
 
                 if (flags['enableCrm'] ?? true) ...[

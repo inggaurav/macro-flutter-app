@@ -100,9 +100,12 @@ class MacroInboxRepository implements InboxRepository {
     if (token == null || token.isEmpty) return [];
 
     try {
+      // Verified Upstream Route: GET emailHost/email/threads/previews/cursor/inbox
       final response = await http
           .get(
-            Uri.parse('${_config.emailHost}/v1/email/inbox'),
+            Uri.parse(
+              '${_config.emailHost}/email/threads/previews/cursor/inbox?limit=25',
+            ),
             headers: {
               'Authorization': 'Bearer $token',
               'Content-Type': 'application/json',
@@ -111,8 +114,9 @@ class MacroInboxRepository implements InboxRepository {
           .timeout(const Duration(seconds: 4));
 
       if (response.statusCode == 200) {
-        final List data = jsonDecode(response.body);
-        return data.map((item) => EmailThread.fromJson(item)).toList();
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        final List items = data['items'] ?? (data['threads'] as List? ?? []);
+        return items.map((item) => EmailThread.fromJson(item)).toList();
       }
     } catch (_) {}
 
@@ -125,9 +129,10 @@ class MacroInboxRepository implements InboxRepository {
     if (token == null || token.isEmpty) return;
 
     try {
+      // Verified Upstream Route: POST emailHost/email/threads/{id}/seen
       await http
           .post(
-            Uri.parse('${_config.emailHost}/v1/email/threads/$id/read'),
+            Uri.parse('${_config.emailHost}/email/threads/$id/seen'),
             headers: {
               'Authorization': 'Bearer $token',
               'Content-Type': 'application/json',
@@ -140,12 +145,12 @@ class MacroInboxRepository implements InboxRepository {
   @override
   Future<String> generateAiReply(String emailId) async {
     final token = _tokenProvider();
-    if (token == null || token.isEmpty) return 'No active Macro session token.';
+    if (token == null || token.isEmpty) return 'No active session token.';
 
     try {
       final response = await http
           .post(
-            Uri.parse('${_config.cognitionHost}/v1/email/reply-draft'),
+            Uri.parse('${_config.cognitionHost}/email/reply-draft'),
             headers: {
               'Authorization': 'Bearer $token',
               'Content-Type': 'application/json',
@@ -169,9 +174,10 @@ class MacroInboxRepository implements InboxRepository {
     if (token == null || token.isEmpty) return null;
 
     try {
+      // Verified Upstream Route: POST authHost/link/gmail
       final response = await http
           .post(
-            Uri.parse('${_config.emailHost}/v1/link/gmail'),
+            Uri.parse('${_config.authHost}/link/gmail'),
             headers: {
               'Authorization': 'Bearer $token',
               'Content-Type': 'application/json',

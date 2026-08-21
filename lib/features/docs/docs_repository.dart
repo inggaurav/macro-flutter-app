@@ -88,9 +88,10 @@ class MacroDocsRepository implements DocsRepository {
     if (token == null || token.isEmpty) return [];
 
     try {
+      // Verified Upstream Route: GET storageHost/documents
       final response = await http
           .get(
-            Uri.parse('${_config.storageHost}/v1/documents'),
+            Uri.parse('${_config.storageHost}/documents'),
             headers: {
               'Authorization': 'Bearer $token',
               'Content-Type': 'application/json',
@@ -114,20 +115,15 @@ class MacroDocsRepository implements DocsRepository {
     String authorName,
   ) async {
     final token = _tokenProvider();
-    final fallback = DocumentItem(
-      id: 'd_${DateTime.now().millisecondsSinceEpoch}',
-      title: title,
-      content: content,
-      authorName: authorName,
-      lastModified: DateTime.now(),
-    );
-
-    if (token == null || token.isEmpty) return fallback;
+    if (token == null || token.isEmpty) {
+      throw Exception('Unauthenticated: Cannot create document without token');
+    }
 
     try {
+      // Verified Upstream Route: POST storageHost/documents
       final response = await http
           .post(
-            Uri.parse('${_config.storageHost}/v1/documents'),
+            Uri.parse('${_config.storageHost}/documents'),
             headers: {
               'Authorization': 'Bearer $token',
               'Content-Type': 'application/json',
@@ -146,7 +142,7 @@ class MacroDocsRepository implements DocsRepository {
       }
     } catch (_) {}
 
-    return fallback;
+    throw Exception('Failed to create document on storageHost');
   }
 
   @override
@@ -155,16 +151,17 @@ class MacroDocsRepository implements DocsRepository {
     if (token == null || token.isEmpty) return;
 
     try {
+      // Verified Upstream Route: POST storageHost/documents/{id}/simple_save
       await http
-          .patch(
-            Uri.parse('${_config.storageHost}/v1/documents/$id'),
+          .post(
+            Uri.parse('${_config.storageHost}/documents/$id/simple_save'),
             headers: {
               'Authorization': 'Bearer $token',
               'Content-Type': 'application/json',
             },
             body: jsonEncode({'content': newContent}),
           )
-          .timeout(const Duration(seconds: 3));
+          .timeout(const Duration(seconds: 4));
     } catch (_) {}
   }
 }

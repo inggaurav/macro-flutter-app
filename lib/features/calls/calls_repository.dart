@@ -45,9 +45,10 @@ class MacroCallsRepository implements CallsRepository {
     if (token == null || token.isEmpty) return [];
 
     try {
+      // Verified Upstream Route: GET storageHost/calls
       final response = await http
           .get(
-            Uri.parse('${_config.notificationHost}/v1/calls'),
+            Uri.parse('${_config.storageHost}/calls'),
             headers: {
               'Authorization': 'Bearer $token',
               'Content-Type': 'application/json',

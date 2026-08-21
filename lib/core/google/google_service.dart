@@ -28,8 +28,12 @@ class GoogleCalendarEvent {
       id: json['id']?.toString() ?? '',
       summary: json['summary']?.toString() ?? 'Workspace Meeting',
       description: json['description']?.toString(),
-      startTime: DateTime.tryParse(json['start']?['dateTime']?.toString() ?? '') ?? DateTime.now(),
-      endTime: DateTime.tryParse(json['end']?['dateTime']?.toString() ?? '') ?? DateTime.now().add(const Duration(hours: 1)),
+      startTime:
+          DateTime.tryParse(json['start']?['dateTime']?.toString() ?? '') ??
+          DateTime.now(),
+      endTime:
+          DateTime.tryParse(json['end']?['dateTime']?.toString() ?? '') ??
+          DateTime.now().add(const Duration(hours: 1)),
       hangoutsLink: json['hangoutLink']?.toString(),
     );
   }
@@ -44,15 +48,14 @@ class GoogleService extends ChangeNotifier {
   String? _googleAccessToken;
   List<GoogleCalendarEvent> _calendarEvents = [];
 
-  GoogleService({
-    MacroServiceConfig? config,
-    SecureKeyValueStore? storage,
-  })  : _config = config ?? MacroServiceConfig.production(),
-        _storage = storage ?? PlatformSecureStorageService();
+  GoogleService({MacroServiceConfig? config, SecureKeyValueStore? storage})
+    : _config = config ?? MacroServiceConfig.production(),
+      _storage = storage ?? PlatformSecureStorageService();
 
   bool get isConnected => _isGoogleConnected;
   String? get googleEmail => _googleEmail;
-  List<GoogleCalendarEvent> get calendarEvents => List.unmodifiable(_calendarEvents);
+  List<GoogleCalendarEvent> get calendarEvents =>
+      List.unmodifiable(_calendarEvents);
 
   Future<void> restoreGoogleSession() async {
     final email = await _storage.read('google_user_email');
@@ -69,10 +72,12 @@ class GoogleService extends ChangeNotifier {
 
   Future<String?> initiateGoogleOAuth() async {
     try {
-      final response = await http.post(
-        Uri.parse('${_config.emailHost}/v1/link/gmail'),
-        headers: {'Content-Type': 'application/json'},
-      ).timeout(const Duration(seconds: 4));
+      final response = await http
+          .post(
+            Uri.parse('${_config.emailHost}/v1/link/gmail'),
+            headers: {'Content-Type': 'application/json'},
+          )
+          .timeout(const Duration(seconds: 4));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -125,15 +130,21 @@ class GoogleService extends ChangeNotifier {
     if (_googleAccessToken == null) return [];
 
     try {
-      final response = await http.get(
-        Uri.parse('https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${DateTime.now().toIso8601String()}'),
-        headers: {'Authorization': 'Bearer $_googleAccessToken'},
-      ).timeout(const Duration(seconds: 4));
+      final response = await http
+          .get(
+            Uri.parse(
+              'https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${DateTime.now().toIso8601String()}',
+            ),
+            headers: {'Authorization': 'Bearer $_googleAccessToken'},
+          )
+          .timeout(const Duration(seconds: 4));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final List items = data['items'] ?? [];
-        _calendarEvents = items.map((item) => GoogleCalendarEvent.fromJson(item)).toList();
+        _calendarEvents = items
+            .map((item) => GoogleCalendarEvent.fromJson(item))
+            .toList();
         notifyListeners();
         return _calendarEvents;
       }

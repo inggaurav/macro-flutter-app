@@ -28,6 +28,17 @@ class UserProfile {
     required this.role,
     this.isOnline = true,
   });
+
+  factory UserProfile.fromJson(Map<String, dynamic> json) {
+    return UserProfile(
+      id: json['id']?.toString() ?? 'u_unknown',
+      name: json['name']?.toString() ?? 'User',
+      email: json['email']?.toString() ?? 'user@macro.com',
+      avatarUrl: json['avatar_url']?.toString() ?? '',
+      role: json['role']?.toString() ?? 'Member',
+      isOnline: json['is_online'] == true,
+    );
+  }
 }
 
 class DocumentItem {
@@ -50,6 +61,21 @@ class DocumentItem {
     this.versionCount = 1,
     this.isPinned = false,
   });
+
+  factory DocumentItem.fromJson(Map<String, dynamic> json) {
+    return DocumentItem(
+      id: json['id']?.toString() ?? 'd_unknown',
+      title: json['title']?.toString() ?? 'Untitled Document',
+      content: json['content']?.toString() ?? '',
+      authorName: json['author_name']?.toString() ?? 'Workspace Member',
+      lastModified:
+          DateTime.tryParse(json['last_modified']?.toString() ?? '') ??
+          DateTime.now(),
+      tags: (json['tags'] as List?)?.map((e) => e.toString()).toList() ?? [],
+      versionCount: (json['version_count'] as num?)?.toInt() ?? 1,
+      isPinned: json['is_pinned'] == true,
+    );
+  }
 }
 
 class TaskItem {
@@ -74,6 +100,28 @@ class TaskItem {
     required this.dueDate,
     required this.tags,
   });
+
+  factory TaskItem.fromJson(Map<String, dynamic> json) {
+    return TaskItem(
+      id: json['id']?.toString() ?? 't_unknown',
+      title: json['title']?.toString() ?? 'Untitled Task',
+      description: json['description']?.toString() ?? '',
+      status: TaskStatus.values.firstWhere(
+        (s) => s.name == json['status']?.toString(),
+        orElse: () => TaskStatus.todo,
+      ),
+      priority: TaskPriority.values.firstWhere(
+        (p) => p.name == json['priority']?.toString(),
+        orElse: () => TaskPriority.medium,
+      ),
+      assigneeName: json['assignee_name']?.toString() ?? 'Unassigned',
+      assigneeAvatar: json['assignee_avatar']?.toString() ?? '',
+      dueDate:
+          DateTime.tryParse(json['due_date']?.toString() ?? '') ??
+          DateTime.now(),
+      tags: (json['tags'] as List?)?.map((e) => e.toString()).toList() ?? [],
+    );
+  }
 }
 
 class CrmDeal {
@@ -98,6 +146,23 @@ class CrmDeal {
     required this.lastInteraction,
     required this.tags,
   });
+
+  factory CrmDeal.fromJson(Map<String, dynamic> json) {
+    return CrmDeal(
+      id: json['id']?.toString() ?? 'deal_unknown',
+      title: json['title']?.toString() ?? 'Untitled Deal',
+      companyName: json['company_name']?.toString() ?? '',
+      value: (json['value'] as num?)?.toDouble() ?? 0.0,
+      stage: DealStage.values.firstWhere(
+        (s) => s.name == json['stage']?.toString(),
+        orElse: () => DealStage.lead,
+      ),
+      contactName: json['contact_name']?.toString() ?? '',
+      contactEmail: json['contact_email']?.toString() ?? '',
+      lastInteraction: json['last_interaction']?.toString() ?? '',
+      tags: (json['tags'] as List?)?.map((e) => e.toString()).toList() ?? [],
+    );
+  }
 }
 
 class AiMemoryItem {
@@ -118,6 +183,20 @@ class AiMemoryItem {
     required this.confidence,
     required this.updatedAt,
   });
+
+  factory AiMemoryItem.fromJson(Map<String, dynamic> json) {
+    return AiMemoryItem(
+      id: json['id']?.toString() ?? 'mem_unknown',
+      category: json['category']?.toString() ?? 'general',
+      title: json['title']?.toString() ?? '',
+      summary: json['summary']?.toString() ?? '',
+      source: json['source']?.toString() ?? '',
+      confidence: (json['confidence'] as num?)?.toDouble() ?? 1.0,
+      updatedAt:
+          DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
+          DateTime.now(),
+    );
+  }
 }
 
 class CallSession {
@@ -138,4 +217,20 @@ class CallSession {
     required this.liveTranscript,
     required this.aiSummary,
   });
+
+  factory CallSession.fromJson(Map<String, dynamic> json) {
+    return CallSession(
+      id: json['id']?.toString() ?? 'call_unknown',
+      title: json['title']?.toString() ?? 'Call Record',
+      isLive: json['is_live'] == true,
+      durationMinutes: (json['duration_minutes'] as num?)?.toInt() ?? 0,
+      participantAvatars:
+          (json['participant_avatars'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      liveTranscript: json['live_transcript']?.toString() ?? '',
+      aiSummary: json['ai_summary']?.toString() ?? '',
+    );
+  }
 }

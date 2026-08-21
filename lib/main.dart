@@ -31,8 +31,9 @@ import 'core/realtime/realtime_client.dart';
 
 import 'config/macro_service_config.dart';
 import 'core/networking/macro_realtime_client.dart';
-
 import 'core/google/google_service.dart';
+import 'features/agents/agent_repository.dart';
+import 'features/agents/ai_chat_controller.dart';
 
 void main() {
   final serviceConfig = MacroServiceConfig.production();
@@ -48,7 +49,16 @@ void main() {
         ChangeNotifierProvider(create: (_) => WorkspaceProvider()),
         ChangeNotifierProvider.value(value: authRepo),
         ChangeNotifierProvider(
-          create: (_) => GoogleService(config: serviceConfig)..restoreGoogleSession(),
+          create: (_) =>
+              GoogleService(config: serviceConfig)..restoreGoogleSession(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => AiChatController(
+            repository: MacroAgentRepository(
+              config: serviceConfig,
+              tokenProvider: () => authRepo.authToken,
+            ),
+          ),
         ),
         ChangeNotifierProvider(
           create: (_) => ChatController(
@@ -317,7 +327,7 @@ class MacroMainScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
-                provider.activeAiModel.split(' ')[0],
+                'AI',
                 style: TextStyle(
                   color: appConfig.primaryColor,
                   fontSize: 10,
@@ -342,7 +352,7 @@ class MacroMainScreen extends StatelessWidget {
       body: Stack(
         children: [
           IndexedStack(
-            index: provider.activeTab.index,
+            index: _getTabIndex(provider.activeTab),
             children: [
               DashboardView(provider: provider),
               InboxView(provider: provider),

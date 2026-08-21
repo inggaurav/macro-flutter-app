@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../config/app_config.dart';
 import '../design/components/entity_chip.dart';
 import '../design/tokens/app_colors.dart';
 import '../design/tokens/app_spacing.dart';
 import '../design/tokens/app_typography.dart';
+import '../features/agents/ai_chat_controller.dart';
 import '../providers/workspace_provider.dart';
 
 class AiCopilotDrawer extends StatefulWidget {
@@ -18,13 +18,6 @@ class AiCopilotDrawer extends StatefulWidget {
 
 class _AiCopilotDrawerState extends State<AiCopilotDrawer> {
   final TextEditingController _promptController = TextEditingController();
-  final List<_CopilotMessage> _messages = [
-    _CopilotMessage(
-      text:
-          'Hello Alex! I am your Macro AI Copilot. I have context on your emails, tasks, and CRDT specs.',
-      isUser: false,
-    ),
-  ];
 
   @override
   void dispose() {
@@ -32,25 +25,18 @@ class _AiCopilotDrawerState extends State<AiCopilotDrawer> {
     super.dispose();
   }
 
-  void _sendPrompt() {
+  void _sendPrompt(AiChatController chatController) {
     final text = _promptController.text.trim();
     if (text.isEmpty) return;
 
-    setState(() {
-      _messages.add(_CopilotMessage(text: text, isUser: true));
-      _messages.add(
-        _CopilotMessage(
-          text:
-              'I parsed your request against #engineering channels and tasks. Target WebSocket latency is <45ms.',
-          isUser: false,
-        ),
-      );
-    });
+    chatController.sendPrompt(text);
     _promptController.clear();
   }
 
   @override
   Widget build(BuildContext context) {
+    final aiController = Provider.of<AiChatController>(context);
+
     return Container(
       width: 360,
       decoration: const BoxDecoration(
@@ -101,51 +87,102 @@ class _AiCopilotDrawerState extends State<AiCopilotDrawer> {
               vertical: AppSpacing.sm,
             ),
             color: AppColors.surfaceElevated,
-            child: Row(
-              children: [
-                Text('Active Context: ', style: AppTypography.caption(context)),
-                const EntityChip(
-                  label: 'Workspace #main',
-                  type: EntityType.agent,
-                ),
-              ],
+            child: const SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  EntityChip(label: '#engineering', type: EntityType.chat),
+                  SizedBox(width: AppSpacing.xs),
+                  EntityChip(label: 'Sprint Task #482', type: EntityType.task),
+                ],
+              ),
             ),
           ),
 
-          // Messages Stream
+          // Messages Stream List
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final msg = _messages[index];
-                return Align(
-                  alignment: msg.isUser
-                      ? Alignment.centerRight
-                      : Alignment.centerLeft,
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: AppSpacing.md),
+            child: aiController.messages.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.xl),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.psychology_outlined,
+                            size: 36,
+                            color: AppColors.textMuted,
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          Text(
+                            'Macro AI Cognition Ready',
+                            style: AppTypography.title(context),
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            'Submit a query to parse real workspace context across connected endpoints.',
+                            style: AppTypography.caption(context),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : ListView.builder(
                     padding: const EdgeInsets.all(AppSpacing.md),
-                    constraints: const BoxConstraints(maxWidth: 280),
-                    decoration: BoxDecoration(
-                      color: msg.isUser
-                          ? AppColors.brandPrimary(
-                              Provider.of<AppConfig>(context),
-                            )
-                          : AppColors.surfaceElevated,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      msg.text,
-                      style: AppTypography.body(context, color: Colors.white),
-                    ),
+                    itemCount: aiController.messages.length,
+                    itemBuilder: (context, index) {
+                      final msg = aiController.messages[index];
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        decoration: BoxDecoration(
+                          color: msg.isUser
+                              ? AppColors.aiPurple.withValues(alpha: 0.15)
+                              : AppColors.surfaceElevated,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: msg.isUser
+                                ? AppColors.aiPurple.withValues(alpha: 0.3)
+                                : AppColors.borderDark,
+                          ),
+                        ),
+                        child: Text(
+                          msg.text,
+                          style: AppTypography.body(context),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           ),
 
-          // Prompt Input Bar
+          if (aiController.errorMessage != null)
+            Container(
+              margin: const EdgeInsets.all(AppSpacing.md),
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              decoration: BoxDecoration(
+                color: AppColors.danger.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: AppColors.danger.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Text(
+                aiController.errorMessage!,
+                style: AppTypography.caption(context, color: AppColors.danger),
+              ),
+            ),
+
+          if (aiController.isLoading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.xs),
+              child: LinearProgressIndicator(
+                backgroundColor: AppColors.surfaceElevated,
+                color: AppColors.aiPurple,
+              ),
+            ),
+
+          // Prompt Input
           Container(
             padding: const EdgeInsets.all(AppSpacing.md),
             decoration: const BoxDecoration(
@@ -156,28 +193,31 @@ class _AiCopilotDrawerState extends State<AiCopilotDrawer> {
                 Expanded(
                   child: TextField(
                     controller: _promptController,
-                    style: AppTypography.body(
-                      context,
-                      color: AppColors.textPrimary,
-                    ),
-                    decoration: const InputDecoration(
+                    style: AppTypography.body(context),
+                    decoration: InputDecoration(
                       hintText: 'Ask AI Copilot...',
-                      hintStyle: TextStyle(
+                      hintStyle: AppTypography.bodySmall(
+                        context,
                         color: AppColors.textMuted,
-                        fontSize: 13,
                       ),
-                      border: InputBorder.none,
+                      isDense: true,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        borderSide: const BorderSide(
+                          color: AppColors.borderDark,
+                        ),
+                      ),
                     ),
-                    onSubmitted: (_) => _sendPrompt(),
+                    onSubmitted: (_) => _sendPrompt(aiController),
                   ),
                 ),
+                const SizedBox(width: AppSpacing.sm),
                 IconButton(
                   icon: const Icon(
-                    Icons.send,
+                    Icons.send_rounded,
                     color: AppColors.aiPurple,
-                    size: 18,
                   ),
-                  onPressed: _sendPrompt,
+                  onPressed: () => _sendPrompt(aiController),
                 ),
               ],
             ),
@@ -186,11 +226,4 @@ class _AiCopilotDrawerState extends State<AiCopilotDrawer> {
       ),
     );
   }
-}
-
-class _CopilotMessage {
-  final String text;
-  final bool isUser;
-
-  const _CopilotMessage({required this.text, required this.isUser});
 }

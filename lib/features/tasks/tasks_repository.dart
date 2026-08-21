@@ -85,9 +85,10 @@ class MacroTasksRepository implements TasksRepository {
     if (token == null || token.isEmpty) return [];
 
     try {
+      // Verified Upstream Route: GET storageHost/tasks
       final response = await http
           .get(
-            Uri.parse('${_config.storageHost}/v1/tasks'),
+            Uri.parse('${_config.storageHost}/tasks'),
             headers: {
               'Authorization': 'Bearer $token',
               'Content-Type': 'application/json',
@@ -111,8 +112,8 @@ class MacroTasksRepository implements TasksRepository {
 
     try {
       await http
-          .patch(
-            Uri.parse('${_config.storageHost}/v1/tasks/$taskId'),
+          .post(
+            Uri.parse('${_config.storageHost}/tasks/$taskId/status'),
             headers: {
               'Authorization': 'Bearer $token',
               'Content-Type': 'application/json',
@@ -131,23 +132,15 @@ class MacroTasksRepository implements TasksRepository {
     String assigneeName,
   ) async {
     final token = _tokenProvider();
-    final fallback = TaskItem(
-      id: 't_${DateTime.now().millisecondsSinceEpoch}',
-      title: title,
-      description: description,
-      status: TaskStatus.todo,
-      priority: priority,
-      assigneeName: assigneeName,
-      assigneeAvatar:
-          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
-    );
-
-    if (token == null || token.isEmpty) return fallback;
+    if (token == null || token.isEmpty) {
+      throw Exception('Unauthenticated: Cannot create task without token');
+    }
 
     try {
+      // Verified Upstream Route: POST storageHost/documents/create_task
       final response = await http
           .post(
-            Uri.parse('${_config.storageHost}/v1/tasks'),
+            Uri.parse('${_config.storageHost}/documents/create_task'),
             headers: {
               'Authorization': 'Bearer $token',
               'Content-Type': 'application/json',
@@ -167,6 +160,6 @@ class MacroTasksRepository implements TasksRepository {
       }
     } catch (_) {}
 
-    return fallback;
+    throw Exception('Failed to create task on storageHost');
   }
 }
