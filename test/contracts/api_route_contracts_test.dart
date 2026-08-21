@@ -1,20 +1,16 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:macro_app/config/macro_service_config.dart';
 import 'package:macro_app/core/auth/auth_repository.dart';
-import 'package:macro_app/features/inbox/inbox_repository.dart';
-import 'package:macro_app/features/chat/chat_repository.dart';
-import 'package:macro_app/features/agents/agent_repository.dart';
-import 'package:macro_app/features/docs/docs_repository.dart';
-import 'package:macro_app/features/tasks/tasks_repository.dart';
 import 'package:macro_app/core/storage/secure_key_value_store.dart';
 
 void main() {
-  group('Upstream Endpoint Contract Tests', () {
+  group('Upstream endpoint contracts', () {
     final config = MacroServiceConfig.production();
 
-    test('MacroServiceConfig Hosts are configured correctly', () {
+    test('Macro service hosts match the verified upstream topology', () {
       expect(config.authHost, equals('https://auth-service.macro.com'));
       expect(config.storageHost, equals('https://cloud-storage.macro.com'));
+      expect(config.searchHost, equals('https://cloud-storage.macro.com'));
       expect(config.emailHost, equals('https://email-service.macro.com'));
       expect(
         config.cognitionHost,
@@ -26,7 +22,7 @@ void main() {
       );
     });
 
-    test('AuthRepository fail-closed on empty storage', () async {
+    test('AuthRepository fails closed when secure storage is empty', () async {
       final storage = InMemorySecureStorageService();
       final authRepo = AuthRepositoryImpl(storage: storage, config: config);
       final result = await authRepo.restoreSession();
@@ -34,16 +30,32 @@ void main() {
       expect(result.isSuccess, isFalse);
       expect(authRepo.isAuthenticated, isFalse);
       expect(authRepo.currentUser, isNull);
+      expect(authRepo.authToken, isNull);
+      expect(authRepo.refreshToken, isNull);
     });
 
-    test('AuthRepository fail-closed on invalid credentials', () async {
+    test('Mobile SSO rejects unrelated deep links without network access', () async {
       final storage = InMemorySecureStorageService();
       final authRepo = AuthRepositoryImpl(storage: storage, config: config);
-      final result = await authRepo.login('user@test.com', 'invalid_token');
 
-      expect(result.isSuccess, isFalse);
+      final result = await authRepo.completeMobileGoogleSignIn(
+        Uri.parse('macro://google-link-callback'),
+      );
+
+      expect(result, isA<AuthValidationFailure>());
       expect(authRepo.isAuthenticated, isFalse);
-      expect(authRepo.currentUser, isNull);
+    });
+
+    test('Mobile SSO requires a one-time session code', () async {
+      final storage = InMemorySecureStorageService();
+      final authRepo = AuthRepositoryImpl(storage: storage, config: config);
+
+      final result = await authRepo.completeMobileGoogleSignIn(
+        Uri.parse('macro://login'),
+      );
+
+      expect(result, isA<AuthValidationFailure>());
+      expect(authRepo.isAuthenticated, isFalse);
     });
   });
 }
