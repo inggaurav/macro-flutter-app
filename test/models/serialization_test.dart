@@ -18,7 +18,7 @@ void main() {
         isUnread: true,
         isStarred: true,
         tags: ['Dev', 'Test'],
-        linkedCompanyName: 'Macro Inc',
+        linkedCompanyName: 'Mr Fox',
       );
 
       final json = thread.toJson();
@@ -33,7 +33,7 @@ void main() {
       expect(restored.isUnread, isTrue);
       expect(restored.isStarred, isTrue);
       expect(restored.tags, equals(['Dev', 'Test']));
-      expect(restored.linkedCompanyName, 'Macro Inc');
+      expect(restored.linkedCompanyName, 'Mr Fox');
     });
 
     test('ChatChannel toJson & fromJson roundtrip', () {

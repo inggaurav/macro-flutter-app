@@ -60,7 +60,7 @@ class _TasksViewState extends State<TasksView> {
         icon: Icons.check_box_outlined,
         title: 'No Active Tasks Connected',
         subtitle:
-            'Connect your Macro Workspace account to view live engineering tasks, sprints, and Kanban items.',
+            'Connect your Mr Fox workspace account to view live engineering tasks, sprints, and Kanban items.',
         actionLabel: 'Refresh Tasks',
         onAction: _loadTasks,
       );

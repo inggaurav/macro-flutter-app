@@ -99,7 +99,7 @@ class TopAppHeader extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Macro Cognition AI',
+                  'Mr Fox AI',
                   style: AppTypography.caption(
                     context,
                     color: AppColors.textPrimary,

@@ -120,7 +120,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   Text(
-                    'Create Workspace Account',
+                    'Create Your Mr Fox Account',
                     style: AppTypography.titleLarge(context),
                     textAlign: TextAlign.center,
                   ),
@@ -303,7 +303,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   const SizedBox(height: AppSpacing.x2l),
 
                   AppButton(
-                    label: 'Create Account & Workspace',
+                    label: 'Create Account',
                     onPressed: _handleSignup,
                     isLoading: _isLoading,
                     isFullWidth: true,

@@ -53,7 +53,7 @@ class DashboardView extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${appConfig.workspaceName} • Macro Unified Workspace',
+                        '${appConfig.workspaceName} • Unified Workspace',
                         style: AppTypography.bodySmall(context),
                         overflow: TextOverflow.ellipsis,
                       ),

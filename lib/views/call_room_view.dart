@@ -60,7 +60,7 @@ class _CallRoomViewState extends State<CallRoomView> {
         icon: Icons.video_call_outlined,
         title: 'No Call Records Connected',
         subtitle:
-            'Connect your Macro Workspace account to access meeting recordings, live transcripts, and summaries.',
+            'Connect your Mr Fox workspace account to access meeting recordings, live transcripts, and summaries.',
         actionLabel: 'Refresh Calls',
         onAction: _loadCalls,
       );

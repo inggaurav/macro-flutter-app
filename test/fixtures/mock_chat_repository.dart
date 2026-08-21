@@ -35,7 +35,7 @@ class MockChatRepository implements ChatRepository {
       channelId: 'c1',
       senderName: 'Gaurav',
       senderAvatar: '',
-      text: 'Welcome to Macro Chat',
+      text: 'Welcome to Mr Fox Chat',
       timestamp: DateTime.now().subtract(const Duration(minutes: 10)),
     ),
     ChatMessage(

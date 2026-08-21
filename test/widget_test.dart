@@ -72,7 +72,7 @@ void main() {
       );
 
       // 1. Splash Screen
-      expect(find.text('MACRO UNIFIED WORKSPACE'), findsOneWidget);
+      expect(find.text('MR FOX WORKSPACE'), findsOneWidget);
 
       await tester.pump(const Duration(seconds: 2));
       await tester.pump();
@@ -85,11 +85,11 @@ void main() {
       }
 
       // 3. Login Screen
-      expect(find.text('Sign In to Workspace'), findsOneWidget);
+      expect(find.text('Sign In to Mr Fox'), findsOneWidget);
       expect(find.text('Sign In'), findsOneWidget);
 
       // 4. Main Workspace
-      expect(find.textContaining('Macro Unified Workspace'), findsWidgets);
+      expect(find.textContaining('Mr Fox Workspace'), findsWidgets);
 
       await tester.pump(const Duration(seconds: 1));
 

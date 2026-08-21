@@ -17,11 +17,11 @@ class MockDocsRepository implements DocsRepository {
   final List<DocumentItem> _docs = [
     DocumentItem(
       id: 'd1',
-      title: 'Macro Architecture & CRDT Engine Protocol',
-      content: '''# Macro Architecture & CRDT Engine Protocol
+      title: 'Mr Fox Architecture & Realtime Engine Protocol',
+      content: '''# Mr Fox Architecture & Realtime Engine Protocol
 
 ## Multi-Region State Replication
-This document specifies the real-time conflict-free replicated data type (CRDT) engine protocol used across Macro workspace clients.
+This document specifies the real-time collaboration engine protocol used across Mr Fox workspace clients.
 ''',
       authorName: 'Alex Rivera',
       lastModified: DateTime.now().subtract(const Duration(hours: 4)),

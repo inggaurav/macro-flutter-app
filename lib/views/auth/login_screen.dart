@@ -178,12 +178,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: AppSpacing.x2l),
 
                 Text(
-                  'Sign In to Workspace',
+                  'Sign In to Mr Fox',
                   style: AppTypography.titleLarge(context),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  'Continue with Google or enter verified Macro credentials',
+                  'Continue with Google or enter your verified workspace credentials',
                   style: AppTypography.bodySmall(
                     context,
                     color: AppColors.textMuted,

@@ -61,7 +61,7 @@ class _DocsViewState extends State<DocsView> {
         icon: Icons.article_outlined,
         title: 'No Documents Connected',
         subtitle:
-            'Connect your Macro Workspace account to access live documents, specs, and CRDT wikis.',
+            'Connect your Mr Fox workspace account to access live documents, specs, and wikis.',
         actionLabel: 'Refresh Documents',
         onAction: _loadDocs,
       );

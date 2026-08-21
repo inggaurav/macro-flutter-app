@@ -54,7 +54,7 @@ class MockChatRepository implements ChatRepository {
       senderName: 'Alex Rivera',
       senderAvatar:
           'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
-      text: 'Welcome to Macro Unified Workspace!',
+      text: 'Welcome to Mr Fox Workspace!',
       timestamp: DateTime.now().subtract(const Duration(hours: 3)),
       isAgent: false,
     ),

@@ -1,11 +1,11 @@
 {
-    "name": "macro_app",
-    "short_name": "macro_app",
+    "name": "Mr Fox Workspace",
+    "short_name": "Mr Fox",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Mr Fox unified workspace.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

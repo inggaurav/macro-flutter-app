@@ -44,10 +44,10 @@ class AppConfig {
   });
 
   static const AppConfig defaultConfig = AppConfig(
-    appName: 'Macro Unified Workspace',
-    workspaceName: 'Macro Inc.',
-    packageName: 'com.macro.workspace',
-    logoText: 'M',
+    appName: 'Mr Fox Workspace',
+    workspaceName: 'Mr Fox',
+    packageName: 'com.mrfox.workspace',
+    logoText: 'F',
     primaryColor: Color(0xFF6366F1), // Indigo
     accentColor: Color(0xFFA855F7), // Purple
     environment: AppEnvironment.prod,
@@ -75,7 +75,7 @@ class AppConfig {
         icon: Icons.auto_awesome_outlined,
       ),
       OnboardingPageInfo(
-        title: 'Real-time CRDT Docs & Tasks',
+        title: 'Real-time Docs & Tasks',
         description:
             'Live document collaboration and engineering Kanban boards linked to customer data.',
         icon: Icons.description_outlined,

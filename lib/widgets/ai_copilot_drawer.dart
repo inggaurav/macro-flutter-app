@@ -115,7 +115,7 @@ class _AiCopilotDrawerState extends State<AiCopilotDrawer> {
                           ),
                           const SizedBox(height: AppSpacing.md),
                           Text(
-                            'Macro AI Cognition Ready',
+                            'Mr Fox AI Ready',
                             style: AppTypography.title(context),
                           ),
                           const SizedBox(height: AppSpacing.xs),

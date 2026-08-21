@@ -65,7 +65,7 @@ class _AiMemoryViewState extends State<AiMemoryView> {
         icon: Icons.psychology_outlined,
         title: 'Memory Unavailable',
         subtitle:
-            'Connect your Macro Workspace account to fetch AI cognition team memories and knowledge provenance.',
+            'Connect your Mr Fox workspace account to fetch AI memory, team knowledge, and provenance.',
         actionLabel: 'Refresh Memory',
         onAction: _loadMemories,
       );

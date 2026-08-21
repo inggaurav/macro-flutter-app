@@ -221,6 +221,27 @@ class MacroMainScreen extends StatelessWidget {
     }
   }
 
+  int _getMobileTabIndex(WorkspaceTab tab) {
+    switch (tab) {
+      case WorkspaceTab.dashboard:
+        return 0;
+      case WorkspaceTab.inbox:
+        return 1;
+      case WorkspaceTab.chat:
+        return 2;
+      case WorkspaceTab.docs:
+        return 3;
+      case WorkspaceTab.tasks:
+        return 4;
+      case WorkspaceTab.profile:
+      case WorkspaceTab.settings:
+      case WorkspaceTab.crm:
+      case WorkspaceTab.aiMemory:
+      case WorkspaceTab.calls:
+        return 5;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<WorkspaceProvider>(context);
@@ -256,7 +277,7 @@ class MacroMainScreen extends StatelessWidget {
             ),
             drawer: AiCopilotDrawer(provider: provider),
             bottomNavigationBar: NavigationBar(
-              selectedIndex: _getTabIndex(provider.activeTab).clamp(0, 4),
+              selectedIndex: _getMobileTabIndex(provider.activeTab),
               onDestinationSelected: (index) {
                 switch (index) {
                   case 0:
@@ -273,6 +294,9 @@ class MacroMainScreen extends StatelessWidget {
                     break;
                   case 4:
                     provider.setActiveTab('tasks');
+                    break;
+                  case 5:
+                    provider.setTab(WorkspaceTab.profile);
                     break;
                 }
               },
@@ -301,6 +325,11 @@ class MacroMainScreen extends StatelessWidget {
                   icon: Icon(Icons.check_box_outlined),
                   selectedIcon: Icon(Icons.check_box),
                   label: 'Tasks',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.person_outline),
+                  selectedIcon: Icon(Icons.person),
+                  label: 'Profile',
                 ),
               ],
             ),

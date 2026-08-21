@@ -219,7 +219,7 @@ class GoogleService extends ChangeNotifier {
 
     _setState(
       GoogleConnectionState.error,
-      'Could not open Macro Google SSO authorization service.',
+      'Could not open Mr Fox Google authorization service.',
     );
     return false;
   }

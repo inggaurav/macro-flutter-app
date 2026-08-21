@@ -60,7 +60,7 @@ class _CrmViewState extends State<CrmView> {
         icon: Icons.pie_chart_outline,
         title: 'No Enterprise Deals Connected',
         subtitle:
-            'Connect your Macro Workspace account to view live company records, pipeline deals, and contacts.',
+            'Connect your Mr Fox workspace account to view live company records, pipeline deals, and contacts.',
         actionLabel: 'Refresh Pipeline',
         onAction: _loadDeals,
       );

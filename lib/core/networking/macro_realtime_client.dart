@@ -60,7 +60,11 @@ class MacroRealtimeClient implements RealtimeClient {
           _onIncomingFrame(data);
         },
         onError: (error) {
-          if (kDebugMode) print('MacroRealtimeClient WebSocket error: $error');
+          if (kDebugMode) {
+            print(
+              'MacroRealtimeClient WebSocket error: ${_redactToken(error.toString())}',
+            );
+          }
           _handleDisconnect();
         },
         onDone: () {
@@ -71,7 +75,11 @@ class MacroRealtimeClient implements RealtimeClient {
         },
       );
     } catch (e) {
-      if (kDebugMode) print('MacroRealtimeClient connect exception: $e');
+      if (kDebugMode) {
+        print(
+          'MacroRealtimeClient connect exception: ${_redactToken(e.toString())}',
+        );
+      }
       _handleDisconnect();
     }
   }
@@ -160,6 +168,10 @@ class MacroRealtimeClient implements RealtimeClient {
       _state = newState;
       _stateController.add(_state);
     }
+  }
+
+  String _redactToken(String message) {
+    return message.replaceAll(RegExp(r'token=[^&\s\)]+'), 'token=<redacted>');
   }
 
   Future<void> dispose() async {
