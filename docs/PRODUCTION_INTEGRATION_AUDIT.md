@@ -10,7 +10,7 @@ This audit freezes the current Macro Flutter branch before any Mr Fox white-labe
 | Baseline HEAD | `40a17a8e3004ca658c82859fa9141c1af0703038` |
 | Flutter | `3.44.8` stable |
 | Dart | `3.12.2` |
-| Test baseline | `flutter test` passed, 24/24 |
+| Test baseline | `flutter test` passed, 24/24 before Phase 4.0 repair |
 | Analyze baseline before repair | 61 issues, then 3 after automated fixes |
 | Analyze target after repair | 0 issues |
 | Upstream Macro SHA/contracts | Not present in this repository; endpoint claims remain unverified until traced to OpenAPI/backend/source evidence |
@@ -82,10 +82,10 @@ These files were already modified before the Phase 4.0 audit/repair pass began:
 
 | Gate | Result |
 | --- | --- |
-| Format | Pending final run |
-| Analyze | Target 0 issues |
-| Test | Target 24/24+ pass |
-| Debug APK | Pending final run |
+| Format | `dart format --output=none --set-exit-if-changed .` passed |
+| Analyze | `flutter analyze` passed with 0 issues |
+| Test | `flutter test` passed, 25/25 |
+| Debug APK | `flutter build apk --debug` passed |
 | CI workflow | Java setup corrected to `actions/setup-java@v4` |
 
 ## Non-Negotiable Next Rules
