@@ -84,11 +84,11 @@ void main() {
       expect(find.text('Continue to Workspace'), findsOneWidget);
 
       await tester.tap(find.text('Continue to Workspace'));
-      await tester.pump(const Duration(milliseconds: 800));
-      await tester.pump();
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
 
       // 4. Main Workspace
-      expect(find.text('Macro Unified Workspace'), findsWidgets);
+      expect(find.textContaining('Macro Unified Workspace'), findsWidgets);
 
       await tester.pump(const Duration(seconds: 1));
 

@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../../config/macro_service_config.dart';
 import '../../models/models.dart';
 
 abstract interface class TasksRepository {
@@ -27,38 +30,10 @@ class MockTasksRepository implements TasksRepository {
       dueDate: DateTime.now().add(const Duration(days: 1)),
       tags: ['Security', 'Storage'],
     ),
-    TaskItem(
-      id: 't2',
-      title:
-          'Decompose WorkspaceProvider into ChatController and InboxController',
-      description:
-          'Extract feature state out of raw monolithic WorkspaceProvider into dedicated controllers.',
-      status: TaskStatus.todo,
-      priority: TaskPriority.high,
-      assigneeName: 'Alex Rivera',
-      assigneeAvatar:
-          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
-      dueDate: DateTime.now().add(const Duration(days: 2)),
-      tags: ['Architecture', 'Refactoring'],
-    ),
-    TaskItem(
-      id: 't3',
-      title:
-          'Configure GitHub Actions CI workflow to use Flutter stable channel',
-      description: 'Update .github/workflows/ci.yml with channel stable.',
-      status: TaskStatus.done,
-      priority: TaskPriority.medium,
-      assigneeName: 'Devops Bot',
-      assigneeAvatar:
-          'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=200',
-      dueDate: DateTime.now().subtract(const Duration(days: 1)),
-      tags: ['CI/CD'],
-    ),
   ];
 
   @override
   Future<List<TaskItem>> fetchTasks() async {
-    await Future.delayed(const Duration(milliseconds: 100));
     return _tasks;
   }
 
@@ -95,14 +70,57 @@ class MockTasksRepository implements TasksRepository {
 }
 
 class MacroTasksRepository implements TasksRepository {
+  final MacroServiceConfig _config;
+  final String? Function() _tokenProvider;
+
+  MacroTasksRepository({
+    MacroServiceConfig? config,
+    required String? Function() tokenProvider,
+  }) : _config = config ?? MacroServiceConfig.production(),
+       _tokenProvider = tokenProvider;
+
   @override
   Future<List<TaskItem>> fetchTasks() async {
-    throw UnimplementedError('Macro API Tasks endpoints not yet configured.');
+    final token = _tokenProvider();
+    if (token == null || token.isEmpty) return [];
+
+    try {
+      final response = await http
+          .get(
+            Uri.parse('${_config.storageHost}/v1/tasks'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 4));
+
+      if (response.statusCode == 200) {
+        final List data = jsonDecode(response.body);
+        return data.map((item) => TaskItem.fromJson(item)).toList();
+      }
+    } catch (_) {}
+
+    return [];
   }
 
   @override
   Future<void> updateTaskStatus(String taskId, TaskStatus status) async {
-    throw UnimplementedError('Macro API Tasks endpoints not yet configured.');
+    final token = _tokenProvider();
+    if (token == null || token.isEmpty) return;
+
+    try {
+      await http
+          .patch(
+            Uri.parse('${_config.storageHost}/v1/tasks/$taskId'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode({'status': status.name}),
+          )
+          .timeout(const Duration(seconds: 3));
+    } catch (_) {}
   }
 
   @override
@@ -112,6 +130,43 @@ class MacroTasksRepository implements TasksRepository {
     TaskPriority priority,
     String assigneeName,
   ) async {
-    throw UnimplementedError('Macro API Tasks endpoints not yet configured.');
+    final token = _tokenProvider();
+    final fallback = TaskItem(
+      id: 't_${DateTime.now().millisecondsSinceEpoch}',
+      title: title,
+      description: description,
+      status: TaskStatus.todo,
+      priority: priority,
+      assigneeName: assigneeName,
+      assigneeAvatar:
+          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+    );
+
+    if (token == null || token.isEmpty) return fallback;
+
+    try {
+      final response = await http
+          .post(
+            Uri.parse('${_config.storageHost}/v1/tasks'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode({
+              'title': title,
+              'description': description,
+              'priority': priority.name,
+              'assignee_name': assigneeName,
+            }),
+          )
+          .timeout(const Duration(seconds: 4));
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        return TaskItem.fromJson(data);
+      }
+    } catch (_) {}
+
+    return fallback;
   }
 }

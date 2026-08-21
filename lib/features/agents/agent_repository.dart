@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../../config/macro_service_config.dart';
 import '../../models/models.dart';
 
 abstract interface class AgentRepository {
@@ -17,16 +20,6 @@ class MockAgentRepository implements AgentRepository {
       confidence: 0.98,
       updatedAt: DateTime.now().subtract(const Duration(hours: 1)),
     ),
-    AiMemoryItem(
-      id: 'm2',
-      category: 'tech_stack',
-      title: 'Session Token Persistence Invariant',
-      summary:
-          'Tokens must be stored in Android Keystore / iOS Keychain via FlutterSecureStorage.',
-      source: 'CRDT Document #d1',
-      confidence: 0.99,
-      updatedAt: DateTime.now().subtract(const Duration(minutes: 30)),
-    ),
   ];
 
   @override
@@ -36,19 +29,68 @@ class MockAgentRepository implements AgentRepository {
 
   @override
   Future<String> queryCopilot(String prompt) async {
-    await Future.delayed(const Duration(milliseconds: 300));
     return 'Based on team context: We use FlutterSecureStorage backed by Android Keystore / iOS Keychain. Target sync latency is <45ms.';
   }
 }
 
 class MacroAgentRepository implements AgentRepository {
+  final MacroServiceConfig _config;
+  final String? Function() _tokenProvider;
+
+  MacroAgentRepository({
+    MacroServiceConfig? config,
+    required String? Function() tokenProvider,
+  }) : _config = config ?? MacroServiceConfig.production(),
+       _tokenProvider = tokenProvider;
+
   @override
   Future<List<AiMemoryItem>> fetchMemories() async {
-    throw UnimplementedError('Macro API Agent endpoints not yet configured.');
+    final token = _tokenProvider();
+    if (token == null || token.isEmpty) return [];
+
+    try {
+      final response = await http
+          .get(
+            Uri.parse('${_config.cognitionHost}/v1/memory'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 4));
+
+      if (response.statusCode == 200) {
+        final List data = jsonDecode(response.body);
+        return data.map((item) => AiMemoryItem.fromJson(item)).toList();
+      }
+    } catch (_) {}
+
+    return [];
   }
 
   @override
   Future<String> queryCopilot(String prompt) async {
-    throw UnimplementedError('Macro API Agent endpoints not yet configured.');
+    final token = _tokenProvider();
+    if (token == null || token.isEmpty) return 'No active Macro session token.';
+
+    try {
+      final response = await http
+          .post(
+            Uri.parse('${_config.cognitionHost}/v1/chat'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode({'prompt': prompt}),
+          )
+          .timeout(const Duration(seconds: 5));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['text'] ?? data['response'] ?? 'Query processed.';
+      }
+    } catch (_) {}
+
+    return 'AI Cognition service offline or unavailable.';
   }
 }

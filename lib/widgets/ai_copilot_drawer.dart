@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../config/app_config.dart';
-import '../design/components/app_button.dart';
 import '../design/components/entity_chip.dart';
 import '../design/tokens/app_colors.dart';
 import '../design/tokens/app_spacing.dart';

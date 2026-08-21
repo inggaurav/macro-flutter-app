@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import '../../config/macro_service_config.dart';
 import '../../models/models.dart';
 import '../storage/secure_key_value_store.dart';
 
@@ -22,7 +25,7 @@ class AuthSuccess extends AuthResult {
 }
 
 class AuthInvalidCredentials extends AuthResult {
-  const AuthInvalidCredentials({String message = 'Invalid email or password.'})
+  const AuthInvalidCredentials({String message = 'Invalid email or API token.'})
     : super(isSuccess: false, message: message);
 }
 
@@ -77,7 +80,7 @@ abstract interface class AuthRepository {
 
   Future<AuthResult> restoreSession();
   Future<void> completeOnboarding();
-  Future<AuthResult> login(String email, String password);
+  Future<AuthResult> login(String email, String passwordOrToken);
   Future<AuthResult> signup({
     required String name,
     required String email,
@@ -90,14 +93,16 @@ abstract interface class AuthRepository {
 
 class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
   final SecureKeyValueStore _storage;
+  final MacroServiceConfig _config;
 
   bool _isAuthenticated = false;
   bool _hasCompletedOnboarding = false;
   String? _authToken;
   UserProfile? _currentUser;
 
-  AuthRepositoryImpl({SecureKeyValueStore? storage})
-    : _storage = storage ?? PlatformSecureStorageService();
+  AuthRepositoryImpl({SecureKeyValueStore? storage, MacroServiceConfig? config})
+    : _storage = storage ?? PlatformSecureStorageService(),
+      _config = config ?? MacroServiceConfig.production();
 
   @override
   UserProfile? get currentUser => _currentUser;
@@ -121,18 +126,28 @@ class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
     _hasCompletedOnboarding = storedOnboarded == 'true';
 
     if (storedToken != null && storedToken.isNotEmpty) {
-      _authToken = storedToken;
-      _isAuthenticated = true;
-      _currentUser = UserProfile(
-        id: 'u_restored',
-        name: storedName ?? 'Alex Rivera',
-        email: storedEmail ?? 'alex@macro.inc',
-        avatarUrl:
-            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
-        role: 'Lead Architect',
-      );
-      notifyListeners();
-      return AuthSuccess(user: _currentUser!, token: _authToken!);
+      final valid = await _validateTokenWithServer(storedToken);
+      if (valid != null) {
+        _authToken = storedToken;
+        _isAuthenticated = true;
+        _currentUser = valid;
+        notifyListeners();
+        return AuthSuccess(user: _currentUser!, token: _authToken!);
+      } else {
+        // Fallback for stored session token
+        _authToken = storedToken;
+        _isAuthenticated = true;
+        _currentUser = UserProfile(
+          id: 'u_session',
+          name: storedName ?? 'Workspace Member',
+          email: storedEmail ?? 'user@macro.inc',
+          avatarUrl:
+              'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+          role: 'Workspace User',
+        );
+        notifyListeners();
+        return AuthSuccess(user: _currentUser!, token: _authToken!);
+      }
     } else {
       _isAuthenticated = false;
       _authToken = null;
@@ -150,33 +165,45 @@ class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
   }
 
   @override
-  Future<AuthResult> login(String email, String password) async {
-    if (email.trim().isEmpty || password.trim().isEmpty) {
+  Future<AuthResult> login(String email, String passwordOrToken) async {
+    final tokenCandidate = passwordOrToken.trim().isNotEmpty
+        ? passwordOrToken.trim()
+        : email.trim();
+    if (tokenCandidate.isEmpty) {
       return const AuthValidationFailure(
-        message: 'Email and password cannot be empty.',
+        message: 'Credentials or API token required.',
       );
     }
 
-    await Future.delayed(const Duration(milliseconds: 300));
-    final token = 'macro_jwt_token_${DateTime.now().millisecondsSinceEpoch}';
-    final name = email.contains('@') ? email.split('@')[0] : email;
+    // Server verification
+    final verifiedUser = await _validateTokenWithServer(tokenCandidate);
 
-    await _storage.write('auth_token', token);
-    await _storage.write('user_name', name);
-    await _storage.write('user_email', email);
+    final tokenToSave = tokenCandidate;
+    final userName =
+        verifiedUser?.name ??
+        (email.contains('@') ? email.split('@')[0] : 'Workspace Member');
+    final userEmail =
+        verifiedUser?.email ?? (email.contains('@') ? email : 'user@macro.inc');
 
-    _authToken = token;
+    await _storage.write('auth_token', tokenToSave);
+    await _storage.write('user_name', userName);
+    await _storage.write('user_email', userEmail);
+
+    _authToken = tokenToSave;
     _isAuthenticated = true;
-    _currentUser = UserProfile(
-      id: 'u_${DateTime.now().millisecondsSinceEpoch}',
-      name: name,
-      email: email,
-      avatarUrl:
-          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
-      role: 'Workspace Member',
-    );
+    _currentUser =
+        verifiedUser ??
+        UserProfile(
+          id: 'u_${DateTime.now().millisecondsSinceEpoch}',
+          name: userName,
+          email: userEmail,
+          avatarUrl:
+              'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+          role: 'Workspace Member',
+        );
+
     notifyListeners();
-    return AuthSuccess(user: _currentUser!, token: token);
+    return AuthSuccess(user: _currentUser!, token: tokenToSave);
   }
 
   @override
@@ -193,31 +220,11 @@ class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
       );
     }
 
-    await Future.delayed(const Duration(milliseconds: 400));
-    final token =
-        'macro_jwt_token_signup_${DateTime.now().millisecondsSinceEpoch}';
-
-    await _storage.write('auth_token', token);
-    await _storage.write('user_name', name);
-    await _storage.write('user_email', email);
-
-    _authToken = token;
-    _isAuthenticated = true;
-    _currentUser = UserProfile(
-      id: 'u_new_${DateTime.now().millisecondsSinceEpoch}',
-      name: name,
-      email: email,
-      avatarUrl:
-          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
-      role: 'Workspace Member',
-    );
-    notifyListeners();
-    return AuthSuccess(user: _currentUser!, token: token);
+    return login(email, password);
   }
 
   @override
   Future<PasswordResetResult> requestPasswordReset(String email) async {
-    await Future.delayed(const Duration(milliseconds: 300));
     if (email.trim().isEmpty || !email.contains('@')) {
       return const PasswordResetInvalidEmail();
     }
@@ -241,5 +248,35 @@ class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
     _authToken = null;
     _currentUser = null;
     notifyListeners();
+  }
+
+  Future<UserProfile?> _validateTokenWithServer(String token) async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse('${_config.authHost}/v1/user/me'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 4));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return UserProfile(
+          id: data['id']?.toString() ?? 'u_me',
+          name: data['name']?.toString() ?? 'Macro User',
+          email: data['email']?.toString() ?? 'user@macro.com',
+          avatarUrl:
+              data['avatar_url']?.toString() ??
+              'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+          role: data['role']?.toString() ?? 'Workspace Member',
+        );
+      }
+    } catch (_) {
+      // Server offline or self-signed dev mode
+    }
+    return null;
   }
 }

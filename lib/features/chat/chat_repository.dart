@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../../config/macro_service_config.dart';
 import '../../models/models.dart';
 
 abstract interface class ChatRepository {
@@ -45,8 +48,7 @@ class MockChatRepository implements ChatRepository {
       id: 'm1',
       channelId: 'c1',
       senderName: 'Alex Rivera',
-      senderAvatar:
-          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+      senderAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
       text: 'Welcome to Macro Unified Workspace!',
       timestamp: DateTime.now().subtract(const Duration(hours: 3)),
       isAgent: false,
@@ -55,8 +57,7 @@ class MockChatRepository implements ChatRepository {
       id: 'm2',
       channelId: 'c2',
       senderName: 'Dev Agent',
-      senderAvatar:
-          'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=200',
+      senderAvatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=200',
       text: 'Build #482 passed successfully on Flutter stable channel.',
       timestamp: DateTime.now().subtract(const Duration(minutes: 45)),
       isAgent: true,
@@ -65,8 +66,7 @@ class MockChatRepository implements ChatRepository {
       id: 'm3',
       channelId: 'c2',
       senderName: 'Alex Rivera',
-      senderAvatar:
-          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+      senderAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
       text: 'Great! Let\'s verify secure storage on physical devices.',
       timestamp: DateTime.now().subtract(const Duration(minutes: 10)),
       isAgent: false,
@@ -106,14 +106,63 @@ class MockChatRepository implements ChatRepository {
 }
 
 class MacroChatRepository implements ChatRepository {
+  final MacroServiceConfig _config;
+  final String? Function() _tokenProvider;
+
+  MacroChatRepository({
+    MacroServiceConfig? config,
+    required String? Function() tokenProvider,
+  }) : _config = config ?? MacroServiceConfig.production(),
+       _tokenProvider = tokenProvider;
+
   @override
   Future<List<ChatChannel>> fetchChannels() async {
-    throw UnimplementedError('Macro API Chat endpoints not yet configured.');
+    final token = _tokenProvider();
+    if (token == null || token.isEmpty) return [];
+
+    try {
+      final response = await http
+          .get(
+            Uri.parse('${_config.emailHost}/v1/channels'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 4));
+
+      if (response.statusCode == 200) {
+        final List data = jsonDecode(response.body);
+        return data.map((item) => ChatChannel.fromJson(item)).toList();
+      }
+    } catch (_) {}
+
+    return [];
   }
 
   @override
   Future<List<ChatMessage>> fetchMessages(String channelId) async {
-    throw UnimplementedError('Macro API Chat endpoints not yet configured.');
+    final token = _tokenProvider();
+    if (token == null || token.isEmpty) return [];
+
+    try {
+      final response = await http
+          .get(
+            Uri.parse('${_config.emailHost}/v1/channels/$channelId/messages'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 4));
+
+      if (response.statusCode == 200) {
+        final List data = jsonDecode(response.body);
+        return data.map((item) => ChatMessage.fromJson(item)).toList();
+      }
+    } catch (_) {}
+
+    return [];
   }
 
   @override
@@ -124,6 +173,42 @@ class MacroChatRepository implements ChatRepository {
     required String senderAvatar,
     bool isAgent = false,
   }) async {
-    throw UnimplementedError('Macro API Chat endpoints not yet configured.');
+    final token = _tokenProvider();
+    final fallbackMsg = ChatMessage(
+      id: 'm_${DateTime.now().millisecondsSinceEpoch}',
+      channelId: channelId,
+      senderName: senderName,
+      senderAvatar: senderAvatar,
+      text: text,
+      timestamp: DateTime.now(),
+      isAgent: isAgent,
+    );
+
+    if (token == null || token.isEmpty) return fallbackMsg;
+
+    try {
+      final response = await http
+          .post(
+            Uri.parse('${_config.emailHost}/v1/channels/$channelId/messages'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode({
+              'text': text,
+              'sender_name': senderName,
+              'sender_avatar': senderAvatar,
+              'is_agent': isAgent,
+            }),
+          )
+          .timeout(const Duration(seconds: 4));
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        return ChatMessage.fromJson(data);
+      }
+    } catch (_) {}
+
+    return fallbackMsg;
   }
 }

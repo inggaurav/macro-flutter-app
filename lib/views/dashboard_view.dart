@@ -55,7 +55,7 @@ class DashboardView extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${appConfig.workspaceName} • Unified Workspace Overview',
+                        '${appConfig.workspaceName} • Macro Unified Workspace',
                         style: AppTypography.bodySmall(context),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -473,7 +473,11 @@ class DashboardView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: AppTypography.caption(context), overflow: TextOverflow.ellipsis),
+                Text(
+                  title,
+                  style: AppTypography.caption(context),
+                  overflow: TextOverflow.ellipsis,
+                ),
                 Text(
                   value,
                   style: AppTypography.sectionTitle(

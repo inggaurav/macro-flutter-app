@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../../config/macro_service_config.dart';
 import '../../models/models.dart';
 
 abstract interface class CallsRepository {
@@ -13,12 +16,10 @@ class MockCallsRepository implements CallsRepository {
       durationMinutes: 45,
       participantAvatars: [
         'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
-        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
       ],
       liveTranscript:
           '[00:12] Alex: Flutter secure storage fail-closed implementation complete.',
-      aiSummary:
-          'Decided to fail closed on platform secure storage errors. Decomposed WorkspaceProvider into modular controllers.',
+      aiSummary: 'Decided to fail closed on platform secure storage errors.',
     ),
   ];
 
@@ -29,8 +30,37 @@ class MockCallsRepository implements CallsRepository {
 }
 
 class MacroCallsRepository implements CallsRepository {
+  final MacroServiceConfig _config;
+  final String? Function() _tokenProvider;
+
+  MacroCallsRepository({
+    MacroServiceConfig? config,
+    required String? Function() tokenProvider,
+  }) : _config = config ?? MacroServiceConfig.production(),
+       _tokenProvider = tokenProvider;
+
   @override
   Future<List<CallSession>> fetchCalls() async {
-    throw UnimplementedError('Macro API Calls endpoints not yet configured.');
+    final token = _tokenProvider();
+    if (token == null || token.isEmpty) return [];
+
+    try {
+      final response = await http
+          .get(
+            Uri.parse('${_config.notificationHost}/v1/calls'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 4));
+
+      if (response.statusCode == 200) {
+        final List data = jsonDecode(response.body);
+        return data.map((item) => CallSession.fromJson(item)).toList();
+      }
+    } catch (_) {}
+
+    return [];
   }
 }

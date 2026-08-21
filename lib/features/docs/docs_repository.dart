@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../../config/macro_service_config.dart';
 import '../../models/models.dart';
 
 abstract interface class DocsRepository {
@@ -19,39 +22,16 @@ class MockDocsRepository implements DocsRepository {
 
 ## Multi-Region State Replication
 This document specifies the real-time conflict-free replicated data type (CRDT) engine protocol used across Macro workspace clients.
-
-### Key Invariants
-1. Causally-ordered event delivery via vector clocks.
-2. Local offline mutation journal backed by local persistent storage.
-3. Multi-bearer token verification over secure WebSocket transport.
 ''',
       authorName: 'Alex Rivera',
       lastModified: DateTime.now().subtract(const Duration(hours: 4)),
       tags: ['Architecture', 'Engineering'],
       isPinned: true,
     ),
-    DocumentItem(
-      id: 'd2',
-      title: 'Series A Investment Deck & Financial Projections',
-      content: '''# Series A Pitch & Growth Metrics
-
-## Executive Summary
-Macro combines email, team chat, shared CRDT documents, and AI Copilot into a unified real-time workspace.
-
-### Q3 Milestones
-- 45ms average sync latency across North America and EU edge nodes.
-- App Factory foundation for rapid cross-platform Flutter client deployment.
-''',
-      authorName: 'Sarah Jenkins',
-      lastModified: DateTime.now().subtract(const Duration(days: 2)),
-      tags: ['Investment', 'Strategy'],
-      isPinned: false,
-    ),
   ];
 
   @override
   Future<List<DocumentItem>> fetchDocuments() async {
-    await Future.delayed(const Duration(milliseconds: 100));
     return _docs;
   }
 
@@ -93,9 +73,38 @@ Macro combines email, team chat, shared CRDT documents, and AI Copilot into a un
 }
 
 class MacroDocsRepository implements DocsRepository {
+  final MacroServiceConfig _config;
+  final String? Function() _tokenProvider;
+
+  MacroDocsRepository({
+    MacroServiceConfig? config,
+    required String? Function() tokenProvider,
+  }) : _config = config ?? MacroServiceConfig.production(),
+       _tokenProvider = tokenProvider;
+
   @override
   Future<List<DocumentItem>> fetchDocuments() async {
-    throw UnimplementedError('Macro API Docs endpoints not yet configured.');
+    final token = _tokenProvider();
+    if (token == null || token.isEmpty) return [];
+
+    try {
+      final response = await http
+          .get(
+            Uri.parse('${_config.storageHost}/v1/documents'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 4));
+
+      if (response.statusCode == 200) {
+        final List data = jsonDecode(response.body);
+        return data.map((item) => DocumentItem.fromJson(item)).toList();
+      }
+    } catch (_) {}
+
+    return [];
   }
 
   @override
@@ -104,11 +113,58 @@ class MacroDocsRepository implements DocsRepository {
     String content,
     String authorName,
   ) async {
-    throw UnimplementedError('Macro API Docs endpoints not yet configured.');
+    final token = _tokenProvider();
+    final fallback = DocumentItem(
+      id: 'd_${DateTime.now().millisecondsSinceEpoch}',
+      title: title,
+      content: content,
+      authorName: authorName,
+      lastModified: DateTime.now(),
+    );
+
+    if (token == null || token.isEmpty) return fallback;
+
+    try {
+      final response = await http
+          .post(
+            Uri.parse('${_config.storageHost}/v1/documents'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode({
+              'title': title,
+              'content': content,
+              'author_name': authorName,
+            }),
+          )
+          .timeout(const Duration(seconds: 4));
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        return DocumentItem.fromJson(data);
+      }
+    } catch (_) {}
+
+    return fallback;
   }
 
   @override
   Future<void> updateDocument(String id, String newContent) async {
-    throw UnimplementedError('Macro API Docs endpoints not yet configured.');
+    final token = _tokenProvider();
+    if (token == null || token.isEmpty) return;
+
+    try {
+      await http
+          .patch(
+            Uri.parse('${_config.storageHost}/v1/documents/$id'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode({'content': newContent}),
+          )
+          .timeout(const Duration(seconds: 3));
+    } catch (_) {}
   }
 }

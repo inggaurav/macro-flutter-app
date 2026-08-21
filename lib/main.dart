@@ -29,22 +29,38 @@ import 'features/inbox/controllers/inbox_controller.dart';
 import 'core/persistence/local_cache.dart';
 import 'core/realtime/realtime_client.dart';
 
+import 'config/macro_service_config.dart';
+import 'core/networking/macro_realtime_client.dart';
+
 void main() {
+  final serviceConfig = MacroServiceConfig.production();
+  final authRepo = AuthRepository();
+  final realtimeClient = MacroRealtimeClient(
+    gatewayUrl: serviceConfig.connectionGateway,
+    tokenProvider: () => authRepo.authToken,
+  );
+
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => WorkspaceProvider()),
-        ChangeNotifierProvider(create: (_) => AuthRepository()),
+        ChangeNotifierProvider.value(value: authRepo),
         ChangeNotifierProvider(
           create: (_) => ChatController(
-            repository: MockChatRepository(),
+            repository: MacroChatRepository(
+              config: serviceConfig,
+              tokenProvider: () => authRepo.authToken,
+            ),
             cacheStore: SharedPreferencesLocalCacheStore(),
-            realtimeClient: MockRealtimeClient(),
+            realtimeClient: realtimeClient,
           )..loadChannels(),
         ),
         ChangeNotifierProvider(
           create: (_) => InboxController(
-            repository: MockInboxRepository(),
+            repository: MacroInboxRepository(
+              config: serviceConfig,
+              tokenProvider: () => authRepo.authToken,
+            ),
             cacheStore: SharedPreferencesLocalCacheStore(),
           )..loadEmails(),
         ),
@@ -131,6 +147,31 @@ class _MacroAppState extends State<MacroApp> {
 class MacroMainScreen extends StatelessWidget {
   const MacroMainScreen({super.key});
 
+  int _getTabIndex(WorkspaceTab tab) {
+    switch (tab) {
+      case WorkspaceTab.dashboard:
+        return 0;
+      case WorkspaceTab.inbox:
+        return 1;
+      case WorkspaceTab.chat:
+        return 2;
+      case WorkspaceTab.docs:
+        return 3;
+      case WorkspaceTab.tasks:
+        return 4;
+      case WorkspaceTab.crm:
+        return 5;
+      case WorkspaceTab.aiMemory:
+        return 6;
+      case WorkspaceTab.calls:
+        return 7;
+      case WorkspaceTab.settings:
+      case WorkspaceTab.profile:
+      default:
+        return 8;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 768;
@@ -155,7 +196,7 @@ class MacroMainScreen extends StatelessWidget {
                     TopAppHeader(provider: provider),
                     Expanded(
                       child: IndexedStack(
-                        index: provider.activeTab.index,
+                        index: _getTabIndex(provider.activeTab),
                         children: [
                           DashboardView(provider: provider),
                           InboxView(provider: provider),

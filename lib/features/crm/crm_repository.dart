@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../../config/macro_service_config.dart';
 import '../../models/models.dart';
 
 abstract interface class CrmRepository {
@@ -18,22 +21,10 @@ class MockCrmRepository implements CrmRepository {
       lastInteraction: '2 hours ago',
       tags: ['Enterprise', 'Q3 Pipeline'],
     ),
-    CrmDeal(
-      id: 'cd2',
-      title: 'Acme Global Workspace Expansion',
-      companyName: 'Acme Corp',
-      value: 85000.0,
-      stage: DealStage.negotiation,
-      contactName: 'Mark Sterling',
-      contactEmail: 'm.sterling@acme.com',
-      lastInteraction: 'Yesterday',
-      tags: ['Expansion'],
-    ),
   ];
 
   @override
   Future<List<CrmDeal>> fetchDeals() async {
-    await Future.delayed(const Duration(milliseconds: 100));
     return _deals;
   }
 
@@ -47,13 +38,56 @@ class MockCrmRepository implements CrmRepository {
 }
 
 class MacroCrmRepository implements CrmRepository {
+  final MacroServiceConfig _config;
+  final String? Function() _tokenProvider;
+
+  MacroCrmRepository({
+    MacroServiceConfig? config,
+    required String? Function() tokenProvider,
+  }) : _config = config ?? MacroServiceConfig.production(),
+       _tokenProvider = tokenProvider;
+
   @override
   Future<List<CrmDeal>> fetchDeals() async {
-    throw UnimplementedError('Macro API CRM endpoints not yet configured.');
+    final token = _tokenProvider();
+    if (token == null || token.isEmpty) return [];
+
+    try {
+      final response = await http
+          .get(
+            Uri.parse('${_config.contactsHost}/v1/deals'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 4));
+
+      if (response.statusCode == 200) {
+        final List data = jsonDecode(response.body);
+        return data.map((item) => CrmDeal.fromJson(item)).toList();
+      }
+    } catch (_) {}
+
+    return [];
   }
 
   @override
   Future<void> updateDealStage(String dealId, DealStage stage) async {
-    throw UnimplementedError('Macro API CRM endpoints not yet configured.');
+    final token = _tokenProvider();
+    if (token == null || token.isEmpty) return;
+
+    try {
+      await http
+          .patch(
+            Uri.parse('${_config.contactsHost}/v1/deals/$dealId'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode({'stage': stage.name}),
+          )
+          .timeout(const Duration(seconds: 3));
+    } catch (_) {}
   }
 }
