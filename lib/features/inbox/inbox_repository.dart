@@ -13,9 +13,9 @@ class MockInboxRepository implements InboxRepository {
       senderName: 'Sarah Jenkins',
       senderEmail: 'sarah@vortex.io',
       subject: 'Series A Term Sheet Review & MCP Agent Deployment',
-      snippet:
+      preview:
           'Hey Alex, we reviewed the latest MCP server deployment specs...',
-      timestamp: '10:42 AM',
+      timestamp: DateTime.now().subtract(const Duration(hours: 1, minutes: 18)),
       body: '''Hey Alex,
 
 We reviewed the latest MCP server deployment specs and the unified CRDT document engine. Overall the team is very impressed with how responsive the Flutter client is.
@@ -36,9 +36,9 @@ Sarah''',
       senderName: 'GitHub Actions CI',
       senderEmail: 'notifications@github.com',
       subject: 'Build #482 Passed: Flutter Stable Release Candidate',
-      snippet:
+      preview:
           'Workflow "Flutter App CI Pipeline" completed successfully on main branch.',
-      timestamp: 'Yesterday',
+      timestamp: DateTime.now().subtract(const Duration(days: 1)),
       body:
           'All 42 widget & unit tests passed. Debug APK generated successfully.',
       isUnread: false,
@@ -61,7 +61,7 @@ Sarah''',
         senderName: _emails[idx].senderName,
         senderEmail: _emails[idx].senderEmail,
         subject: _emails[idx].subject,
-        snippet: _emails[idx].snippet,
+        preview: _emails[idx].preview,
         timestamp: _emails[idx].timestamp,
         body: _emails[idx].body,
         isUnread: false,
@@ -74,5 +74,22 @@ Sarah''',
   Future<String> generateAiReply(String emailId) async {
     await Future.delayed(const Duration(milliseconds: 300));
     return 'Hi Sarah, thanks for reaching out. 1) Our target WebSocket sync latency is under 45ms. 2) Yes, we persist tokens via Android Keystore and iOS Keychain!';
+  }
+}
+
+class MacroInboxRepository implements InboxRepository {
+  @override
+  Future<List<EmailThread>> fetchEmails() async {
+    throw UnimplementedError('Macro API Inbox endpoints not yet configured.');
+  }
+
+  @override
+  Future<void> markAsRead(String id) async {
+    throw UnimplementedError('Macro API Inbox endpoints not yet configured.');
+  }
+
+  @override
+  Future<String> generateAiReply(String emailId) async {
+    throw UnimplementedError('Macro API Inbox endpoints not yet configured.');
   }
 }

@@ -22,12 +22,32 @@ import 'views/crm_view.dart';
 import 'views/ai_memory_view.dart';
 import 'views/call_room_view.dart';
 
+import 'features/chat/chat_repository.dart';
+import 'features/chat/controllers/chat_controller.dart';
+import 'features/inbox/inbox_repository.dart';
+import 'features/inbox/controllers/inbox_controller.dart';
+import 'core/persistence/local_cache.dart';
+import 'core/realtime/realtime_client.dart';
+
 void main() {
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => WorkspaceProvider()),
         ChangeNotifierProvider(create: (_) => AuthRepository()),
+        ChangeNotifierProvider(
+          create: (_) => ChatController(
+            repository: MockChatRepository(),
+            cacheStore: SharedPreferencesLocalCacheStore(),
+            realtimeClient: MockRealtimeClient(),
+          )..loadChannels(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => InboxController(
+            repository: MockInboxRepository(),
+            cacheStore: SharedPreferencesLocalCacheStore(),
+          )..loadEmails(),
+        ),
         Provider.value(value: AppConfig.defaultConfig),
       ],
       child: const MacroApp(),

@@ -1,4 +1,10 @@
-import 'package:flutter/material.dart';
+import '../features/inbox/domain/email_thread.dart';
+import '../features/chat/domain/chat_channel.dart';
+import '../features/chat/domain/chat_message.dart';
+
+export '../features/inbox/domain/email_thread.dart';
+export '../features/chat/domain/chat_channel.dart';
+export '../features/chat/domain/chat_message.dart';
 
 enum TaskStatus { todo, inProgress, inReview, done }
 
@@ -21,76 +27,6 @@ class UserProfile {
     required this.avatarUrl,
     required this.role,
     this.isOnline = true,
-  });
-}
-
-class EmailThread {
-  final String id;
-  final String subject;
-  final String senderName;
-  final String senderEmail;
-  final String preview;
-  final String body;
-  final DateTime timestamp;
-  final bool isUnread;
-  final bool isStarred;
-  final List<String> tags;
-  final String? linkedCompanyName;
-
-  EmailThread({
-    required this.id,
-    required this.subject,
-    required this.senderName,
-    required this.senderEmail,
-    required this.preview,
-    required this.body,
-    required this.timestamp,
-    this.isUnread = false,
-    this.isStarred = false,
-    required this.tags,
-    this.linkedCompanyName,
-  });
-}
-
-class ChatMessage {
-  final String id;
-  final String channelId;
-  final String senderName;
-  final String senderAvatar;
-  final String text;
-  final DateTime timestamp;
-  final bool isAgent;
-  final List<String> mentions; // e.g. ["@Acme Corp", "@Task-402"]
-  final String? codeSnippet;
-
-  ChatMessage({
-    required this.id,
-    required this.channelId,
-    required this.senderName,
-    required this.senderAvatar,
-    required this.text,
-    required this.timestamp,
-    this.isAgent = false,
-    this.mentions = const [],
-    this.codeSnippet,
-  });
-}
-
-class ChatChannel {
-  final String id;
-  final String name;
-  final String description;
-  final bool isPrivate;
-  final int unreadCount;
-  final DateTime lastActivity;
-
-  ChatChannel({
-    required this.id,
-    required this.name,
-    required this.description,
-    this.isPrivate = false,
-    this.unreadCount = 0,
-    required this.lastActivity,
   });
 }
 
@@ -166,10 +102,10 @@ class CrmDeal {
 
 class AiMemoryItem {
   final String id;
-  final String category; // 'team_context', 'sales_insight', 'tech_stack'
+  final String category;
   final String title;
   final String summary;
-  final String source; // 'Slack #engineering', 'Email thread', 'CRDT Document'
+  final String source;
   final double confidence;
   final DateTime updatedAt;
 

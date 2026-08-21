@@ -18,32 +18,32 @@ sealed class AuthResult {
 
 class AuthSuccess extends AuthResult {
   const AuthSuccess({required UserProfile user, required String token})
-      : super(isSuccess: true, user: user, token: token);
+    : super(isSuccess: true, user: user, token: token);
 }
 
 class AuthInvalidCredentials extends AuthResult {
   const AuthInvalidCredentials({String message = 'Invalid email or password.'})
-      : super(isSuccess: false, message: message);
+    : super(isSuccess: false, message: message);
 }
 
 class AuthNetworkFailure extends AuthResult {
   const AuthNetworkFailure({String message = 'Network connection failed.'})
-      : super(isSuccess: false, message: message);
+    : super(isSuccess: false, message: message);
 }
 
 class AuthServerFailure extends AuthResult {
   const AuthServerFailure({required String message})
-      : super(isSuccess: false, message: message);
+    : super(isSuccess: false, message: message);
 }
 
 class AuthValidationFailure extends AuthResult {
   const AuthValidationFailure({required String message})
-      : super(isSuccess: false, message: message);
+    : super(isSuccess: false, message: message);
 }
 
 class AuthUnknownFailure extends AuthResult {
   const AuthUnknownFailure({required String message})
-      : super(isSuccess: false, message: message);
+    : super(isSuccess: false, message: message);
 }
 
 sealed class PasswordResetResult {
@@ -55,17 +55,18 @@ sealed class PasswordResetResult {
 
 class PasswordResetSuccess extends PasswordResetResult {
   const PasswordResetSuccess({required String message})
-      : super(isSuccess: true, message: message);
+    : super(isSuccess: true, message: message);
 }
 
 class PasswordResetInvalidEmail extends PasswordResetResult {
-  const PasswordResetInvalidEmail({String message = 'Please enter a valid work email address.'})
-      : super(isSuccess: false, message: message);
+  const PasswordResetInvalidEmail({
+    String message = 'Please enter a valid work email address.',
+  }) : super(isSuccess: false, message: message);
 }
 
 class PasswordResetFailure extends PasswordResetResult {
   const PasswordResetFailure({required String message})
-      : super(isSuccess: false, message: message);
+    : super(isSuccess: false, message: message);
 }
 
 abstract interface class AuthRepository {
@@ -77,7 +78,11 @@ abstract interface class AuthRepository {
   Future<AuthResult> restoreSession();
   Future<void> completeOnboarding();
   Future<AuthResult> login(String email, String password);
-  Future<AuthResult> signup({required String name, required String email, required String password});
+  Future<AuthResult> signup({
+    required String name,
+    required String email,
+    required String password,
+  });
   Future<PasswordResetResult> requestPasswordReset(String email);
   Future<AuthResult> refreshSession();
   Future<void> logout();
@@ -92,7 +97,7 @@ class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
   UserProfile? _currentUser;
 
   AuthRepositoryImpl({SecureKeyValueStore? storage})
-      : _storage = storage ?? PlatformSecureStorageService();
+    : _storage = storage ?? PlatformSecureStorageService();
 
   @override
   UserProfile? get currentUser => _currentUser;
@@ -122,7 +127,8 @@ class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
         id: 'u_restored',
         name: storedName ?? 'Alex Rivera',
         email: storedEmail ?? 'alex@macro.inc',
-        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+        avatarUrl:
+            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
         role: 'Lead Architect',
       );
       notifyListeners();
@@ -146,7 +152,9 @@ class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
   @override
   Future<AuthResult> login(String email, String password) async {
     if (email.trim().isEmpty || password.trim().isEmpty) {
-      return const AuthValidationFailure(message: 'Email and password cannot be empty.');
+      return const AuthValidationFailure(
+        message: 'Email and password cannot be empty.',
+      );
     }
 
     await Future.delayed(const Duration(milliseconds: 300));
@@ -163,7 +171,8 @@ class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
       id: 'u_${DateTime.now().millisecondsSinceEpoch}',
       name: name,
       email: email,
-      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+      avatarUrl:
+          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
       role: 'Workspace Member',
     );
     notifyListeners();
@@ -176,12 +185,17 @@ class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
     required String email,
     required String password,
   }) async {
-    if (name.trim().isEmpty || email.trim().isEmpty || password.trim().isEmpty) {
-      return const AuthValidationFailure(message: 'Name, email, and password are required.');
+    if (name.trim().isEmpty ||
+        email.trim().isEmpty ||
+        password.trim().isEmpty) {
+      return const AuthValidationFailure(
+        message: 'Name, email, and password are required.',
+      );
     }
 
     await Future.delayed(const Duration(milliseconds: 400));
-    final token = 'macro_jwt_token_signup_${DateTime.now().millisecondsSinceEpoch}';
+    final token =
+        'macro_jwt_token_signup_${DateTime.now().millisecondsSinceEpoch}';
 
     await _storage.write('auth_token', token);
     await _storage.write('user_name', name);
@@ -193,7 +207,8 @@ class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
       id: 'u_new_${DateTime.now().millisecondsSinceEpoch}',
       name: name,
       email: email,
-      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+      avatarUrl:
+          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
       role: 'Workspace Member',
     );
     notifyListeners();
@@ -206,7 +221,9 @@ class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
     if (email.trim().isEmpty || !email.contains('@')) {
       return const PasswordResetInvalidEmail();
     }
-    return PasswordResetSuccess(message: 'Password reset link dispatched to $email.');
+    return PasswordResetSuccess(
+      message: 'Password reset link dispatched to $email.',
+    );
   }
 
   @override

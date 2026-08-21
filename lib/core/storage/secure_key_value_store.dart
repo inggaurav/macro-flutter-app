@@ -1,6 +1,17 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+class SecureStorageException implements Exception {
+  final String message;
+  final dynamic cause;
+
+  const SecureStorageException(this.message, [this.cause]);
+
+  @override
+  String toString() =>
+      'SecureStorageException: $message ${cause != null ? '($cause)' : ''}';
+}
+
 abstract interface class SecureKeyValueStore {
   Future<void> write(String key, String value);
   Future<String?> read(String key);
@@ -19,20 +30,24 @@ class PlatformSecureStorageService implements SecureKeyValueStore {
     try {
       await _storage.write(key: key, value: value);
     } catch (e) {
-      debugPrint('PlatformSecureStorage write error: $e');
-      InMemorySecureStorageService.fallbackStorage[key] = value;
+      if (kDebugMode) debugPrint('PlatformSecureStorage write error: $e');
+      throw SecureStorageException(
+        'Failed to write key "$key" to platform secure storage.',
+        e,
+      );
     }
   }
 
   @override
   Future<String?> read(String key) async {
     try {
-      final value = await _storage.read(key: key);
-      if (value != null) return value;
-      return InMemorySecureStorageService.fallbackStorage[key];
+      return await _storage.read(key: key);
     } catch (e) {
-      debugPrint('PlatformSecureStorage read error: $e');
-      return InMemorySecureStorageService.fallbackStorage[key];
+      if (kDebugMode) debugPrint('PlatformSecureStorage read error: $e');
+      throw SecureStorageException(
+        'Failed to read key "$key" from platform secure storage.',
+        e,
+      );
     }
   }
 
@@ -41,9 +56,12 @@ class PlatformSecureStorageService implements SecureKeyValueStore {
     try {
       await _storage.delete(key: key);
     } catch (e) {
-      debugPrint('PlatformSecureStorage delete error: $e');
+      if (kDebugMode) debugPrint('PlatformSecureStorage delete error: $e');
+      throw SecureStorageException(
+        'Failed to delete key "$key" from platform secure storage.',
+        e,
+      );
     }
-    InMemorySecureStorageService.fallbackStorage.remove(key);
   }
 
   @override
@@ -51,15 +69,17 @@ class PlatformSecureStorageService implements SecureKeyValueStore {
     try {
       await _storage.deleteAll();
     } catch (e) {
-      debugPrint('PlatformSecureStorage clear error: $e');
+      if (kDebugMode) debugPrint('PlatformSecureStorage clear error: $e');
+      throw SecureStorageException(
+        'Failed to clear platform secure storage.',
+        e,
+      );
     }
-    InMemorySecureStorageService.fallbackStorage.clear();
   }
 }
 
 class InMemorySecureStorageService implements SecureKeyValueStore {
-  static final Map<String, String> fallbackStorage = {};
-  final Map<String, String> _data = fallbackStorage;
+  final Map<String, String> _data = {};
 
   @override
   Future<void> write(String key, String value) async {

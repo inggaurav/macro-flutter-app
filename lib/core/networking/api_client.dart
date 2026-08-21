@@ -5,6 +5,12 @@ import 'package:http/http.dart' as http;
 import '../../config/app_config.dart';
 import '../storage/secure_key_value_store.dart';
 
+abstract interface class AuthTokenProvider {
+  Future<String?> getAccessToken();
+  Future<bool> refreshSession();
+  Future<void> clearSession();
+}
+
 sealed class ApiFailure {
   final String message;
   final int? statusCode;
@@ -21,7 +27,7 @@ class NetworkFailure extends ApiFailure {
 class TimeoutFailure extends ApiFailure {
   const TimeoutFailure([
     super.message = 'Request timed out.',
-    super.statusCode,
+    super.statusCode = 408,
   ]);
 }
 
@@ -97,18 +103,25 @@ class ApiResponse<T> {
 class ApiClient {
   final AppConfig appConfig;
   final SecureKeyValueStore storage;
+  final AuthTokenProvider? tokenProvider;
   final http.Client client;
   final Duration timeout;
+
+  bool _isRefreshing = false;
 
   ApiClient({
     required this.appConfig,
     required this.storage,
+    this.tokenProvider,
     http.Client? client,
     this.timeout = const Duration(seconds: 15),
   }) : client = client ?? http.Client();
 
   Future<Map<String, String>> _buildHeaders() async {
-    final token = await storage.read('auth_token');
+    final token = tokenProvider != null
+        ? await tokenProvider!.getAccessToken()
+        : await storage.read('auth_token');
+
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
@@ -123,38 +136,77 @@ class ApiClient {
     final uri = Uri.parse(
       '${appConfig.apiBaseUrl}$path',
     ).replace(queryParameters: queryParams);
-    return _request(() async {
+    return _executeWithRefresh(() async {
       final headers = await _buildHeaders();
       return await client.get(uri, headers: headers).timeout(timeout);
-    });
+    }, isRefreshPath: path.contains('/auth/refresh'));
   }
 
   Future<ApiResponse<dynamic>> post(String path, {dynamic body}) async {
     final uri = Uri.parse('${appConfig.apiBaseUrl}$path');
-    return _request(() async {
+    return _executeWithRefresh(() async {
       final headers = await _buildHeaders();
       return await client
           .post(uri, headers: headers, body: jsonEncode(body))
           .timeout(timeout);
-    });
+    }, isRefreshPath: path.contains('/auth/refresh'));
   }
 
   Future<ApiResponse<dynamic>> put(String path, {dynamic body}) async {
     final uri = Uri.parse('${appConfig.apiBaseUrl}$path');
-    return _request(() async {
+    return _executeWithRefresh(() async {
       final headers = await _buildHeaders();
       return await client
           .put(uri, headers: headers, body: jsonEncode(body))
           .timeout(timeout);
-    });
+    }, isRefreshPath: path.contains('/auth/refresh'));
   }
 
   Future<ApiResponse<dynamic>> delete(String path) async {
     final uri = Uri.parse('${appConfig.apiBaseUrl}$path');
-    return _request(() async {
+    return _executeWithRefresh(() async {
       final headers = await _buildHeaders();
       return await client.delete(uri, headers: headers).timeout(timeout);
-    });
+    }, isRefreshPath: path.contains('/auth/refresh'));
+  }
+
+  Future<ApiResponse<dynamic>> _executeWithRefresh(
+    Future<http.Response> Function() call, {
+    required bool isRefreshPath,
+  }) async {
+    final initialResponse = await _request(call);
+
+    // If initial response is 401 Unauthorized and not already refreshing or executing refresh path
+    if (initialResponse.statusCode == 401 &&
+        !isRefreshPath &&
+        tokenProvider != null &&
+        !_isRefreshing) {
+      _isRefreshing = true;
+      try {
+        final refreshSuccess = await tokenProvider!.refreshSession();
+        _isRefreshing = false;
+
+        if (refreshSuccess) {
+          // Retry original request ONCE with new access token
+          return await _request(call);
+        } else {
+          await tokenProvider!.clearSession();
+          return const ApiResponse.failure(
+            UnauthorizedFailure('Session expired. Please log in again.'),
+            statusCode: 401,
+          );
+        }
+      } catch (e) {
+        _isRefreshing = false;
+        await tokenProvider!.clearSession();
+        return ApiResponse.failure(
+          UnauthorizedFailure('Session refresh exception: $e'),
+          statusCode: 401,
+        );
+      }
+    }
+
+    return initialResponse;
   }
 
   Future<ApiResponse<dynamic>> _request(

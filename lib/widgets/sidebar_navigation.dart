@@ -257,7 +257,10 @@ class SidebarNavigation extends StatelessWidget {
           selected: isSelected,
           selectedTileColor: appConfig.primaryColor.withOpacity(0.15),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 0,
+          ),
           dense: true,
           leading: Icon(
             isSelected ? selectedIcon : icon,
@@ -274,7 +277,10 @@ class SidebarNavigation extends StatelessWidget {
           ),
           trailing: badgeCount > 0
               ? Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? appConfig.primaryColor
