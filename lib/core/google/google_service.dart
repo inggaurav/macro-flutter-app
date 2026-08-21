@@ -213,8 +213,7 @@ class GoogleService extends ChangeNotifier {
     _setState(GoogleConnectionState.linking, null);
 
     final uri = buildGoogleSsoUri();
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (await _launchAuthorizationUri(uri)) {
       return true;
     }
 
@@ -222,6 +221,40 @@ class GoogleService extends ChangeNotifier {
       GoogleConnectionState.error,
       'Could not open Macro Google SSO authorization service.',
     );
+    return false;
+  }
+
+  Future<bool> _launchAuthorizationUri(Uri uri) async {
+    try {
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (launched) {
+        return true;
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('Authorization launch exception: $e');
+    }
+
+    try {
+      final launched = await launchUrl(uri, mode: LaunchMode.platformDefault);
+      if (launched) {
+        return true;
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Authorization platform launch exception: $e');
+      }
+    }
+
+    if (await canLaunchUrl(uri)) {
+      final launched = await launchUrl(uri);
+      if (launched) {
+        return true;
+      }
+    }
+
     return false;
   }
 
@@ -255,8 +288,7 @@ class GoogleService extends ChangeNotifier {
             data['authorization_url']?.toString() ?? data['url']?.toString();
         if (authUrl != null && authUrl.isNotEmpty) {
           final authUri = Uri.parse(authUrl);
-          if (await canLaunchUrl(authUri)) {
-            await launchUrl(authUri, mode: LaunchMode.externalApplication);
+          if (await _launchAuthorizationUri(authUri)) {
             return true;
           }
         }
