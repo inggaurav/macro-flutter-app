@@ -25,13 +25,13 @@ class ProfileScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppTheme.bgDark,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      body: RefreshIndicator(
+        onRefresh: googleService.checkConnectionStatus,
+        child: ListView(
+          padding: const EdgeInsets.all(24),
           children: [
             const Text(
-              'User Profile & Settings',
+              'Profile & Connected Services',
               style: TextStyle(
                 color: AppTheme.textPrimary,
                 fontSize: 22,
@@ -40,15 +40,13 @@ class ProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Manage your session and workspace preferences for ${appConfig.workspaceName}.',
+              'Manage your workspace session, Gmail accounts and Google Calendar access.',
               style: const TextStyle(
                 color: AppTheme.textSecondary,
                 fontSize: 13,
               ),
             ),
             const SizedBox(height: 24),
-
-            // Profile Card
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -62,7 +60,7 @@ class ProfileScreen extends StatelessWidget {
                     radius: 30,
                     backgroundColor: appConfig.primaryColor,
                     child: Text(
-                      (user?.name ?? 'U').substring(0, 1).toUpperCase(),
+                      _initial(user?.name),
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -82,36 +80,19 @@ class ProfileScreen extends StatelessWidget {
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          user?.email ?? 'Unauthenticated',
-                          style: const TextStyle(
-                            color: AppTheme.textMuted,
-                            fontSize: 12,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: appConfig.primaryColor.withValues(
-                              alpha: 0.2,
+                        if ((user?.email ?? '').isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            user!.email,
+                            style: const TextStyle(
+                              color: AppTheme.textMuted,
+                              fontSize: 12,
                             ),
-                            borderRadius: BorderRadius.circular(4),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          child: Text(
-                            (user?.role ?? 'MEMBER').toUpperCase(),
-                            style: TextStyle(
-                              color: appConfig.primaryColor,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
+                        ],
                       ],
                     ),
                   ),
@@ -119,8 +100,6 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-
-            // Google Workspace Integration Card (Live Server State)
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -136,12 +115,12 @@ class ProfileScreen extends StatelessWidget {
                       const Icon(
                         Icons.g_mobiledata_rounded,
                         color: AppColors.info,
-                        size: 24,
+                        size: 26,
                       ),
                       const SizedBox(width: 8),
                       const Expanded(
                         child: Text(
-                          'Gmail & Google Workspace Sync',
+                          'Google — Gmail & Calendar',
                           style: TextStyle(
                             color: AppColors.textPrimary,
                             fontWeight: FontWeight.bold,
@@ -149,59 +128,157 @@ class ProfileScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-
-                      // Live Status Badge
                       _buildGoogleStatusBadge(context, googleService.state),
                     ],
                   ),
                   const SizedBox(height: 12),
-
-                  if (googleService.isConnected) ...[
+                  Text(
+                    _connectionDescription(googleService),
+                    style: AppTypography.caption(context),
+                  ),
+                  if (googleService.accounts.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    ...googleService.accounts.map(
+                      (account) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 16,
+                              backgroundImage: account.photoUrl != null
+                                  ? NetworkImage(account.photoUrl!)
+                                  : null,
+                              child: account.photoUrl == null
+                                  ? const Icon(Icons.mail_outline, size: 16)
+                                  : null,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    account.emailAddress,
+                                    style: AppTypography.body(
+                                      context,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    '${account.isPrimary ? 'Primary • ' : ''}${account.syncStatus}${account.needsReauth ? ' • Reauthorization required' : ''}',
+                                    style: AppTypography.caption(context),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              tooltip: 'Disconnect this Gmail account',
+                              onPressed: () =>
+                                  googleService.disconnectGoogle(account.id),
+                              icon: const Icon(
+                                Icons.link_off,
+                                size: 18,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (googleService.calendars.isNotEmpty) ...[
+                    const Divider(color: AppColors.borderDark),
                     Text(
-                      'Account: ${googleService.connectedEmail ?? "Linked"}',
-                      style: AppTypography.body(
+                      '${googleService.calendars.length} Google Calendar${googleService.calendars.length == 1 ? '' : 's'} available${googleService.calendarSyncing ? ' • syncing' : ''}',
+                      style: AppTypography.bodySmall(
                         context,
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Gmail Inbox Sync and Workspace Calendar Events active.',
-                      style: AppTypography.caption(context),
-                    ),
-                    const SizedBox(height: 12),
-                    OutlinedButton(
-                      onPressed: () => googleService.disconnectGoogle(),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppColors.danger),
-                      ),
-                      child: const Text(
-                        'Disconnect Account',
-                        style: TextStyle(color: AppColors.danger, fontSize: 12),
-                      ),
-                    ),
-                  ] else ...[
-                    Text(
-                      googleService.errorMessage ??
-                          'No Google Workspace account is linked to this Macro session.',
-                      style: AppTypography.caption(context),
-                    ),
-                    const SizedBox(height: 12),
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.open_in_browser, size: 16),
-                      label: const Text('Connect Google Workspace'),
-                      onPressed: () => googleService.initiateGoogleOAuth(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: appConfig.primaryColor,
+                    const SizedBox(height: 8),
+                    ...googleService.calendars.take(4).map(
+                      (calendar) => Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Row(
+                          children: [
+                            Icon(
+                              calendar.isPrimary
+                                  ? Icons.calendar_month
+                                  : Icons.calendar_today_outlined,
+                              size: 16,
+                              color: AppColors.info,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '${calendar.name} • ${calendar.emailAddress}',
+                                style: AppTypography.caption(context),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (!calendar.isWritable)
+                              Text(
+                                'Read only',
+                                style: AppTypography.caption(context),
+                              ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
+                  const SizedBox(height: 14),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      if (googleService.state ==
+                              GoogleConnectionState.notConnected ||
+                          googleService.state == GoogleConnectionState.error ||
+                          googleService.state ==
+                              GoogleConnectionState.needsReauth)
+                        ElevatedButton.icon(
+                          icon: const Icon(Icons.add_link, size: 16),
+                          label: Text(
+                            googleService.state ==
+                                    GoogleConnectionState.needsReauth
+                                ? 'Reconnect Google'
+                                : 'Connect Gmail & Calendar',
+                          ),
+                          onPressed: () =>
+                              googleService.initiateGoogleOAuth(
+                                includeCalendar: true,
+                              ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: appConfig.primaryColor,
+                          ),
+                        ),
+                      if (googleService.accounts.isNotEmpty &&
+                          !googleService.hasCalendarAccess)
+                        OutlinedButton.icon(
+                          icon: const Icon(Icons.calendar_month, size: 16),
+                          label: const Text('Enable Google Calendar'),
+                          onPressed: () =>
+                              googleService.initiateGoogleOAuth(
+                                includeCalendar: true,
+                              ),
+                        ),
+                      if (googleService.accounts.isNotEmpty)
+                        OutlinedButton.icon(
+                          icon: const Icon(Icons.add, size: 16),
+                          label: const Text('Add another Gmail'),
+                          onPressed: () =>
+                              googleService.initiateGoogleOAuth(
+                                includeCalendar: true,
+                              ),
+                        ),
+                    ],
+                  ),
                 ],
               ),
             ),
             const SizedBox(height: 24),
-
-            // Session Security Telemetry Card
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -221,7 +298,7 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        'Session Security & Environment',
+                        'Session Security',
                         style: TextStyle(
                           color: AppTheme.textPrimary,
                           fontWeight: FontWeight.bold,
@@ -232,7 +309,7 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   _buildTelemetryRow(
-                    'Authentication State',
+                    'Authentication',
                     authRepository.isAuthenticated
                         ? 'AUTHENTICATED'
                         : 'UNAUTHENTICATED',
@@ -241,15 +318,13 @@ class ProfileScreen extends StatelessWidget {
                         : AppColors.danger,
                   ),
                   _buildTelemetryRow(
-                    'Key Store Provider',
-                    'PlatformSecureStorageService',
+                    'Credential storage',
+                    'Platform secure storage',
                     AppTheme.textPrimary,
                   ),
                   _buildTelemetryRow(
-                    'Onboarding Status',
-                    authRepository.hasCompletedOnboarding
-                        ? 'COMPLETED'
-                        : 'PENDING',
+                    'Refresh session',
+                    authRepository.refreshToken != null ? 'AVAILABLE' : 'N/A',
                     AppTheme.textSecondary,
                   ),
                   const SizedBox(height: 16),
@@ -258,12 +333,10 @@ class ProfileScreen extends StatelessWidget {
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.logout, color: AppColors.danger),
                       label: const Text(
-                        'Sign Out of Workspace',
+                        'Sign Out',
                         style: TextStyle(color: AppColors.danger),
                       ),
-                      onPressed: () async {
-                        await authRepository.logout();
-                      },
+                      onPressed: authRepository.logout,
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: AppColors.danger),
                         padding: const EdgeInsets.symmetric(vertical: 12),
@@ -277,6 +350,28 @@ class ProfileScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _initial(String? name) {
+    final value = name?.trim() ?? '';
+    return value.isEmpty ? 'U' : value.substring(0, 1).toUpperCase();
+  }
+
+  String _connectionDescription(GoogleService service) {
+    switch (service.state) {
+      case GoogleConnectionState.connected:
+        return service.hasCalendarAccess
+            ? 'Gmail is connected and Google Calendar access is active.'
+            : 'Gmail is connected. Enable Calendar to sync events and meetings.';
+      case GoogleConnectionState.linking:
+        return 'Waiting for Google authorization to complete.';
+      case GoogleConnectionState.needsReauth:
+        return 'Google revoked or expired the grant. Reconnect to resume sync.';
+      case GoogleConnectionState.error:
+        return service.errorMessage ?? 'Google connection could not be verified.';
+      case GoogleConnectionState.notConnected:
+        return 'Connect a Google account to sync Gmail, Contacts and Calendar through the Macro backend.';
+    }
   }
 
   Widget _buildGoogleStatusBadge(
@@ -296,22 +391,22 @@ class ProfileScreen extends StatelessWidget {
       case GoogleConnectionState.linking:
         bg = AppColors.warning.withValues(alpha: 0.15);
         fg = AppColors.warning;
-        text = 'Linking...';
+        text = 'Connecting';
         break;
       case GoogleConnectionState.needsReauth:
         bg = AppColors.warning.withValues(alpha: 0.15);
         fg = AppColors.warning;
-        text = 'Needs Reauth';
+        text = 'Reconnect';
         break;
       case GoogleConnectionState.error:
         bg = AppColors.danger.withValues(alpha: 0.15);
         fg = AppColors.danger;
-        text = 'Sync Error';
+        text = 'Error';
         break;
       case GoogleConnectionState.notConnected:
         bg = AppColors.surfaceElevated;
         fg = AppColors.textMuted;
-        text = 'Not Connected';
+        text = 'Not connected';
         break;
     }
 
@@ -329,18 +424,23 @@ class ProfileScreen extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+            ),
           ),
-          Text(
-            value,
-            style: TextStyle(
-              color: valueColor,
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
+          const SizedBox(width: 12),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: TextStyle(
+                color: valueColor,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
