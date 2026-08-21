@@ -48,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     final googleService = Provider.of<GoogleService>(context, listen: false);
-    final launched = await googleService.initiateGoogleOAuth();
+    final launched = await googleService.initiateGoogleSso();
 
     if (mounted) {
       setState(() => _isLoading = false);
@@ -248,10 +248,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Password or API Token',
-                      style: AppTypography.caption(context),
-                    ),
+                    Text('Password', style: AppTypography.caption(context)),
                     GestureDetector(
                       onTap: widget.onNavigateToForgotPassword,
                       child: Text(

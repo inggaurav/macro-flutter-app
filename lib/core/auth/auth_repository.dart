@@ -96,6 +96,8 @@ abstract interface class AuthRepository {
 }
 
 class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
+  static const _localAuthHost = 'local://macro-auth';
+
   final SecureKeyValueStore _storage;
   final MacroServiceConfig _config;
 
@@ -189,6 +191,10 @@ class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
       );
     }
 
+    if (_usesLocalAuth) {
+      return _loginWithLocalPassword(email, password);
+    }
+
     try {
       final response = await http
           .post(
@@ -235,6 +241,10 @@ class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
       return const AuthValidationFailure(
         message: 'Name, email, and password are required.',
       );
+    }
+
+    if (_usesLocalAuth) {
+      return _signupLocally(name: name, email: email, password: password);
     }
 
     try {
@@ -299,6 +309,10 @@ class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
   }
 
   Future<AuthResult> _validateTokenWithServer(String token) async {
+    if (_usesLocalAuth) {
+      return _validateLocalToken(token);
+    }
+
     try {
       // Verified Upstream Endpoint: GET authHost/user/me
       final response = await http
@@ -343,5 +357,146 @@ class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
     _currentUser = null;
     notifyListeners();
     return AuthInvalidCredentials(message: reason);
+  }
+
+  bool get _usesLocalAuth => _config.authHost == _localAuthHost;
+
+  String _normalizeEmail(String email) => email.trim().toLowerCase();
+
+  String _localUserKey(String email) => 'local_user:${_normalizeEmail(email)}';
+
+  String _localTokenKey(String token) => 'local_token:$token';
+
+  String _localTokenFor(String email) {
+    final normalized = _normalizeEmail(email);
+    final encoded = base64Url
+        .encode(utf8.encode(normalized))
+        .replaceAll('=', '');
+    return 'local_macro_$encoded';
+  }
+
+  UserProfile _userFromStoredJson(String jsonString) {
+    final data = jsonDecode(jsonString) as Map<String, dynamic>;
+    return UserProfile(
+      id: data['id']?.toString() ?? 'local_user',
+      name: data['name']?.toString() ?? 'Workspace Member',
+      email: data['email']?.toString() ?? 'user@macro.local',
+      avatarUrl: data['avatar_url']?.toString() ?? '',
+      role: data['role']?.toString() ?? 'Workspace Owner',
+    );
+  }
+
+  Future<void> _persistLocalSession({
+    required UserProfile user,
+    required String token,
+  }) async {
+    await _storage.write('auth_token', token);
+    await _storage.write('user_name', user.name);
+    await _storage.write('user_email', user.email);
+    await _storage.write('has_onboarded', 'true');
+
+    _authToken = token;
+    _isAuthenticated = true;
+    _hasCompletedOnboarding = true;
+    _currentUser = user;
+    notifyListeners();
+  }
+
+  Future<AuthResult> _signupLocally({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    if (!email.contains('@')) {
+      return const AuthValidationFailure(
+        message: 'Please enter a valid work email address.',
+      );
+    }
+
+    if (password.trim().length < 8) {
+      return const AuthValidationFailure(
+        message: 'Password must be at least 8 characters.',
+      );
+    }
+
+    final normalizedEmail = _normalizeEmail(email);
+    final userKey = _localUserKey(normalizedEmail);
+    final existingUser = await _storage.read(userKey);
+
+    if (existingUser != null) {
+      return const AuthValidationFailure(
+        message: 'An account already exists for this email. Please sign in.',
+      );
+    }
+
+    final token = _localTokenFor(normalizedEmail);
+    final user = UserProfile(
+      id: 'local_${DateTime.now().millisecondsSinceEpoch}',
+      name: name.trim(),
+      email: normalizedEmail,
+      avatarUrl: '',
+      role: 'Workspace Owner',
+    );
+
+    final payload = jsonEncode({
+      'id': user.id,
+      'name': user.name,
+      'email': user.email,
+      'avatar_url': user.avatarUrl,
+      'role': user.role,
+      'password': password,
+      'workspace_name': '${name.trim().split(' ').first} Workspace',
+    });
+
+    await _storage.write(userKey, payload);
+    await _storage.write(_localTokenKey(token), userKey);
+    await _persistLocalSession(user: user, token: token);
+
+    return AuthSuccess(user: user, token: token);
+  }
+
+  Future<AuthResult> _loginWithLocalPassword(
+    String email,
+    String password,
+  ) async {
+    final userJson = await _storage.read(_localUserKey(email));
+
+    if (userJson == null) {
+      return const AuthInvalidCredentials(
+        message: 'No local account found. Create a workspace account first.',
+      );
+    }
+
+    final data = jsonDecode(userJson) as Map<String, dynamic>;
+    if (data['password']?.toString() != password) {
+      return const AuthInvalidCredentials(message: 'Incorrect password.');
+    }
+
+    final user = _userFromStoredJson(userJson);
+    final token = _localTokenFor(user.email);
+    await _storage.write(_localTokenKey(token), _localUserKey(user.email));
+    await _persistLocalSession(user: user, token: token);
+
+    return AuthSuccess(user: user, token: token);
+  }
+
+  Future<AuthResult> _validateLocalToken(String token) async {
+    final userKey = await _storage.read(_localTokenKey(token));
+    if (userKey == null) {
+      return const AuthInvalidCredentials(message: 'Local session expired.');
+    }
+
+    final userJson = await _storage.read(userKey);
+    if (userJson == null) {
+      return const AuthInvalidCredentials(message: 'Local account not found.');
+    }
+
+    final user = _userFromStoredJson(userJson);
+    _authToken = token;
+    _isAuthenticated = true;
+    _currentUser = user;
+    notifyListeners();
+
+    return AuthSuccess(user: user, token: token);
   }
 }

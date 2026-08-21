@@ -67,4 +67,19 @@ class MacroServiceConfig {
       ),
     );
   }
+
+  factory MacroServiceConfig.localDevelopment() {
+    return const MacroServiceConfig(
+      authHost: 'local://macro-auth',
+      storageHost: 'local://macro-storage',
+      emailHost: 'local://macro-email',
+      cognitionHost: 'local://macro-cognition',
+      notificationHost: 'local://macro-notifications',
+      connectionGateway: 'local://macro-realtime',
+      contactsHost: 'local://macro-contacts',
+      searchHost: 'local://macro-search',
+      staticFilesHost: 'local://macro-static-files',
+      scheduledActionsHost: 'local://macro-scheduled-actions',
+    );
+  }
 }

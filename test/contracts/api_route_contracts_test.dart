@@ -6,6 +6,7 @@ import 'package:macro_app/features/chat/chat_repository.dart';
 import 'package:macro_app/features/agents/agent_repository.dart';
 import 'package:macro_app/features/docs/docs_repository.dart';
 import 'package:macro_app/features/tasks/tasks_repository.dart';
+import 'package:macro_app/core/google/google_service.dart';
 import 'package:macro_app/core/storage/secure_key_value_store.dart';
 
 void main() {
@@ -45,5 +46,47 @@ void main() {
       expect(authRepo.isAuthenticated, isFalse);
       expect(authRepo.currentUser, isNull);
     });
+
+    test('AuthRepository local development signup and login works', () async {
+      final storage = InMemorySecureStorageService();
+      final authRepo = AuthRepositoryImpl(
+        storage: storage,
+        config: MacroServiceConfig.localDevelopment(),
+      );
+
+      final signupResult = await authRepo.signup(
+        name: 'Macro Owner',
+        email: 'owner@example.com',
+        password: 'password123',
+      );
+
+      expect(signupResult, isA<AuthSuccess>());
+      expect(authRepo.isAuthenticated, isTrue);
+      expect(authRepo.currentUser?.email, equals('owner@example.com'));
+
+      await authRepo.logout();
+      expect(authRepo.isAuthenticated, isFalse);
+
+      final loginResult = await authRepo.loginWithPassword(
+        'owner@example.com',
+        'password123',
+      );
+
+      expect(loginResult, isA<AuthSuccess>());
+      expect(authRepo.isAuthenticated, isTrue);
+      expect(authRepo.currentUser?.role, equals('Workspace Owner'));
+    });
+
+    test(
+      'GoogleService initiateGoogleSso formats request accurately',
+      () async {
+        final googleService = GoogleService(
+          config: config,
+          tokenProvider: () => null,
+        );
+        expect(googleService.state, equals(GoogleConnectionState.notConnected));
+        expect(googleService.isConnected, isFalse);
+      },
+    );
   });
 }

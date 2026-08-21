@@ -77,6 +77,7 @@ class GoogleService extends ChangeNotifier {
       List.unmodifiable(_calendarEvents);
   String? get errorMessage => _errorMessage;
 
+  /// Check live Gmail connection status from Macro auth-service
   Future<void> checkConnectionStatus() async {
     final token = _tokenProvider();
     if (token == null || token.isEmpty) {
@@ -118,22 +119,28 @@ class GoogleService extends ChangeNotifier {
     }
   }
 
-  /// Initiates Google OAuth Sign-In or Account Creation for unauthenticated users
-  Future<bool> initiateGoogleLoginOrSignup() async {
+  /// Initiates verified Macro Mobile Google SSO login/signup via POST authHost/login/sso
+  Future<bool> initiateGoogleSso() async {
     _setState(GoogleConnectionState.linking, null);
 
     try {
-      // Query unauthenticated Google OAuth initiation endpoint
+      // Verified Upstream Mobile Route: POST authHost/login/sso
       final response = await http
           .post(
-            Uri.parse('${_config.authHost}/oauth/google'),
+            Uri.parse('${_config.authHost}/login/sso'),
             headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'provider': 'google_gmail',
+              'client_type': 'mobile',
+              'redirect_uri': 'macro://login',
+            }),
           )
           .timeout(const Duration(seconds: 4));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final authUrl = data['authorization_url']?.toString();
+        final authUrl =
+            data['authorization_url']?.toString() ?? data['url']?.toString();
         if (authUrl != null && authUrl.isNotEmpty) {
           final uri = Uri.parse(authUrl);
           if (await canLaunchUrl(uri)) {
@@ -143,11 +150,13 @@ class GoogleService extends ChangeNotifier {
         }
       }
     } catch (e) {
-      if (kDebugMode) print('initiateGoogleLoginOrSignup exception: $e');
+      if (kDebugMode) print('initiateGoogleSso exception: $e');
     }
 
-    // Direct auth service Google entry point fallback
-    final directUri = Uri.parse('${_config.authHost}/oauth/google');
+    // Direct auth service Google SSO fallback URL
+    final directUri = Uri.parse(
+      '${_config.authHost}/login/sso?provider=google_gmail',
+    );
     if (await canLaunchUrl(directUri)) {
       await launchUrl(directUri, mode: LaunchMode.externalApplication);
       return true;
@@ -155,17 +164,16 @@ class GoogleService extends ChangeNotifier {
 
     _setState(
       GoogleConnectionState.error,
-      'Could not open Google authentication service.',
+      'Could not open Macro Google SSO authorization service.',
     );
     return false;
   }
 
-  /// Link Google account to an existing authenticated Macro session or initiate OAuth for unauthenticated users
+  /// Link Gmail account to an existing authenticated Macro session via POST authHost/link/gmail
   Future<bool> initiateGoogleOAuth() async {
     final token = _tokenProvider();
     if (token == null || token.isEmpty) {
-      // Unauthenticated user tapping Google button on Login/Signup screen -> trigger LoginOrSignup flow!
-      return initiateGoogleLoginOrSignup();
+      return initiateGoogleSso();
     }
 
     _setState(GoogleConnectionState.linking, null);

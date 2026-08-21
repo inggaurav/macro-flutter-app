@@ -349,7 +349,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                 listen: false,
                               );
                               final launched = await googleService
-                                  .initiateGoogleLoginOrSignup();
+                                  .initiateGoogleSso();
                               if (mounted && launched) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(

@@ -36,8 +36,14 @@ import 'features/agents/agent_repository.dart';
 import 'features/agents/ai_chat_controller.dart';
 
 void main() {
-  final serviceConfig = MacroServiceConfig.production();
-  final authRepo = AuthRepository();
+  const useRemoteServices = bool.fromEnvironment(
+    'MACRO_USE_REMOTE_SERVICES',
+    defaultValue: false,
+  );
+  final serviceConfig = useRemoteServices
+      ? MacroServiceConfig.production()
+      : MacroServiceConfig.localDevelopment();
+  final authRepo = AuthRepository(config: serviceConfig);
   final realtimeClient = MacroRealtimeClient(
     gatewayUrl: serviceConfig.connectionGateway,
     tokenProvider: () => authRepo.authToken,
@@ -140,6 +146,7 @@ class _MacroAppState extends State<MacroApp> {
         return SignupScreen(
           appConfig: appConfig,
           authRepository: authRepo,
+          onSignupSuccess: () => setState(() => _authSubRoute = 'login'),
           onNavToLogin: () => setState(() => _authSubRoute = 'login'),
         );
       case 'forgot':
