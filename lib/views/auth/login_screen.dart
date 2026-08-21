@@ -378,7 +378,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(width: 8),
                         Flexible(
                           child: Text(
-                            'Connect Google Workspace',
+                            'Connect Gmail / Google Workspace',
                             style: AppTypography.body(
                               context,
                               color: AppColors.textPrimary,

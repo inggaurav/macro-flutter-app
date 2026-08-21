@@ -141,7 +141,7 @@ class ProfileScreen extends StatelessWidget {
                       const SizedBox(width: 8),
                       const Expanded(
                         child: Text(
-                          'Google Workspace & Calendar Sync',
+                          'Gmail & Google Workspace Sync',
                           style: TextStyle(
                             color: AppColors.textPrimary,
                             fontWeight: FontWeight.bold,
