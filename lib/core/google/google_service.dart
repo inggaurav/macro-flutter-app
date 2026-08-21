@@ -118,14 +118,54 @@ class GoogleService extends ChangeNotifier {
     }
   }
 
+  /// Initiates Google OAuth Sign-In or Account Creation for unauthenticated users
+  Future<bool> initiateGoogleLoginOrSignup() async {
+    _setState(GoogleConnectionState.linking, null);
+
+    try {
+      // Query unauthenticated Google OAuth initiation endpoint
+      final response = await http
+          .post(
+            Uri.parse('${_config.authHost}/oauth/google'),
+            headers: {'Content-Type': 'application/json'},
+          )
+          .timeout(const Duration(seconds: 4));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final authUrl = data['authorization_url']?.toString();
+        if (authUrl != null && authUrl.isNotEmpty) {
+          final uri = Uri.parse(authUrl);
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+            return true;
+          }
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) print('initiateGoogleLoginOrSignup exception: $e');
+    }
+
+    // Direct auth service Google entry point fallback
+    final directUri = Uri.parse('${_config.authHost}/oauth/google');
+    if (await canLaunchUrl(directUri)) {
+      await launchUrl(directUri, mode: LaunchMode.externalApplication);
+      return true;
+    }
+
+    _setState(
+      GoogleConnectionState.error,
+      'Could not open Google authentication service.',
+    );
+    return false;
+  }
+
+  /// Link Google account to an existing authenticated Macro session or initiate OAuth for unauthenticated users
   Future<bool> initiateGoogleOAuth() async {
     final token = _tokenProvider();
     if (token == null || token.isEmpty) {
-      _setState(
-        GoogleConnectionState.error,
-        'Unauthenticated: Must sign in to Macro before connecting Google.',
-      );
-      return false;
+      // Unauthenticated user tapping Google button on Login/Signup screen -> trigger LoginOrSignup flow!
+      return initiateGoogleLoginOrSignup();
     }
 
     _setState(GoogleConnectionState.linking, null);

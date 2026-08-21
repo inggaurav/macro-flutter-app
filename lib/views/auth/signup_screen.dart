@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/app_config.dart';
+import '../../core/google/google_service.dart';
 import '../../design/components/app_button.dart';
 import '../../design/tokens/app_colors.dart';
 import '../../design/tokens/app_radius.dart';
@@ -306,6 +307,88 @@ class _SignupScreenState extends State<SignupScreen> {
                     onPressed: _handleSignup,
                     isLoading: _isLoading,
                     isFullWidth: true,
+                  ),
+
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // Divider
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Divider(color: AppColors.borderDark),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                        ),
+                        child: Text(
+                          'OR',
+                          style: AppTypography.caption(
+                            context,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                      ),
+                      const Expanded(
+                        child: Divider(color: AppColors.borderDark),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // Google OAuth Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 44,
+                    child: OutlinedButton(
+                      onPressed: _isLoading
+                          ? null
+                          : () async {
+                              final googleService = Provider.of<GoogleService>(
+                                context,
+                                listen: false,
+                              );
+                              final launched = await googleService
+                                  .initiateGoogleLoginOrSignup();
+                              if (mounted && launched) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Opening Google Workspace authorization in browser...',
+                                    ),
+                                    duration: Duration(seconds: 4),
+                                  ),
+                                );
+                              }
+                            },
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppColors.borderDark),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.g_mobiledata,
+                            size: 24,
+                            color: AppColors.info,
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              'Sign Up with Gmail / Google Workspace',
+                              style: AppTypography.body(
+                                context,
+                                color: AppColors.textPrimary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
 
                   const SizedBox(height: AppSpacing.x2l),
