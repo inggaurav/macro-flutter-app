@@ -40,7 +40,7 @@ void main() {
     defaultValue: true,
   );
   final serviceConfig = useRemoteServices
-      ? MacroServiceConfig.production()
+      ? MacroServiceConfig.liveHostinger()
       : MacroServiceConfig.localDevelopment();
   final authRepo = AuthRepository(config: serviceConfig);
   final realtimeClient = MacroRealtimeClient(
