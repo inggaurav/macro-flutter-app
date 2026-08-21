@@ -27,9 +27,10 @@ class GlassSurface extends StatelessWidget {
   Widget build(BuildContext context) {
     final effectiveRadius = borderRadius ?? AppRadius.borderLg;
     final effectiveColor =
-        backgroundColor ?? AppColors.surfaceElevated.withOpacity(0.65);
+        backgroundColor ?? AppColors.surfaceElevated.withValues(alpha: 0.65);
     final effectiveBorder =
-        border ?? Border.all(color: AppColors.borderDark.withOpacity(0.6));
+        border ??
+        Border.all(color: AppColors.borderDark.withValues(alpha: 0.6));
 
     return Container(
       margin: margin,

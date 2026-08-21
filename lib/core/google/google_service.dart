@@ -64,11 +64,8 @@ class GoogleService extends ChangeNotifier {
   List<MacroCalendarEvent> _calendarEvents = [];
   String? _errorMessage;
 
-  GoogleService({
-    MacroServiceConfig? config,
-    required String? Function() tokenProvider,
-  }) : _config = config ?? MacroServiceConfig.production(),
-       _tokenProvider = tokenProvider;
+  GoogleService({MacroServiceConfig? config, required this._tokenProvider})
+    : _config = config ?? MacroServiceConfig.production();
 
   GoogleConnectionState get state => _state;
   bool get isConnected => _state == GoogleConnectionState.connected;

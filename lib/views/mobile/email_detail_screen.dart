@@ -125,7 +125,7 @@ class _EmailDetailScreenState extends State<EmailDetailScreen> {
                         decoration: BoxDecoration(
                           color: AppTheme.surfaceDark,
                           border: Border.all(
-                            color: AppTheme.accentPurple.withOpacity(0.3),
+                            color: AppTheme.accentPurple.withValues(alpha: 0.3),
                           ),
                           borderRadius: BorderRadius.circular(8),
                         ),

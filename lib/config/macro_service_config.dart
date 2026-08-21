@@ -70,16 +70,16 @@ class MacroServiceConfig {
 
   factory MacroServiceConfig.localDevelopment() {
     return const MacroServiceConfig(
-      authHost: 'local://macro-auth',
-      storageHost: 'local://macro-storage',
-      emailHost: 'local://macro-email',
-      cognitionHost: 'local://macro-cognition',
-      notificationHost: 'local://macro-notifications',
-      connectionGateway: 'local://macro-realtime',
-      contactsHost: 'local://macro-contacts',
-      searchHost: 'local://macro-search',
-      staticFilesHost: 'local://macro-static-files',
-      scheduledActionsHost: 'local://macro-scheduled-actions',
+      authHost: 'http://127.0.0.1:8080',
+      storageHost: 'http://127.0.0.1:8081',
+      emailHost: 'http://127.0.0.1:8082',
+      cognitionHost: 'http://127.0.0.1:8083',
+      notificationHost: 'http://127.0.0.1:8084',
+      connectionGateway: 'ws://127.0.0.1:8085',
+      contactsHost: 'http://127.0.0.1:8086',
+      searchHost: 'http://127.0.0.1:8087',
+      staticFilesHost: 'http://127.0.0.1:8088',
+      scheduledActionsHost: 'http://127.0.0.1:8089',
     );
   }
 }

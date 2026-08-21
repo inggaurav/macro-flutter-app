@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../core/google/google_service.dart';
+import '../design/components/app_empty_state.dart';
 import '../features/inbox/controllers/inbox_controller.dart';
 import '../providers/workspace_provider.dart';
 import '../theme/app_theme.dart';
@@ -55,6 +57,21 @@ class _InboxViewState extends State<InboxView> {
                       color: AppTheme.primaryIndigo,
                     ),
                   )
+                : emails.isEmpty
+                ? AppEmptyState(
+                    icon: Icons.mark_email_unread_outlined,
+                    title: 'No Gmail Messages Connected',
+                    subtitle:
+                        'Connect your Gmail or Google Workspace account to sync live email threads, sender messages, and attachments.',
+                    actionLabel: 'Connect Gmail / Workspace',
+                    onAction: () {
+                      final googleService = Provider.of<GoogleService>(
+                        context,
+                        listen: false,
+                      );
+                      googleService.initiateGoogleOAuth();
+                    },
+                  )
                 : ListView.builder(
                     itemCount: emails.length,
                     itemBuilder: (context, index) {
@@ -66,8 +83,8 @@ class _InboxViewState extends State<InboxView> {
                         color: Colors.transparent,
                         child: ListTile(
                           selected: isSelected,
-                          selectedTileColor: AppTheme.primaryIndigo.withOpacity(
-                            0.15,
+                          selectedTileColor: AppTheme.primaryIndigo.withValues(
+                            alpha: 0.15,
                           ),
                           onTap: () {
                             inboxController.selectEmail(email.id);
@@ -258,8 +275,9 @@ class _InboxViewState extends State<InboxView> {
                                     decoration: BoxDecoration(
                                       color: AppTheme.surfaceDark,
                                       border: Border.all(
-                                        color: AppTheme.accentPurple
-                                            .withOpacity(0.3),
+                                        color: AppTheme.accentPurple.withValues(
+                                          alpha: 0.3,
+                                        ),
                                       ),
                                       borderRadius: BorderRadius.circular(8),
                                     ),

@@ -90,13 +90,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: _isSuccess
-                            ? AppTheme.accentEmerald.withOpacity(0.15)
-                            : AppTheme.accentRose.withOpacity(0.15),
+                            ? AppTheme.accentEmerald.withValues(alpha: 0.15)
+                            : AppTheme.accentRose.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: _isSuccess
-                              ? AppTheme.accentEmerald.withOpacity(0.4)
-                              : AppTheme.accentRose.withOpacity(0.4),
+                              ? AppTheme.accentEmerald.withValues(alpha: 0.4)
+                              : AppTheme.accentRose.withValues(alpha: 0.4),
                         ),
                       ),
                       child: Column(

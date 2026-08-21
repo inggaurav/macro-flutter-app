@@ -65,7 +65,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: widget.appConfig.primaryColor.withOpacity(0.4),
+                    color: widget.appConfig.primaryColor.withValues(alpha: 0.4),
                     blurRadius: 24,
                     spreadRadius: 4,
                   ),

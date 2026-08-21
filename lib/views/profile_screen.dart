@@ -166,19 +166,47 @@ class ProfileScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Gmail Inbox Sync and Workspace Calendar Events active.',
+                      'Last synced: 2 min ago • Gmail Inbox & Workspace Calendar active',
                       style: AppTypography.caption(context),
                     ),
                     const SizedBox(height: 12),
-                    OutlinedButton(
-                      onPressed: () => googleService.disconnectGoogle(),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppColors.danger),
-                      ),
-                      child: const Text(
-                        'Disconnect Account',
-                        style: TextStyle(color: AppColors.danger, fontSize: 12),
-                      ),
+                    Row(
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: () async {
+                            await googleService.checkConnectionStatus();
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Syncing Gmail & Google Calendar...',
+                                  ),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.sync, size: 14),
+                          label: const Text(
+                            'Sync now',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        OutlinedButton(
+                          onPressed: () => googleService.disconnectGoogle(),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: AppColors.danger),
+                          ),
+                          child: const Text(
+                            'Disconnect',
+                            style: TextStyle(
+                              color: AppColors.danger,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ] else ...[
                     Text(

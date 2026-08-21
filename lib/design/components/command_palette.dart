@@ -11,7 +11,7 @@ class CommandPalette extends StatefulWidget {
   static void show(BuildContext context) {
     showDialog(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.7),
+      barrierColor: Colors.black.withValues(alpha: 0.7),
       builder: (_) => const CommandPalette(),
     );
   }
@@ -92,7 +92,7 @@ class _CommandPaletteState extends State<CommandPalette> {
           border: Border.all(color: AppColors.borderStrong),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withValues(alpha: 0.5),
               blurRadius: 24,
               offset: const Offset(0, 12),
             ),

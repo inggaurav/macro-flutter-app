@@ -121,12 +121,12 @@ class TopAppHeader extends StatelessWidget {
               decoration: BoxDecoration(
                 color: provider.isCopilotDrawerOpen
                     ? AppTheme.primaryIndigo
-                    : AppTheme.primaryIndigo.withOpacity(0.15),
+                    : AppTheme.primaryIndigo.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: provider.isCopilotDrawerOpen
                       ? AppTheme.primaryIndigo
-                      : AppTheme.primaryIndigo.withOpacity(0.4),
+                      : AppTheme.primaryIndigo.withValues(alpha: 0.4),
                 ),
               ),
               child: Row(

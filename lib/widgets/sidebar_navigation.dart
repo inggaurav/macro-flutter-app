@@ -8,7 +8,6 @@ import '../design/tokens/app_spacing.dart';
 import '../design/tokens/app_typography.dart';
 import '../features/chat/controllers/chat_controller.dart';
 import '../features/inbox/controllers/inbox_controller.dart';
-import '../models/models.dart';
 import '../providers/workspace_provider.dart';
 import '../repositories/auth_repository.dart';
 
@@ -48,7 +47,7 @@ class SidebarNavigation extends StatelessWidget {
                     borderRadius: AppRadius.borderSm,
                     boxShadow: [
                       BoxShadow(
-                        color: appConfig.primaryColor.withOpacity(0.3),
+                        color: appConfig.primaryColor.withValues(alpha: 0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -301,7 +300,7 @@ class SidebarNavigation extends StatelessWidget {
         color: Colors.transparent,
         child: ListTile(
           selected: isSelected,
-          selectedTileColor: appConfig.primaryColor.withOpacity(0.15),
+          selectedTileColor: appConfig.primaryColor.withValues(alpha: 0.15),
           shape: RoundedRectangleBorder(borderRadius: AppRadius.borderSm),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.md,

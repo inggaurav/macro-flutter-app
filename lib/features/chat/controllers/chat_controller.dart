@@ -190,8 +190,9 @@ class ChatController extends ChangeNotifier {
     try {
       final message = ChatMessage.fromJson(payload);
       // Ignore if message belongs to another channel or is already present
-      if (_activeChannel == null || message.channelId != _activeChannel!.id)
+      if (_activeChannel == null || message.channelId != _activeChannel!.id) {
         return;
+      }
       if (_activeMessages.any((m) => m.id == message.id)) return;
 
       _activeMessages = [..._activeMessages, message];

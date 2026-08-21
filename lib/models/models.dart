@@ -1,7 +1,3 @@
-import '../features/inbox/domain/email_thread.dart';
-import '../features/chat/domain/chat_channel.dart';
-import '../features/chat/domain/chat_message.dart';
-
 export '../features/inbox/domain/email_thread.dart';
 export '../features/chat/domain/chat_channel.dart';
 export '../features/chat/domain/chat_message.dart';

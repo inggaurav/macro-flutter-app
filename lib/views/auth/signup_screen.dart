@@ -101,7 +101,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       borderRadius: AppRadius.borderMd,
                       boxShadow: [
                         BoxShadow(
-                          color: brandColor.withOpacity(0.4),
+                          color: brandColor.withValues(alpha: 0.4),
                           blurRadius: 16,
                           offset: const Offset(0, 4),
                         ),
@@ -136,10 +136,10 @@ class _SignupScreenState extends State<SignupScreen> {
                     Container(
                       padding: const EdgeInsets.all(AppSpacing.md),
                       decoration: BoxDecoration(
-                        color: AppColors.danger.withOpacity(0.15),
+                        color: AppColors.danger.withValues(alpha: 0.15),
                         borderRadius: AppRadius.borderSm,
                         border: Border.all(
-                          color: AppColors.danger.withOpacity(0.3),
+                          color: AppColors.danger.withValues(alpha: 0.3),
                         ),
                       ),
                       child: Row(
@@ -344,6 +344,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       onPressed: _isLoading
                           ? null
                           : () async {
+                              final messenger = ScaffoldMessenger.of(context);
                               final googleService = Provider.of<GoogleService>(
                                 context,
                                 listen: false,
@@ -351,7 +352,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               final launched = await googleService
                                   .initiateGoogleSso();
                               if (mounted && launched) {
-                                ScaffoldMessenger.of(context).showSnackBar(
+                                messenger.showSnackBar(
                                   const SnackBar(
                                     content: Text(
                                       'Opening Google Workspace authorization in browser...',

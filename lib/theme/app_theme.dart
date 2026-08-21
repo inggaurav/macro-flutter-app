@@ -28,12 +28,10 @@ class AppTheme {
       colorScheme: const ColorScheme.dark(
         primary: primaryIndigo,
         surface: surfaceDark,
-        background: bgDark,
         secondary: accentEmerald,
         error: accentRose,
         onPrimary: Colors.white,
         onSurface: textPrimary,
-        onBackground: textPrimary,
       ),
       textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme)
           .copyWith(

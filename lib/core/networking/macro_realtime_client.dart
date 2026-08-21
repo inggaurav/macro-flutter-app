@@ -64,8 +64,9 @@ class MacroRealtimeClient implements RealtimeClient {
           _handleDisconnect();
         },
         onDone: () {
-          if (kDebugMode)
+          if (kDebugMode) {
             print('MacroRealtimeClient WebSocket closed by gateway');
+          }
           _handleDisconnect();
         },
       );

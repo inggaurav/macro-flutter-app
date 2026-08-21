@@ -78,9 +78,8 @@ class MacroDocsRepository implements DocsRepository {
 
   MacroDocsRepository({
     MacroServiceConfig? config,
-    required String? Function() tokenProvider,
-  }) : _config = config ?? MacroServiceConfig.production(),
-       _tokenProvider = tokenProvider;
+    required this._tokenProvider,
+  }) : _config = config ?? MacroServiceConfig.production();
 
   @override
   Future<List<DocumentItem>> fetchDocuments() async {

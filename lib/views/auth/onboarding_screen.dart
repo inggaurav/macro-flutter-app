@@ -60,7 +60,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         Container(
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
-                            color: AppTheme.primaryIndigo.withOpacity(0.15),
+                            color: AppTheme.primaryIndigo.withValues(
+                              alpha: 0.15,
+                            ),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(

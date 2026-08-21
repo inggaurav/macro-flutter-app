@@ -60,19 +60,18 @@ sealed class PasswordResetResult {
 }
 
 class PasswordResetSuccess extends PasswordResetResult {
-  const PasswordResetSuccess({required String message})
-    : super(isSuccess: true, message: message);
+  const PasswordResetSuccess({required super.message}) : super(isSuccess: true);
 }
 
 class PasswordResetInvalidEmail extends PasswordResetResult {
   const PasswordResetInvalidEmail({
-    String message = 'Please enter a valid work email address.',
-  }) : super(isSuccess: false, message: message);
+    super.message = 'Please enter a valid work email address.',
+  }) : super(isSuccess: false);
 }
 
 class PasswordResetFailure extends PasswordResetResult {
-  const PasswordResetFailure({required String message})
-    : super(isSuccess: false, message: message);
+  const PasswordResetFailure({required super.message})
+    : super(isSuccess: false);
 }
 
 abstract interface class AuthRepository {
@@ -96,7 +95,7 @@ abstract interface class AuthRepository {
 }
 
 class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
-  static const _localAuthHost = 'local://macro-auth';
+  static const _localAuthHost = 'http://127.0.0.1:8080';
 
   final SecureKeyValueStore _storage;
   final MacroServiceConfig _config;

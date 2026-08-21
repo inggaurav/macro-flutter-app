@@ -81,7 +81,7 @@ class _ChatViewState extends State<ChatView> {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryIndigo.withOpacity(0.2),
+                    color: AppTheme.primaryIndigo.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
@@ -116,8 +116,8 @@ class _ChatViewState extends State<ChatView> {
                         color: Colors.transparent,
                         child: ListTile(
                           selected: isSelected,
-                          selectedTileColor: AppTheme.primaryIndigo.withOpacity(
-                            0.15,
+                          selectedTileColor: AppTheme.primaryIndigo.withValues(
+                            alpha: 0.15,
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
@@ -269,8 +269,8 @@ class _ChatViewState extends State<ChatView> {
                                     Icon(
                                       Icons.chat_bubble_outline,
                                       size: 40,
-                                      color: AppTheme.textMuted.withOpacity(
-                                        0.5,
+                                      color: AppTheme.textMuted.withValues(
+                                        alpha: 0.5,
                                       ),
                                     ),
                                     const SizedBox(height: 12),
@@ -333,7 +333,9 @@ class _ChatViewState extends State<ChatView> {
                                                       decoration: BoxDecoration(
                                                         color: AppTheme
                                                             .accentPurple
-                                                            .withOpacity(0.2),
+                                                            .withValues(
+                                                              alpha: 0.2,
+                                                            ),
                                                         borderRadius:
                                                             BorderRadius.circular(
                                                               4,

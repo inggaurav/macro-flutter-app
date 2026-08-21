@@ -22,8 +22,7 @@ class AiChatController extends ChangeNotifier {
   String? _errorMessage;
   final List<AiChatMessage> _messages = [];
 
-  AiChatController({required AgentRepository repository})
-    : _repository = repository;
+  AiChatController({required this._repository});
 
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;

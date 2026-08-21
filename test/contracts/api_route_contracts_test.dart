@@ -1,11 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:macro_app/config/macro_service_config.dart';
 import 'package:macro_app/core/auth/auth_repository.dart';
-import 'package:macro_app/features/inbox/inbox_repository.dart';
-import 'package:macro_app/features/chat/chat_repository.dart';
-import 'package:macro_app/features/agents/agent_repository.dart';
-import 'package:macro_app/features/docs/docs_repository.dart';
-import 'package:macro_app/features/tasks/tasks_repository.dart';
 import 'package:macro_app/core/google/google_service.dart';
 import 'package:macro_app/core/storage/secure_key_value_store.dart';
 

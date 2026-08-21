@@ -325,7 +325,7 @@ class DashboardView extends StatelessWidget {
                     AppCard(
                       backgroundColor: AppColors.surfaceElevated,
                       border: Border.all(
-                        color: AppColors.aiPurple.withOpacity(0.3),
+                        color: AppColors.aiPurple.withValues(alpha: 0.3),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -439,7 +439,7 @@ class DashboardView extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(AppSpacing.sm),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
+              color: color.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: color, size: 20),
