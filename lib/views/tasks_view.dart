@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import '../design/components/app_card.dart';
+import '../design/components/entity_chip.dart';
+import '../design/tokens/app_colors.dart';
+import '../design/tokens/app_radius.dart';
+import '../design/tokens/app_spacing.dart';
+import '../design/tokens/app_typography.dart';
 import '../models/models.dart';
 import '../providers/workspace_provider.dart';
-import '../theme/app_theme.dart';
 
 class TasksView extends StatelessWidget {
   final WorkspaceProvider provider;
@@ -11,82 +15,104 @@ class TasksView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tasks = provider.tasks;
+    final isMobile = MediaQuery.of(context).size.width < 768;
+
     return Scaffold(
-      backgroundColor: AppTheme.bgDark,
+      backgroundColor: AppColors.backgroundDark,
       body: Column(
         children: [
           // Header Bar
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppTheme.borderDark)),
+              color: AppColors.surfaceDark,
+              border: Border(bottom: BorderSide(color: AppColors.borderDark)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
+                  children: [
                     Text(
-                      'Tasks & Engineering Board',
-                      style: TextStyle(
-                        color: AppTheme.textPrimary,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      'Engineering Tasks & Kanban',
+                      style: AppTypography.title(context),
                     ),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(
-                      'Kanban views auto-updated from Slack messages, emails, and PRs',
-                      style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                      '${tasks.length} tasks in active sprint',
+                      style: AppTypography.caption(context),
                     ),
                   ],
                 ),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryIndigo,
-                    foregroundColor: Colors.white,
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.xs,
                   ),
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Add Task'),
-                  onPressed: () {},
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceElevated,
+                    borderRadius: AppRadius.borderSm,
+                    border: Border.all(color: AppColors.borderDark),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.filter_list,
+                        size: 14,
+                        color: AppColors.textMuted,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'All Priorities',
+                        style: AppTypography.caption(context),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
 
-          // Kanban Columns Grid
+          // Body Content
           Expanded(
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.all(20),
-              children: [
-                _buildKanbanColumn(
-                  context,
-                  'TO DO',
-                  TaskStatus.todo,
-                  AppTheme.textMuted,
-                ),
-                _buildKanbanColumn(
-                  context,
-                  'IN PROGRESS',
-                  TaskStatus.inProgress,
-                  AppTheme.primaryIndigo,
-                ),
-                _buildKanbanColumn(
-                  context,
-                  'IN REVIEW',
-                  TaskStatus.inReview,
-                  AppTheme.accentAmber,
-                ),
-                _buildKanbanColumn(
-                  context,
-                  'DONE',
-                  TaskStatus.done,
-                  AppTheme.accentEmerald,
-                ),
-              ],
-            ),
+            child: isMobile
+                ? ListView.builder(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    itemCount: tasks.length,
+                    itemBuilder: (context, index) =>
+                        _buildTaskCard(context, tasks[index]),
+                  )
+                : Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildKanbanColumn(
+                        context,
+                        'TO DO',
+                        TaskStatus.todo,
+                        tasks,
+                      ),
+                      _buildKanbanColumn(
+                        context,
+                        'IN PROGRESS',
+                        TaskStatus.inProgress,
+                        tasks,
+                      ),
+                      _buildKanbanColumn(
+                        context,
+                        'IN REVIEW',
+                        TaskStatus.inReview,
+                        tasks,
+                      ),
+                      _buildKanbanColumn(
+                        context,
+                        'DONE',
+                        TaskStatus.done,
+                        tasks,
+                      ),
+                    ],
+                  ),
           ),
         ],
       ),
@@ -97,208 +123,89 @@ class TasksView extends StatelessWidget {
     BuildContext context,
     String title,
     TaskStatus status,
-    Color accentColor,
+    List<TaskItem> allTasks,
   ) {
-    final columnTasks = provider.tasks
-        .where((t) => t.status == status)
-        .toList();
+    final columnTasks = allTasks.where((t) => t.status == status).toList();
 
-    return Container(
-      width: 300,
-      margin: const EdgeInsets.only(right: 16),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceDark,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.borderDark),
-      ),
-      child: Column(
-        children: [
-          // Column Header
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppTheme.borderDark)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: accentColor,
-                        shape: BoxShape.circle,
-                      ),
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.all(AppSpacing.sm),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceDark,
+          borderRadius: AppRadius.borderMd,
+          border: Border.all(color: AppColors.borderDark),
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(title, style: AppTypography.label(context)),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: AppTheme.textPrimary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceElevated,
+                      borderRadius: AppRadius.borderPill,
                     ),
-                  ],
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppTheme.surfaceLightDark,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    '${columnTasks.length}',
-                    style: const TextStyle(
-                      color: AppTheme.textSecondary,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
+                    child: Text(
+                      '${columnTasks.length}',
+                      style: AppTypography.caption(context),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-
-          // Task Cards List
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(12),
-              itemCount: columnTasks.length,
-              itemBuilder: (context, index) {
-                final task = columnTasks[index];
-                return _buildTaskCard(context, task);
-              },
+            const Divider(height: 1, color: AppColors.borderDark),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                itemCount: columnTasks.length,
+                itemBuilder: (context, index) =>
+                    _buildTaskCard(context, columnTasks[index]),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildTaskCard(BuildContext context, TaskItem task) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceLightDark,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppTheme.borderDark),
-      ),
+    return AppCard(
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: task.priority == TaskPriority.urgent
-                      ? AppTheme.accentRose.withOpacity(0.2)
-                      : AppTheme.primaryIndigo.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  task.priority.name.toUpperCase(),
-                  style: TextStyle(
-                    color: task.priority == TaskPriority.urgent
-                        ? AppTheme.accentRose
-                        : AppTheme.primaryIndigo,
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+              EntityChip(
+                label: task.priority.name.toUpperCase(),
+                type: EntityType.task,
               ),
-              PopupMenuButton<TaskStatus>(
-                icon: const Icon(
-                  Icons.more_horiz,
-                  size: 16,
-                  color: AppTheme.textMuted,
-                ),
-                color: AppTheme.surfaceDark,
-                onSelected: (newStatus) =>
-                    provider.updateTaskStatus(task.id, newStatus),
-                itemBuilder: (context) => [
-                  const PopupMenuItem(
-                    value: TaskStatus.todo,
-                    child: Text('Move to To Do'),
-                  ),
-                  const PopupMenuItem(
-                    value: TaskStatus.inProgress,
-                    child: Text('Move to In Progress'),
-                  ),
-                  const PopupMenuItem(
-                    value: TaskStatus.inReview,
-                    child: Text('Move to In Review'),
-                  ),
-                  const PopupMenuItem(
-                    value: TaskStatus.done,
-                    child: Text('Move to Done'),
-                  ),
-                ],
+              const Spacer(),
+              CircleAvatar(
+                radius: 10,
+                backgroundImage: NetworkImage(task.assigneeAvatar),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             task.title,
-            style: const TextStyle(
-              color: AppTheme.textPrimary,
-              fontWeight: FontWeight.bold,
-              fontSize: 13,
-            ),
+            style: AppTypography.sectionTitle(context).copyWith(fontSize: 13),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.xs),
           Text(
             task.description,
+            style: AppTypography.bodySmall(context),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 10,
-                    backgroundImage: NetworkImage(task.assigneeAvatar),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    task.assigneeName.split(' ')[0],
-                    style: const TextStyle(
-                      color: AppTheme.textSecondary,
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  const Icon(
-                    Icons.calendar_today,
-                    size: 12,
-                    color: AppTheme.textMuted,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    DateFormat('MMM d').format(task.dueDate),
-                    style: const TextStyle(
-                      color: AppTheme.textMuted,
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
-              ),
-            ],
           ),
         ],
       ),

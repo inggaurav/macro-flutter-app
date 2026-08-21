@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../config/app_config.dart';
+import '../design/components/app_card.dart';
+import '../design/components/entity_chip.dart';
+import '../design/tokens/app_colors.dart';
+import '../design/tokens/app_spacing.dart';
+import '../design/tokens/app_typography.dart';
 import '../features/inbox/controllers/inbox_controller.dart';
 import '../models/models.dart';
 import '../providers/workspace_provider.dart';
-import '../theme/app_theme.dart';
+import '../repositories/auth_repository.dart';
 
 class DashboardView extends StatelessWidget {
   final WorkspaceProvider provider;
@@ -13,445 +19,391 @@ class DashboardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authRepo = Provider.of<AuthRepository>(context);
+    final appConfig = Provider.of<AppConfig>(context);
+    final inboxController = Provider.of<InboxController>(context);
+    final user = authRepo.currentUser;
     final currencyFormatter = NumberFormat.currency(
       symbol: '\$',
       decimalDigits: 0,
     );
-    final totalArr = provider.deals.fold(0.0, (sum, d) => sum + d.value);
+
+    final unreadCount = inboxController.emails.where((e) => e.isUnread).length;
+    final openTasks = provider.tasks
+        .where((t) => t.status != TaskStatus.done)
+        .toList();
 
     return Scaffold(
-      backgroundColor: AppTheme.bgDark,
+      backgroundColor: AppColors.backgroundDark,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Welcome Header
+            // 1. Workspace Greeting Header
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
+                  children: [
                     Text(
-                      'Good morning, Alex 👋',
-                      style: TextStyle(
-                        color: AppTheme.textPrimary,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      'Welcome back, ${user?.name ?? 'Alex'}',
+                      style: AppTypography.titleLarge(context),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
-                      'Here is your Macro workspace overview and AI team memory synthesis.',
-                      style: TextStyle(
-                        color: AppTheme.textSecondary,
-                        fontSize: 13,
-                      ),
+                      '${appConfig.workspaceName} • Unified Workspace Overview',
+                      style: AppTypography.bodySmall(context),
                     ),
                   ],
                 ),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryIndigo,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.xs,
                   ),
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text(
-                    'New Item',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceElevated,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.borderDark),
                   ),
-                  onPressed: () => provider.setTab(WorkspaceTab.docs),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.shield_outlined,
+                        size: 14,
+                        color: AppColors.success,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'System Operational',
+                        style: AppTypography.caption(
+                          context,
+                          color: AppColors.success,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpacing.xl),
 
-            // AI Team Memory Synthesis Banner
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppTheme.primaryIndigo.withOpacity(0.2),
-                    AppTheme.accentPurple.withOpacity(0.2),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppTheme.primaryIndigo.withOpacity(0.4),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryIndigo,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.auto_awesome,
-                      color: Colors.white,
-                      size: 24,
-                    ),
+            // 2. Metrics Bar (Asymmetric Information Density)
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isCompact = constraints.maxWidth < 600;
+                final cards = [
+                  _buildMetricTile(
+                    context,
+                    'Unread Emails',
+                    '$unreadCount',
+                    Icons.inbox_outlined,
+                    AppColors.info,
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Text(
-                              'AI Shared Team Memory Daily Synthesis',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
+                  _buildMetricTile(
+                    context,
+                    'Active Tasks',
+                    '${openTasks.length}',
+                    Icons.check_box_outlined,
+                    AppColors.warning,
+                  ),
+                  _buildMetricTile(
+                    context,
+                    'Pipeline Value',
+                    currencyFormatter.format(120000),
+                    Icons.pie_chart_outline,
+                    AppColors.success,
+                  ),
+                  _buildMetricTile(
+                    context,
+                    'Realtime Sync',
+                    '<45ms',
+                    Icons.bolt,
+                    AppColors.aiPurple,
+                  ),
+                ];
+
+                if (isCompact) {
+                  return Column(
+                    children: cards
+                        .map(
+                          (c) => Padding(
+                            padding: const EdgeInsets.only(
+                              bottom: AppSpacing.sm,
                             ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppTheme.accentEmerald.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Text(
-                                'SYNCHRONIZED',
-                                style: TextStyle(
-                                  color: AppTheme.accentEmerald,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                            child: c,
+                          ),
+                        )
+                        .toList(),
+                  );
+                }
+
+                return Row(
+                  children: cards
+                      .map(
+                        (c) => Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(
+                              right: AppSpacing.md,
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Acme Corp (\$120k ARR) proposal confirmed. CRDT Document sync benchmark passed SOC2 Type II compliance testing.',
-                          style: TextStyle(
-                            color: AppTheme.textSecondary,
-                            fontSize: 12,
+                            child: c,
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                  OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppTheme.textPrimary,
-                      side: const BorderSide(color: AppTheme.borderDark),
-                    ),
-                    onPressed: () => provider.setTab(WorkspaceTab.aiMemory),
-                    child: const Text('View Memory Log'),
-                  ),
-                ],
-              ),
+                      )
+                      .toList(),
+                );
+              },
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.x2l),
 
-            // Key Telemetry Metric Cards
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 220,
-                    child: _buildMetricCard(
-                      title: 'Active Pipeline ARR',
-                      value: currencyFormatter.format(totalArr),
-                      icon: Icons.monetization_on_outlined,
-                      color: AppTheme.accentEmerald,
-                      subtitle: '3 Active CRM Deals',
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  SizedBox(
-                    width: 220,
-                    child: _buildMetricCard(
-                      title: 'Unread Emails',
-                      value:
-                          '${Provider.of<InboxController>(context).emails.where((e) => e.isUnread).length}',
-                      icon: Icons.mail_outline,
-                      color: AppTheme.primaryIndigo,
-                      subtitle: 'Linked to CRM contacts',
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  SizedBox(
-                    width: 220,
-                    child: _buildMetricCard(
-                      title: 'Open Tasks',
-                      value:
-                          '${provider.tasks.where((t) => t.status != TaskStatus.done).length}',
-                      icon: Icons.check_box_outlined,
-                      color: AppTheme.accentAmber,
-                      subtitle: '1 Urgent priority',
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  SizedBox(
-                    width: 220,
-                    child: _buildMetricCard(
-                      title: 'Active Call Room',
-                      value: provider.callSessions.any((c) => c.isLive)
-                          ? 'LIVE'
-                          : 'Idle',
-                      icon: Icons.videocam_outlined,
-                      color: AppTheme.accentRose,
-                      subtitle: 'AI Live Transcript',
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            // 3. Priority Work Grid
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth > 800;
 
-            const SizedBox(height: 28),
-
-            // Two Column Module Grid
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Left Column: Recent Inbox & Active Tasks
-                Expanded(
-                  flex: 3,
-                  child: Column(
-                    children: [
-                      _buildSectionCard(
-                        title: 'Recent Inbox Threads',
-                        actionLabel: 'View All Emails',
-                        onAction: () => provider.setTab(WorkspaceTab.inbox),
-                        child: Column(
-                          children: Provider.of<InboxController>(context).emails.take(2).map((email) {
+                final leftColumn = Column(
+                  children: [
+                    // Inbox Section Card
+                    AppCard(
+                      padding: EdgeInsets.zero,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(AppSpacing.md),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Recent Inbox Threads',
+                                  style: AppTypography.sectionTitle(context),
+                                ),
+                                TextButton(
+                                  onPressed: () =>
+                                      provider.setTab(WorkspaceTab.inbox),
+                                  child: Text(
+                                    'View All',
+                                    style: AppTypography.caption(
+                                      context,
+                                      color: AppColors.brandPrimary(appConfig),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Divider(height: 1, color: AppColors.borderDark),
+                          ...inboxController.emails.take(2).map((email) {
                             return Material(
                               color: Colors.transparent,
                               child: ListTile(
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 4,
-                                ),
+                                onTap: () {
+                                  inboxController.selectEmail(email.id);
+                                  provider.setTab(WorkspaceTab.inbox);
+                                },
                                 leading: CircleAvatar(
-                                  backgroundColor: AppTheme.primaryIndigo
-                                      .withOpacity(0.2),
+                                  radius: 16,
+                                  backgroundColor: AppColors.surfaceElevated,
                                   child: Text(
                                     email.senderName[0],
                                     style: const TextStyle(
-                                      color: AppTheme.primaryIndigo,
+                                      color: AppColors.textPrimary,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                 ),
                                 title: Text(
                                   email.subject,
-                                  style: const TextStyle(
-                                    color: AppTheme.textPrimary,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 13,
-                                  ),
+                                  style: AppTypography.sectionTitle(
+                                    context,
+                                  ).copyWith(fontSize: 13),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                                 subtitle: Text(
                                   email.preview,
+                                  style: AppTypography.bodySmall(context),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: AppTheme.textSecondary,
-                                    fontSize: 12,
-                                  ),
                                 ),
                                 trailing: Text(
                                   DateFormat('h:mm a').format(email.timestamp),
-                                  style: const TextStyle(
-                                    color: AppTheme.textMuted,
-                                    fontSize: 11,
+                                  style: AppTypography.caption(context),
+                                ),
+                              ),
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: AppSpacing.lg),
+
+                    // Tasks Section Card
+                    AppCard(
+                      padding: EdgeInsets.zero,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(AppSpacing.md),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Active Engineering Tasks',
+                                  style: AppTypography.sectionTitle(context),
+                                ),
+                                TextButton(
+                                  onPressed: () =>
+                                      provider.setTab(WorkspaceTab.tasks),
+                                  child: Text(
+                                    'Go to Kanban',
+                                    style: AppTypography.caption(
+                                      context,
+                                      color: AppColors.brandPrimary(appConfig),
+                                    ),
                                   ),
                                 ),
-                                onTap: () {
-                                  Provider.of<InboxController>(context, listen: false).selectEmail(email.id);
-                                  provider.setTab(WorkspaceTab.inbox);
-                                },
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      _buildSectionCard(
-                        title: 'Active Priority Tasks',
-                        actionLabel: 'Go to Kanban',
-                        onAction: () => provider.setTab(WorkspaceTab.tasks),
-                        child: Column(
-                          children: provider.tasks.map((task) {
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    task.status == TaskStatus.done
-                                        ? Icons.check_circle
-                                        : Icons.radio_button_unchecked,
-                                    color: task.status == TaskStatus.done
-                                        ? AppTheme.accentEmerald
-                                        : AppTheme.textMuted,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          task.title,
-                                          style: TextStyle(
-                                            color: AppTheme.textPrimary,
-                                            fontWeight: FontWeight.w500,
-                                            decoration:
-                                                task.status == TaskStatus.done
-                                                ? TextDecoration.lineThrough
-                                                : null,
-                                          ),
-                                        ),
-                                        Text(
-                                          'Assignee: ${task.assigneeName}',
-                                          style: const TextStyle(
-                                            color: AppTheme.textMuted,
-                                            fontSize: 11,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color:
-                                          task.priority == TaskPriority.urgent
-                                          ? AppTheme.accentRose.withOpacity(0.2)
-                                          : AppTheme.surfaceLightDark,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      task.priority.name.toUpperCase(),
-                                      style: TextStyle(
-                                        color:
-                                            task.priority == TaskPriority.urgent
-                                            ? AppTheme.accentRose
-                                            : AppTheme.textSecondary,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(width: 20),
-
-                // Right Column: CRM Deals & Active Docs
-                Expanded(
-                  flex: 2,
-                  child: Column(
-                    children: [
-                      _buildSectionCard(
-                        title: 'CRM Sales Deals',
-                        actionLabel: 'Open CRM',
-                        onAction: () => provider.setTab(WorkspaceTab.crm),
-                        child: Column(
-                          children: provider.deals.map((deal) {
+                              ],
+                            ),
+                          ),
+                          const Divider(height: 1, color: AppColors.borderDark),
+                          ...openTasks.map((task) {
                             return Material(
                               color: Colors.transparent,
                               child: ListTile(
-                                leading: const Icon(
-                                  Icons.business,
-                                  color: AppTheme.primaryIndigo,
+                                leading: Icon(
+                                  task.status == TaskStatus.done
+                                      ? Icons.check_circle
+                                      : Icons.radio_button_unchecked,
+                                  color: task.status == TaskStatus.done
+                                      ? AppColors.success
+                                      : AppColors.warning,
+                                  size: 18,
                                 ),
                                 title: Text(
-                                  deal.companyName,
-                                  style: const TextStyle(
-                                    color: AppTheme.textPrimary,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
+                                  task.title,
+                                  style: AppTypography.body(
+                                    context,
+                                    color: AppColors.textPrimary,
                                   ),
                                 ),
-                                subtitle: Text(
-                                  deal.title,
-                                  style: const TextStyle(
-                                    color: AppTheme.textSecondary,
-                                    fontSize: 12,
-                                  ),
+                                subtitle: Row(
+                                  children: [
+                                    EntityChip(
+                                      label: task.priority.name.toUpperCase(),
+                                      type: EntityType.task,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Due in 1 day',
+                                      style: AppTypography.caption(context),
+                                    ),
+                                  ],
                                 ),
-                                trailing: Text(
-                                  currencyFormatter.format(deal.value),
-                                  style: const TextStyle(
-                                    color: AppTheme.accentEmerald,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                                onTap: () => provider.setTab(WorkspaceTab.crm),
+                                onTap: () =>
+                                    provider.setTab(WorkspaceTab.tasks),
                               ),
                             );
-                          }).toList(),
-                        ),
+                          }),
+                        ],
                       ),
-                      const SizedBox(height: 20),
-                      _buildSectionCard(
-                        title: 'Pinned Docs & PRDs',
-                        actionLabel: 'View Docs',
-                        onAction: () => provider.setTab(WorkspaceTab.docs),
-                        child: Column(
-                          children: provider.documents.map((doc) {
+                    ),
+                  ],
+                );
+
+                final rightColumn = Column(
+                  children: [
+                    // AI Copilot Contextual Insight Card
+                    AppCard(
+                      backgroundColor: AppColors.surfaceElevated,
+                      border: Border.all(
+                        color: AppColors.aiPurple.withOpacity(0.3),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.auto_awesome,
+                                color: AppColors.aiPurple,
+                                size: 18,
+                              ),
+                              const SizedBox(width: AppSpacing.xs),
+                              Text(
+                                'AI Workspace Synthesis',
+                                style: AppTypography.sectionTitle(
+                                  context,
+                                  color: AppColors.aiPurple,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            'Multi-region real-time sync SLA target is <45ms. Offline session tokens are hardened via Android Keystore & iOS Keychain.',
+                            style: AppTypography.body(context),
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          Row(
+                            children: [
+                              const EntityChip(
+                                label: 'CRDT Spec #d1',
+                                type: EntityType.document,
+                              ),
+                              const SizedBox(width: 6),
+                              const EntityChip(
+                                label: '@vortex.io',
+                                type: EntityType.deal,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: AppSpacing.lg),
+
+                    // Pinned Architecture Docs
+                    AppCard(
+                      padding: EdgeInsets.zero,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(AppSpacing.md),
+                            child: Text(
+                              'Pinned Specs & Architecture',
+                              style: AppTypography.sectionTitle(context),
+                            ),
+                          ),
+                          const Divider(height: 1, color: AppColors.borderDark),
+                          ...provider.documents.map((doc) {
                             return Material(
                               color: Colors.transparent,
                               child: ListTile(
                                 leading: const Icon(
                                   Icons.article_outlined,
-                                  color: AppTheme.accentCyan,
+                                  color: AppColors.aiCyan,
+                                  size: 18,
                                 ),
                                 title: Text(
                                   doc.title,
+                                  style: AppTypography.body(
+                                    context,
+                                    color: AppColors.textPrimary,
+                                  ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: AppTheme.textPrimary,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                  ),
                                 ),
                                 subtitle: Text(
-                                  'Author: ${doc.authorName} • v${doc.versionCount}',
-                                  style: const TextStyle(
-                                    color: AppTheme.textMuted,
-                                    fontSize: 11,
-                                  ),
+                                  'v${doc.versionCount} • ${doc.authorName}',
+                                  style: AppTypography.caption(context),
                                 ),
                                 onTap: () {
                                   provider.selectDoc(doc.id);
@@ -459,13 +411,32 @@ class DashboardView extends StatelessWidget {
                                 },
                               ),
                             );
-                          }).toList(),
-                        ),
+                          }),
+                        ],
                       ),
+                    ),
+                  ],
+                );
+
+                if (isWide) {
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(flex: 3, child: leftColumn),
+                      const SizedBox(width: AppSpacing.lg),
+                      Expanded(flex: 2, child: rightColumn),
                     ],
-                  ),
-                ),
-              ],
+                  );
+                }
+
+                return Column(
+                  children: [
+                    leftColumn,
+                    const SizedBox(height: AppSpacing.lg),
+                    rightColumn,
+                  ],
+                );
+              },
             ),
           ],
         ),
@@ -473,105 +444,38 @@ class DashboardView extends StatelessWidget {
     );
   }
 
-  Widget _buildMetricCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color color,
-    required String subtitle,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceDark,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.borderDark),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildMetricTile(
+    BuildContext context,
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Row(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.sm),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
+              Text(title, style: AppTypography.caption(context)),
+              Text(
+                value,
+                style: AppTypography.sectionTitle(
+                  context,
+                ).copyWith(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              Icon(icon, color: color, size: 20),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: const TextStyle(
-              color: AppTheme.textPrimary,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionCard({
-    required String title,
-    required String actionLabel,
-    required VoidCallback onAction,
-    required Widget child,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceDark,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.borderDark),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                TextButton(
-                  onPressed: onAction,
-                  child: Text(
-                    actionLabel,
-                    style: const TextStyle(
-                      color: AppTheme.primaryIndigo,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-          child,
         ],
       ),
     );

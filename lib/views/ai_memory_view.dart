@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import '../design/components/app_card.dart';
+import '../design/components/entity_chip.dart';
+import '../design/tokens/app_colors.dart';
+import '../design/tokens/app_spacing.dart';
+import '../design/tokens/app_typography.dart';
 import '../providers/workspace_provider.dart';
-import '../theme/app_theme.dart';
 
 class AiMemoryView extends StatelessWidget {
   final WorkspaceProvider provider;
@@ -10,76 +13,44 @@ class AiMemoryView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final memories = provider.memories;
+
     return Scaffold(
-      backgroundColor: AppTheme.bgDark,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      backgroundColor: AppColors.backgroundDark,
+      body: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            decoration: const BoxDecoration(
+              color: AppColors.surfaceDark,
+              border: Border(bottom: BorderSide(color: AppColors.borderDark)),
+            ),
+            child: Row(
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: const [
-                        Icon(
-                          Icons.auto_awesome,
-                          color: AppTheme.accentPurple,
-                          size: 24,
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          'Agents & Unified Team-Level Memory',
-                          style: TextStyle(
-                            color: AppTheme.textPrimary,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Synthesized automatically from company channels, emails, tasks, and CRDT docs into persistent LLM memory.',
-                      style: TextStyle(
-                        color: AppTheme.textSecondary,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
+                const Icon(
+                  Icons.auto_awesome,
+                  color: AppColors.aiPurple,
+                  size: 20,
                 ),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.accentPurple,
-                    foregroundColor: Colors.white,
-                  ),
-                  icon: const Icon(Icons.refresh, size: 18),
-                  label: const Text('Synthesize Memory Now'),
-                  onPressed: () {},
+                const SizedBox(width: AppSpacing.sm),
+                Text(
+                  'AI Team Shared Memory',
+                  style: AppTypography.title(context),
                 ),
               ],
             ),
-
-            const SizedBox(height: 24),
-
-            // Category Cards
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: provider.memories.length,
+          ),
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              itemCount: memories.length,
               itemBuilder: (context, index) {
-                final mem = provider.memories[index];
-
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: AppTheme.surfaceDark,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppTheme.borderDark),
+                final mem = memories[index];
+                return AppCard(
+                  margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                  backgroundColor: AppColors.surfaceElevated,
+                  border: Border.all(
+                    color: AppColors.aiPurple.withOpacity(0.3),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,84 +58,41 @@ class AiMemoryView extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppTheme.accentPurple.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              mem.category.replaceAll('_', ' ').toUpperCase(),
-                              style: const TextStyle(
-                                color: AppTheme.accentPurple,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                              ),
+                          Text(
+                            mem.title,
+                            style: AppTypography.sectionTitle(
+                              context,
+                              color: AppColors.aiPurple,
                             ),
                           ),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.analytics_outlined,
-                                size: 14,
-                                color: AppTheme.accentEmerald,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${(mem.confidence * 100).toInt()}% Confidence',
-                                style: const TextStyle(
-                                  color: AppTheme.accentEmerald,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
+                          EntityChip(
+                            label: 'Source: ${mem.source}',
+                            type: EntityType.agent,
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      Text(
-                        mem.title,
-                        style: const TextStyle(
-                          color: AppTheme.textPrimary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppSpacing.sm),
                       Text(
                         mem.summary,
-                        style: const TextStyle(
-                          color: AppTheme.textSecondary,
-                          fontSize: 13,
-                          height: 1.5,
+                        style: AppTypography.body(
+                          context,
+                          color: AppColors.textPrimary,
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: AppSpacing.md),
                       Row(
                         children: [
                           const Icon(
-                            Icons.source,
+                            Icons.verified,
                             size: 14,
-                            color: AppTheme.textMuted,
+                            color: AppColors.success,
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 4),
                           Text(
-                            'Source: ${mem.source}',
-                            style: const TextStyle(
-                              color: AppTheme.textMuted,
-                              fontSize: 11,
-                            ),
-                          ),
-                          const Spacer(),
-                          Text(
-                            'Updated ${DateFormat('h:mm a').format(mem.updatedAt)}',
-                            style: const TextStyle(
-                              color: AppTheme.textMuted,
-                              fontSize: 11,
+                            'Confidence: ${(mem.confidence * 100).toInt()}%',
+                            style: AppTypography.caption(
+                              context,
+                              color: AppColors.success,
                             ),
                           ),
                         ],
@@ -174,8 +102,8 @@ class AiMemoryView extends StatelessWidget {
                 );
               },
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

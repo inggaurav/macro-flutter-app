@@ -46,12 +46,15 @@ This document specifies the real-time conflict-free replicated data type (CRDT) 
   final List<TaskItem> _tasks = [
     TaskItem(
       id: 't1',
-      title: 'Harden SecureStorageService with Android Keystore fail-closed semantics',
-      description: 'Ensure platform storage throws explicit exception rather than fallback silently to memory map.',
+      title:
+          'Harden SecureStorageService with Android Keystore fail-closed semantics',
+      description:
+          'Ensure platform storage throws explicit exception rather than fallback silently to memory map.',
       status: TaskStatus.inProgress,
       priority: TaskPriority.urgent,
       assigneeName: 'Alex Rivera',
-      assigneeAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+      assigneeAvatar:
+          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
       dueDate: DateTime.now().add(const Duration(days: 1)),
       tags: ['Security', 'Storage'],
     ),
@@ -76,7 +79,8 @@ This document specifies the real-time conflict-free replicated data type (CRDT) 
       id: 'm1',
       category: 'team_context',
       title: 'WebSocket Latency SLA',
-      summary: 'Multi-region real-time sync target is established at <45ms across edge nodes.',
+      summary:
+          'Multi-region real-time sync target is established at <45ms across edge nodes.',
       source: 'Slack #engineering',
       confidence: 0.98,
       updatedAt: DateTime.now().subtract(const Duration(hours: 1)),
@@ -93,8 +97,10 @@ This document specifies the real-time conflict-free replicated data type (CRDT) 
         'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
         'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
       ],
-      liveTranscript: '[00:12] Alex: Flutter secure storage fail-closed implementation complete.',
-      aiSummary: 'Decided to fail closed on platform secure storage errors. Decomposed WorkspaceProvider into modular controllers.',
+      liveTranscript:
+          '[00:12] Alex: Flutter secure storage fail-closed implementation complete.',
+      aiSummary:
+          'Decided to fail closed on platform secure storage errors. Decomposed WorkspaceProvider into modular controllers.',
     ),
   ];
 
@@ -104,7 +110,8 @@ This document specifies the real-time conflict-free replicated data type (CRDT) 
   List<String> get availableAiModels => List.unmodifiable(_availableAiModels);
   bool get isCopilotDrawerOpen => _isCopilotDrawerOpen;
   bool get isCopilotOpen => _isCopilotDrawerOpen;
-  String? get selectedDocId => _selectedDocId ?? (_documents.isNotEmpty ? _documents.first.id : null);
+  String? get selectedDocId =>
+      _selectedDocId ?? (_documents.isNotEmpty ? _documents.first.id : null);
 
   List<DocumentItem> get documents => List.unmodifiable(_documents);
   List<TaskItem> get tasks => List.unmodifiable(_tasks);

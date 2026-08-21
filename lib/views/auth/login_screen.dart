@@ -1,22 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../config/app_config.dart';
+import '../../design/components/app_button.dart';
+import '../../design/tokens/app_colors.dart';
+import '../../design/tokens/app_radius.dart';
+import '../../design/tokens/app_spacing.dart';
+import '../../design/tokens/app_typography.dart';
 import '../../repositories/auth_repository.dart';
-import '../../theme/app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
   final AppConfig appConfig;
-  final AuthRepository authRepository;
+  final AuthRepository? authRepository;
   final VoidCallback onLoginSuccess;
-  final VoidCallback onNavToSignup;
-  final VoidCallback onNavToForgotPassword;
+  final VoidCallback? onNavigateSignup;
+  final VoidCallback? onNavToSignup;
+  final VoidCallback? onNavigateForgot;
+  final VoidCallback? onNavToForgot;
+  final VoidCallback? onNavToForgotPassword;
 
   const LoginScreen({
     super.key,
     required this.appConfig,
-    required this.authRepository,
+    this.authRepository,
     required this.onLoginSuccess,
-    required this.onNavToSignup,
-    required this.onNavToForgotPassword,
+    this.onNavigateSignup,
+    this.onNavToSignup,
+    this.onNavigateForgot,
+    this.onNavToForgot,
+    this.onNavToForgotPassword,
   });
 
   @override
@@ -25,12 +36,14 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController(
-    text: 'alex@macro.inc',
+    text: 'alex@macro.app',
   );
   final TextEditingController _passwordController = TextEditingController(
     text: 'password123',
   );
+  bool _obscurePassword = true;
   bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -39,204 +52,285 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _handleLogin() async {
-    setState(() => _isLoading = true);
-    final result = await widget.authRepository.login(
-      _emailController.text,
-      _passwordController.text,
-    );
+  Future<void> _handleLogin() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      setState(() => _errorMessage = 'Please fill in all credentials.');
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    final authRepo =
+        widget.authRepository ??
+        Provider.of<AuthRepository>(context, listen: false);
+    final result = await authRepo.login(email, password);
+
+    if (!mounted) return;
+
     setState(() => _isLoading = false);
-    if (result.isSuccess && mounted) {
+
+    if (result is AuthSuccess) {
       widget.onLoginSuccess();
+    } else if (result is AuthInvalidCredentials) {
+      setState(() => _errorMessage = 'Invalid email or password.');
+    } else {
+      setState(
+        () => _errorMessage = 'Authentication failed. Please try again.',
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final brandColor = AppColors.brandPrimary(widget.appConfig);
+
     return Scaffold(
-      backgroundColor: AppTheme.bgDark,
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
+      backgroundColor: AppColors.backgroundDark,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.x2l),
             child: Container(
-              padding: const EdgeInsets.all(32),
-              decoration: BoxDecoration(
-                color: AppTheme.surfaceDark,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.borderDark),
-              ),
+              constraints: const BoxConstraints(maxWidth: 420),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  // App Logo & Brand Header
                   Container(
                     width: 56,
                     height: 56,
                     decoration: BoxDecoration(
-                      color: widget.appConfig.primaryColor,
-                      borderRadius: BorderRadius.circular(14),
+                      color: brandColor,
+                      borderRadius: AppRadius.borderMd,
+                      boxShadow: [
+                        BoxShadow(
+                          color: brandColor.withOpacity(0.4),
+                          blurRadius: 16,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                     child: Center(
                       child: Text(
                         widget.appConfig.logoText,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 32,
                           fontWeight: FontWeight.bold,
+                          fontSize: 24,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppSpacing.lg),
                   Text(
                     'Sign in to ${widget.appConfig.appName}',
-                    style: const TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: AppTypography.titleLarge(context),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
-                    'Enter credentials for ${widget.appConfig.workspaceName}',
-                    style: const TextStyle(
-                      color: AppTheme.textMuted,
-                      fontSize: 12,
-                    ),
+                    'Enter your workspace credentials to continue',
+                    style: AppTypography.bodySmall(context),
+                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: AppSpacing.x2l),
 
-                  TextField(
-                    controller: _emailController,
-                    style: const TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 14,
-                    ),
-                    decoration: const InputDecoration(
-                      labelText: 'Work Email',
-                      labelStyle: TextStyle(color: AppTheme.textMuted),
-                      filled: true,
-                      fillColor: AppTheme.bgDark,
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  TextField(
-                    controller: _passwordController,
-                    obscureText: true,
-                    style: const TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 14,
-                    ),
-                    decoration: const InputDecoration(
-                      labelText: 'Password',
-                      labelStyle: TextStyle(color: AppTheme.textMuted),
-                      filled: true,
-                      fillColor: AppTheme.bgDark,
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: widget.onNavToForgotPassword,
-                      child: const Text(
-                        'Forgot password?',
-                        style: TextStyle(
-                          color: AppTheme.textMuted,
-                          fontSize: 12,
+                  // Error Message Alert
+                  if (_errorMessage != null) ...[
+                    Container(
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      decoration: BoxDecoration(
+                        color: AppColors.danger.withOpacity(0.15),
+                        borderRadius: AppRadius.borderSm,
+                        border: Border.all(
+                          color: AppColors.danger.withOpacity(0.3),
                         ),
                       ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: widget.appConfig.primaryColor,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      onPressed: _isLoading ? null : _handleLogin,
-                      child: _isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text(
-                              'Continue to Workspace',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            color: AppColors.danger,
+                            size: 18,
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: Text(
+                              _errorMessage!,
+                              style: AppTypography.bodySmall(
+                                context,
+                                color: AppColors.danger,
                               ),
                             ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: AppSpacing.lg),
+                  ],
 
-                  if (widget.appConfig.environment == AppEnvironment.dev) ...[
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 44,
-                      child: OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppTheme.textPrimary,
-                          side: const BorderSide(color: AppTheme.borderDark),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                  // Email Input Field
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Work Email',
+                        style: AppTypography.sectionTitle(
+                          context,
+                        ).copyWith(fontSize: 12),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      TextField(
+                        controller: _emailController,
+                        style: AppTypography.body(
+                          context,
+                          color: AppColors.textPrimary,
+                        ),
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: InputDecoration(
+                          hintText: 'alex@company.com',
+                          hintStyle: const TextStyle(
+                            color: AppColors.textMuted,
+                            fontSize: 13,
+                          ),
+                          filled: true,
+                          fillColor: AppColors.surfaceDark,
+                          border: OutlineInputBorder(
+                            borderRadius: AppRadius.borderMd,
+                            borderSide: const BorderSide(
+                              color: AppColors.borderDark,
+                            ),
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.email_outlined,
+                            color: AppColors.textMuted,
+                            size: 18,
                           ),
                         ),
-                        onPressed: _isLoading
-                            ? null
-                            : () => widget.authRepository.login(
-                                'demo.guest@macro.inc',
-                                'guest123',
-                              ),
-                        child: const Text(
-                          '⚡ Demo 1-Tap Sign In (DEV ONLY)',
-                          style: TextStyle(fontSize: 13),
-                        ),
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // Password Input Field
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Password',
+                            style: AppTypography.sectionTitle(
+                              context,
+                            ).copyWith(fontSize: 12),
+                          ),
+                          GestureDetector(
+                            onTap:
+                                widget.onNavigateForgot ?? widget.onNavToForgot,
+                            child: Text(
+                              'Forgot password?',
+                              style: AppTypography.caption(
+                                context,
+                                color: brandColor,
+                              ).copyWith(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      TextField(
+                        controller: _passwordController,
+                        obscureText: _obscurePassword,
+                        style: AppTypography.body(
+                          context,
+                          color: AppColors.textPrimary,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: '••••••••',
+                          hintStyle: const TextStyle(
+                            color: AppColors.textMuted,
+                            fontSize: 13,
+                          ),
+                          filled: true,
+                          fillColor: AppColors.surfaceDark,
+                          border: OutlineInputBorder(
+                            borderRadius: AppRadius.borderMd,
+                            borderSide: const BorderSide(
+                              color: AppColors.borderDark,
+                            ),
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.lock_outline,
+                            color: AppColors.textMuted,
+                            size: 18,
+                          ),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                              color: AppColors.textMuted,
+                              size: 18,
+                            ),
+                            onPressed: () => setState(
+                              () => _obscurePassword = !_obscurePassword,
+                            ),
+                          ),
+                        ),
+                        onSubmitted: (_) => _handleLogin(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.x2l),
+
+                  // Submit Button
+                  AppButton(
+                    label: 'Continue to Workspace',
+                    onPressed: _handleLogin,
+                    isLoading: _isLoading,
+                    isFullWidth: true,
+                  ),
+
+                  // Dev Environment 1-Tap Sign In
+                  if (widget.appConfig.environment == AppEnvironment.dev) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    AppButton(
+                      label: 'Demo 1-Tap Sign In (DEV)',
+                      onPressed: () {
+                        _emailController.text = 'alex@macro.app';
+                        _passwordController.text = 'password123';
+                        _handleLogin();
+                      },
+                      variant: AppButtonVariant.secondary,
+                      isFullWidth: true,
                     ),
                   ],
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppSpacing.x2l),
 
+                  // Navigation to Signup
                   Wrap(
                     alignment: WrapAlignment.center,
-                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      const Text(
+                      Text(
                         "Don't have an account? ",
-                        style: TextStyle(
-                          color: AppTheme.textMuted,
-                          fontSize: 12,
-                        ),
+                        style: AppTypography.bodySmall(context),
                       ),
                       GestureDetector(
-                        onTap: widget.onNavToSignup,
+                        onTap: widget.onNavigateSignup ?? widget.onNavToSignup,
                         child: Text(
-                          'Sign up',
-                          style: TextStyle(
-                            color: widget.appConfig.primaryColor,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
+                          'Create workspace',
+                          style: AppTypography.bodySmall(
+                            context,
+                            color: brandColor,
+                          ).copyWith(fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],

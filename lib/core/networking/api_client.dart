@@ -257,7 +257,9 @@ class ApiClient {
       }
     }
 
-    final String? message = decoded is Map ? decoded['message']?.toString() : decoded?.toString();
+    final String? message = decoded is Map
+        ? decoded['message']?.toString()
+        : decoded?.toString();
 
     switch (response.statusCode) {
       case 200:
@@ -265,20 +267,43 @@ class ApiClient {
       case 204:
         return ApiResponse.success(decoded, statusCode: response.statusCode);
       case 401:
-        return ApiResponse.failure(UnauthorizedFailure(message ?? 'Authentication token invalid or expired.'), statusCode: 401);
+        return ApiResponse.failure(
+          UnauthorizedFailure(
+            message ?? 'Authentication token invalid or expired.',
+          ),
+          statusCode: 401,
+        );
       case 403:
-        return ApiResponse.failure(ForbiddenFailure(message ?? 'Access forbidden.'), statusCode: 403);
+        return ApiResponse.failure(
+          ForbiddenFailure(message ?? 'Access forbidden.'),
+          statusCode: 403,
+        );
       case 404:
-        return ApiResponse.failure(NotFoundFailure(message ?? 'Resource not found.'), statusCode: 404);
+        return ApiResponse.failure(
+          NotFoundFailure(message ?? 'Resource not found.'),
+          statusCode: 404,
+        );
       case 422:
-        return ApiResponse.failure(ValidationFailure(message ?? 'Invalid request data.'), statusCode: 422);
+        return ApiResponse.failure(
+          ValidationFailure(message ?? 'Invalid request data.'),
+          statusCode: 422,
+        );
       case 429:
-        return ApiResponse.failure(RateLimitedFailure(message ?? 'Rate limit exceeded.'), statusCode: 429);
+        return ApiResponse.failure(
+          RateLimitedFailure(message ?? 'Rate limit exceeded.'),
+          statusCode: 429,
+        );
       default:
         if (response.statusCode >= 500) {
-          return ApiResponse.failure(ServerFailure(message ?? 'Internal server error.'), statusCode: response.statusCode);
+          return ApiResponse.failure(
+            ServerFailure(message ?? 'Internal server error.'),
+            statusCode: response.statusCode,
+          );
         }
-        return ApiResponse.failure(UnknownFailure(message ?? 'An unknown error occurred.'), statusCode: response.statusCode);
+        return ApiResponse.failure(
+          UnknownFailure(message ?? 'An unknown error occurred.'),
+          statusCode: response.statusCode,
+        );
     }
   }
 }

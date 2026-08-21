@@ -191,7 +191,9 @@ class MacroMainScreen extends StatelessWidget {
     AppConfig appConfig,
     AuthRepository authRepo,
   ) {
-    final unreadCount = Provider.of<InboxController>(context).emails.where((e) => e.isUnread).length;
+    final unreadCount = Provider.of<InboxController>(
+      context,
+    ).emails.where((e) => e.isUnread).length;
     int getBottomIndex() {
       switch (provider.activeTab) {
         case WorkspaceTab.dashboard:

@@ -1,18 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../config/app_config.dart';
+import '../../design/components/app_button.dart';
+import '../../design/tokens/app_colors.dart';
+import '../../design/tokens/app_radius.dart';
+import '../../design/tokens/app_spacing.dart';
+import '../../design/tokens/app_typography.dart';
 import '../../repositories/auth_repository.dart';
-import '../../theme/app_theme.dart';
 
 class SignupScreen extends StatefulWidget {
   final AppConfig appConfig;
-  final AuthRepository authRepository;
-  final VoidCallback onNavToLogin;
+  final AuthRepository? authRepository;
+  final VoidCallback? onSignupSuccess;
+  final VoidCallback? onNavigateLogin;
+  final VoidCallback? onNavToLogin;
 
   const SignupScreen({
     super.key,
     required this.appConfig,
-    required this.authRepository,
-    required this.onNavToLogin,
+    this.authRepository,
+    this.onSignupSuccess,
+    this.onNavigateLogin,
+    this.onNavToLogin,
   });
 
   @override
@@ -23,6 +32,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _obscurePassword = true;
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -34,13 +44,13 @@ class _SignupScreenState extends State<SignupScreen> {
     super.dispose();
   }
 
-  void _handleSignup() async {
+  Future<void> _handleSignup() async {
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
     if (name.isEmpty || email.isEmpty || password.isEmpty) {
-      setState(() => _errorMessage = 'Please fill in all required fields.');
+      setState(() => _errorMessage = 'Please complete all required fields.');
       return;
     }
 
@@ -49,184 +59,275 @@ class _SignupScreenState extends State<SignupScreen> {
       _errorMessage = null;
     });
 
-    final result = await widget.authRepository.signup(
+    final authRepo = Provider.of<AuthRepository>(context, listen: false);
+    final result = await authRepo.signup(
       name: name,
       email: email,
       password: password,
     );
 
+    if (!mounted) return;
+
     setState(() => _isLoading = false);
 
-    if (!result.isSuccess) {
-      setState(() => _errorMessage = result.message ?? 'Signup failed');
+    if (result is AuthSuccess) {
+      widget.onSignupSuccess?.call();
+    } else {
+      setState(() => _errorMessage = 'Failed to create workspace account.');
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final brandColor = AppColors.brandPrimary(widget.appConfig);
+
     return Scaffold(
-      backgroundColor: AppTheme.bgDark,
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
+      backgroundColor: AppColors.backgroundDark,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.x2l),
             child: Container(
-              padding: const EdgeInsets.all(32),
-              decoration: BoxDecoration(
-                color: AppTheme.surfaceDark,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.borderDark),
-              ),
+              constraints: const BoxConstraints(maxWidth: 420),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Container(
                     width: 56,
                     height: 56,
                     decoration: BoxDecoration(
-                      color: widget.appConfig.primaryColor,
-                      borderRadius: BorderRadius.circular(14),
+                      color: brandColor,
+                      borderRadius: AppRadius.borderMd,
+                      boxShadow: [
+                        BoxShadow(
+                          color: brandColor.withOpacity(0.4),
+                          blurRadius: 16,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                     child: Center(
                       child: Text(
                         widget.appConfig.logoText,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 32,
                           fontWeight: FontWeight.bold,
+                          fontSize: 24,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppSpacing.lg),
                   Text(
-                    'Create ${widget.appConfig.appName} Account',
-                    style: const TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    'Create Workspace Account',
+                    style: AppTypography.titleLarge(context),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
-                    'Join ${widget.appConfig.workspaceName} team workspace',
-                    style: const TextStyle(
-                      color: AppTheme.textMuted,
-                      fontSize: 12,
-                    ),
+                    'Get started with ${widget.appConfig.appName}',
+                    style: AppTypography.bodySmall(context),
+                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpacing.x2l),
 
                   if (_errorMessage != null) ...[
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(AppSpacing.md),
                       decoration: BoxDecoration(
-                        color: AppTheme.accentRose.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(8),
+                        color: AppColors.danger.withOpacity(0.15),
+                        borderRadius: AppRadius.borderSm,
                         border: Border.all(
-                          color: AppTheme.accentRose.withOpacity(0.4),
+                          color: AppColors.danger.withOpacity(0.3),
                         ),
                       ),
-                      child: Text(
-                        _errorMessage!,
-                        style: const TextStyle(
-                          color: AppTheme.accentRose,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-
-                  TextField(
-                    controller: _nameController,
-                    style: const TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 14,
-                    ),
-                    decoration: const InputDecoration(
-                      labelText: 'Full Name',
-                      labelStyle: TextStyle(color: AppTheme.textMuted),
-                      filled: true,
-                      fillColor: AppTheme.bgDark,
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  TextField(
-                    controller: _emailController,
-                    style: const TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 14,
-                    ),
-                    decoration: const InputDecoration(
-                      labelText: 'Work Email',
-                      labelStyle: TextStyle(color: AppTheme.textMuted),
-                      filled: true,
-                      fillColor: AppTheme.bgDark,
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  TextField(
-                    controller: _passwordController,
-                    obscureText: true,
-                    style: const TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 14,
-                    ),
-                    decoration: const InputDecoration(
-                      labelText: 'Password',
-                      labelStyle: TextStyle(color: AppTheme.textMuted),
-                      filled: true,
-                      fillColor: AppTheme.bgDark,
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: widget.appConfig.primaryColor,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      onPressed: _isLoading ? null : _handleSignup,
-                      child: _isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text(
-                              'Create Account & Join',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            color: AppColors.danger,
+                            size: 18,
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: Text(
+                              _errorMessage!,
+                              style: AppTypography.bodySmall(
+                                context,
+                                color: AppColors.danger,
                               ),
                             ),
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(height: AppSpacing.lg),
+                  ],
+
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Full Name',
+                        style: AppTypography.sectionTitle(
+                          context,
+                        ).copyWith(fontSize: 12),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      TextField(
+                        controller: _nameController,
+                        style: AppTypography.body(
+                          context,
+                          color: AppColors.textPrimary,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Alex Rivera',
+                          hintStyle: const TextStyle(
+                            color: AppColors.textMuted,
+                            fontSize: 13,
+                          ),
+                          filled: true,
+                          fillColor: AppColors.surfaceDark,
+                          border: OutlineInputBorder(
+                            borderRadius: AppRadius.borderMd,
+                            borderSide: const BorderSide(
+                              color: AppColors.borderDark,
+                            ),
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.person_outline,
+                            color: AppColors.textMuted,
+                            size: 18,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Work Email',
+                        style: AppTypography.sectionTitle(
+                          context,
+                        ).copyWith(fontSize: 12),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      TextField(
+                        controller: _emailController,
+                        style: AppTypography.body(
+                          context,
+                          color: AppColors.textPrimary,
+                        ),
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: InputDecoration(
+                          hintText: 'alex@company.com',
+                          hintStyle: const TextStyle(
+                            color: AppColors.textMuted,
+                            fontSize: 13,
+                          ),
+                          filled: true,
+                          fillColor: AppColors.surfaceDark,
+                          border: OutlineInputBorder(
+                            borderRadius: AppRadius.borderMd,
+                            borderSide: const BorderSide(
+                              color: AppColors.borderDark,
+                            ),
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.email_outlined,
+                            color: AppColors.textMuted,
+                            size: 18,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Password',
+                        style: AppTypography.sectionTitle(
+                          context,
+                        ).copyWith(fontSize: 12),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      TextField(
+                        controller: _passwordController,
+                        obscureText: _obscurePassword,
+                        style: AppTypography.body(
+                          context,
+                          color: AppColors.textPrimary,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'At least 8 characters',
+                          hintStyle: const TextStyle(
+                            color: AppColors.textMuted,
+                            fontSize: 13,
+                          ),
+                          filled: true,
+                          fillColor: AppColors.surfaceDark,
+                          border: OutlineInputBorder(
+                            borderRadius: AppRadius.borderMd,
+                            borderSide: const BorderSide(
+                              color: AppColors.borderDark,
+                            ),
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.lock_outline,
+                            color: AppColors.textMuted,
+                            size: 18,
+                          ),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                              color: AppColors.textMuted,
+                              size: 18,
+                            ),
+                            onPressed: () => setState(
+                              () => _obscurePassword = !_obscurePassword,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.x2l),
+
+                  AppButton(
+                    label: 'Create Account & Workspace',
+                    onPressed: _handleSignup,
+                    isLoading: _isLoading,
+                    isFullWidth: true,
                   ),
 
-                  const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: widget.onNavToLogin,
-                    child: Text(
-                      'Already have an account? Sign in',
-                      style: TextStyle(color: widget.appConfig.primaryColor),
-                    ),
+                  const SizedBox(height: AppSpacing.x2l),
+
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    children: [
+                      Text(
+                        'Already have an account? ',
+                        style: AppTypography.bodySmall(context),
+                      ),
+                      GestureDetector(
+                        onTap: widget.onNavigateLogin ?? widget.onNavToLogin,
+                        child: Text(
+                          'Sign in',
+                          style: AppTypography.bodySmall(
+                            context,
+                            color: brandColor,
+                          ).copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

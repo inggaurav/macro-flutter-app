@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../config/app_config.dart';
-import '../models/models.dart';
+import '../design/components/command_palette.dart';
+import '../design/tokens/app_colors.dart';
+import '../design/tokens/app_radius.dart';
+import '../design/tokens/app_spacing.dart';
+import '../design/tokens/app_typography.dart';
 import '../features/chat/controllers/chat_controller.dart';
 import '../features/inbox/controllers/inbox_controller.dart';
+import '../models/models.dart';
 import '../providers/workspace_provider.dart';
 import '../repositories/auth_repository.dart';
-import '../theme/app_theme.dart';
 
 class SidebarNavigation extends StatelessWidget {
   final WorkspaceProvider provider;
@@ -21,27 +25,34 @@ class SidebarNavigation extends StatelessWidget {
     final flags = appConfig.featureFlags;
 
     return Container(
-      width: 240,
+      width: 250,
       decoration: const BoxDecoration(
-        color: AppTheme.surfaceDark,
-        border: Border(right: BorderSide(color: AppTheme.borderDark)),
+        color: AppColors.surfaceDark,
+        border: Border(right: BorderSide(color: AppColors.borderDark)),
       ),
       child: Column(
         children: [
-          // Dynamic App Branding Header
+          // Header / Workspace Branding Identity
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppTheme.borderDark)),
+              border: Border(bottom: BorderSide(color: AppColors.borderDark)),
             ),
             child: Row(
               children: [
                 Container(
-                  width: 36,
-                  height: 36,
+                  width: 32,
+                  height: 32,
                   decoration: BoxDecoration(
                     color: appConfig.primaryColor,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: AppRadius.borderSm,
+                    boxShadow: [
+                      BoxShadow(
+                        color: appConfig.primaryColor.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Center(
                     child: Text(
@@ -49,44 +60,25 @@ class SidebarNavigation extends StatelessWidget {
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: 20,
+                        fontSize: 16,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         appConfig.appName,
-                        style: const TextStyle(
-                          color: AppTheme.textPrimary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
+                        style: AppTypography.sectionTitle(context),
                         overflow: TextOverflow.ellipsis,
                       ),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.circle,
-                            size: 8,
-                            color: AppTheme.accentEmerald,
-                          ),
-                          const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(
-                              appConfig.workspaceName,
-                              style: const TextStyle(
-                                color: AppTheme.textSecondary,
-                                fontSize: 11,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
+                      Text(
+                        appConfig.workspaceName,
+                        style: AppTypography.caption(context),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
@@ -95,17 +87,63 @@ class SidebarNavigation extends StatelessWidget {
             ),
           ),
 
-          // Navigation Links
+          // Command Palette Search Trigger Button
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: AppRadius.borderSm,
+                onTap: () => CommandPalette.show(context),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceElevated,
+                    borderRadius: AppRadius.borderSm,
+                    border: Border.all(color: AppColors.borderDark),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.search,
+                        size: 16,
+                        color: AppColors.textMuted,
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          'Search... (Ctrl+K)',
+                          style: AppTypography.bodySmall(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Grouped Navigation Items
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: AppSpacing.xs,
+              ),
               children: [
+                _buildSectionHeader(context, 'WORKSPACE'),
                 _buildNavItem(
                   context,
                   tab: WorkspaceTab.dashboard,
                   icon: Icons.dashboard_outlined,
                   selectedIcon: Icons.dashboard,
-                  label: 'Dashboard',
+                  label: 'Home Dashboard',
                 ),
                 _buildNavItem(
                   context,
@@ -139,13 +177,15 @@ class SidebarNavigation extends StatelessWidget {
                   tab: WorkspaceTab.tasks,
                   icon: Icons.check_box_outlined,
                   selectedIcon: Icons.check_box,
-                  label: 'Engineering Tasks',
+                  label: 'Tasks & Kanban',
                   badgeCount: provider.tasks
                       .where((t) => t.status != TaskStatus.done)
                       .length,
                 ),
 
-                if (flags['enableCrm'] ?? true)
+                if (flags['enableCrm'] ?? true) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  _buildSectionHeader(context, 'BUSINESS'),
                   _buildNavItem(
                     context,
                     tab: WorkspaceTab.crm,
@@ -153,8 +193,11 @@ class SidebarNavigation extends StatelessWidget {
                     selectedIcon: Icons.pie_chart,
                     label: 'CRM & Deals',
                   ),
+                ],
 
-                if (flags['enableAiCopilot'] ?? true)
+                if (flags['enableAiCopilot'] ?? true) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  _buildSectionHeader(context, 'INTELLIGENCE'),
                   _buildNavItem(
                     context,
                     tab: WorkspaceTab.aiMemory,
@@ -162,23 +205,16 @@ class SidebarNavigation extends StatelessWidget {
                     selectedIcon: Icons.auto_awesome,
                     label: 'AI Shared Memory',
                   ),
+                ],
 
-                if (flags['enableCalls'] ?? true)
-                  _buildNavItem(
-                    context,
-                    tab: WorkspaceTab.calls,
-                    icon: Icons.videocam_outlined,
-                    selectedIcon: Icons.videocam,
-                    label: 'Call Rooms & Notes',
-                  ),
-
-                const Divider(height: 24),
+                const SizedBox(height: AppSpacing.md),
+                _buildSectionHeader(context, 'COMMUNICATION'),
                 _buildNavItem(
                   context,
-                  tab: WorkspaceTab.settings,
-                  icon: Icons.person_outline,
-                  selectedIcon: Icons.person,
-                  label: 'Profile & Settings',
+                  tab: WorkspaceTab.calls,
+                  icon: Icons.video_camera_front_outlined,
+                  selectedIcon: Icons.video_camera_front,
+                  label: 'Calls & Huddles',
                 ),
               ],
             ),
@@ -186,56 +222,66 @@ class SidebarNavigation extends StatelessWidget {
 
           // User Profile Footer
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppSpacing.md),
             decoration: const BoxDecoration(
-              border: Border(top: BorderSide(color: AppTheme.borderDark)),
+              border: Border(top: BorderSide(color: AppColors.borderDark)),
             ),
-            child: Row(
-              children: [
-                CircleAvatar(
+            child: Material(
+              color: Colors.transparent,
+              child: ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: CircleAvatar(
                   radius: 16,
-                  backgroundImage: NetworkImage(
-                    user?.avatarUrl ??
-                        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
-                  ),
+                  backgroundImage: user?.avatarUrl != null
+                      ? NetworkImage(user!.avatarUrl)
+                      : null,
+                  backgroundColor: appConfig.primaryColor,
+                  child: user?.avatarUrl == null
+                      ? Text(
+                          user?.name[0] ?? 'A',
+                          style: const TextStyle(color: Colors.white),
+                        )
+                      : null,
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        user?.name ?? 'Alex Rivera',
-                        style: const TextStyle(
-                          color: AppTheme.textPrimary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        user?.role ?? 'Lead Architect',
-                        style: const TextStyle(
-                          color: AppTheme.textMuted,
-                          fontSize: 10,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
+                title: Text(
+                  user?.name ?? 'Alex Rivera',
+                  style: AppTypography.sectionTitle(
+                    context,
+                  ).copyWith(fontSize: 13),
+                  overflow: TextOverflow.ellipsis,
                 ),
-                IconButton(
+                subtitle: Text(
+                  user?.role ?? 'Lead Architect',
+                  style: AppTypography.caption(context),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                trailing: IconButton(
                   icon: const Icon(
-                    Icons.logout,
-                    size: 16,
-                    color: AppTheme.textMuted,
+                    Icons.settings_outlined,
+                    size: 18,
+                    color: AppColors.textMuted,
                   ),
-                  onPressed: () => authRepo.logout(),
+                  onPressed: () => provider.setTab(WorkspaceTab.profile),
                 ),
-              ],
+              ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(BuildContext context, String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
+      child: Text(
+        title,
+        style: AppTypography.label(
+          context,
+        ).copyWith(fontSize: 10, letterSpacing: 0.8),
       ),
     );
   }
@@ -249,7 +295,6 @@ class SidebarNavigation extends StatelessWidget {
     int badgeCount = 0,
   }) {
     final isSelected = provider.activeTab == tab;
-
     final appConfig = Provider.of<AppConfig>(context);
 
     return Padding(
@@ -259,21 +304,23 @@ class SidebarNavigation extends StatelessWidget {
         child: ListTile(
           selected: isSelected,
           selectedTileColor: appConfig.primaryColor.withOpacity(0.15),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.borderSm),
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
+            horizontal: AppSpacing.md,
             vertical: 0,
           ),
           dense: true,
           leading: Icon(
             isSelected ? selectedIcon : icon,
             size: 18,
-            color: isSelected ? appConfig.primaryColor : AppTheme.textMuted,
+            color: isSelected ? appConfig.primaryColor : AppColors.textMuted,
           ),
           title: Text(
             label,
             style: TextStyle(
-              color: isSelected ? AppTheme.textPrimary : AppTheme.textSecondary,
+              color: isSelected
+                  ? AppColors.textPrimary
+                  : AppColors.textSecondary,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               fontSize: 12,
             ),
@@ -287,13 +334,15 @@ class SidebarNavigation extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? appConfig.primaryColor
-                        : AppTheme.surfaceLightDark,
-                    borderRadius: BorderRadius.circular(10),
+                        : AppColors.surfaceElevated,
+                    borderRadius: AppRadius.borderPill,
                   ),
                   child: Text(
                     '$badgeCount',
                     style: TextStyle(
-                      color: isSelected ? Colors.white : AppTheme.textSecondary,
+                      color: isSelected
+                          ? Colors.white
+                          : AppColors.textSecondary,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),
