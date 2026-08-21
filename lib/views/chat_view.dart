@@ -289,6 +289,7 @@ class _ChatViewState extends State<ChatView> {
                                 itemCount: activeMessages.length,
                                 itemBuilder: (context, index) {
                                   final msg = activeMessages[index];
+                                  final avatarUrl = msg.senderAvatar.trim();
                                   return Container(
                                     margin: const EdgeInsets.only(bottom: 20),
                                     child: Row(
@@ -297,9 +298,17 @@ class _ChatViewState extends State<ChatView> {
                                       children: [
                                         CircleAvatar(
                                           radius: 18,
-                                          backgroundImage: NetworkImage(
-                                            msg.senderAvatar,
-                                          ),
+                                          backgroundImage: avatarUrl.isNotEmpty
+                                              ? NetworkImage(avatarUrl)
+                                              : null,
+                                          child: avatarUrl.isEmpty
+                                              ? Text(
+                                                  msg.senderName.isNotEmpty
+                                                      ? msg.senderName[0]
+                                                            .toUpperCase()
+                                                      : 'M',
+                                                )
+                                              : null,
                                         ),
                                         const SizedBox(width: 12),
                                         Expanded(

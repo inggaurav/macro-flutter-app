@@ -106,11 +106,12 @@ graph TD
     Realtime --> Config
 
     %% Core to Upstream Endpoints
-    AuthRepo -- "POST /login/sso & GET /user/me" --> AuthService
-    GS -- "POST /login/sso & GET /link/gmail/status" --> AuthService
+    AuthRepo -- "GET /session/login/{code}, POST /jwt/refresh, GET /user/me" --> AuthService
+    GS -- "GET /login/sso redirect, GET /link/gmail/status" --> AuthService
     InboxRepo -- "GET /email/threads/previews/cursor/inbox" --> EmailService
-    GS -- "GET /email/calendar/events" --> EmailService
-    ChatRepo -- "GET /storageHost/comms/channels" --> StorageService
+    GS -- "GET /email/links, GET /calendar/calendars" --> EmailService
+    GS -- "GET /calendar-events" --> StorageService
+    ChatRepo -- "GET /comms/channels, GET /channels/{id}/messages, POST /channels/{id}/message" --> StorageService
     AgentRepo -- "POST /stream/chat/message" --> CognitionService
     Realtime -- "wss://token={jwt}" --> GatewayService
 ```
@@ -120,18 +121,21 @@ graph TD
 ## 🏗️ Architectural Flow Map
 
 ### 1. **Authentication & SSO Flow**:
-- **Mobile SSO Entry**: `GoogleService.initiateGoogleSso()` triggers `POST authHost/login/sso` with `{"provider": "google_gmail", "client_type": "mobile"}`.
+- **Mobile SSO Entry**: `GoogleService.initiateGoogleSso()` navigates to `GET authHost/login/sso?idp_name=google_gmail&is_mobile=true&original_url=macro://login`.
+- **Mobile Callback**: Android and iOS register the `macro://login` scheme. `AuthRepositoryImpl.redeemMobileSessionUri()` extracts the one-time code and calls `GET authHost/session/login/{session_code}`.
+- **Token Rotation**: `AuthRepositoryImpl.refreshSession()` calls `POST authHost/jwt/refresh` with `x-macro-refresh-token` and rotates both stored tokens.
 - **Fail-Closed Validation**: `AuthRepositoryImpl._validateTokenWithServer()` hits `GET authHost/user/me`. Rejects invalid tokens immediately without fallback.
 - **Offline / Local Dev Fallback**: `AuthRepositoryImpl` supports `MacroServiceConfig.localDevelopment()` for offline dev testing.
 
 ### 2. **Gmail & Calendar Connection**:
-- **Link Status Polling**: `GoogleService.checkConnectionStatus()` hits `GET authHost/link/gmail/status`.
+- **Account Discovery**: `GoogleService.fetchGoogleAccounts()` hits `GET emailHost/email/links`.
+- **Reauthentication Status**: `GoogleService.fetchGmailReauthenticationRequired()` reads only `reauthentication_required` from `GET authHost/link/gmail/status`.
 - **Live Status Render**: `ProfileScreen` renders live state badges (`Not connected`, `Linking...`, `Connected`, `Needs Reauth`).
-- **Calendar Sync**: `GoogleService.fetchCalendarEvents()` hits `GET emailHost/email/calendar/events`.
+- **Calendar Sync**: `GoogleService.fetchCalendars()` hits `GET emailHost/calendar/calendars`; `fetchCalendarEvents()` hits `GET storageHost/calendar-events`.
 
 ### 3. **Realtime Channels & Messaging**:
 - **WebSocket Gateway**: `MacroRealtimeClient` connects to `wss://connection-gateway.macro.com?token={jwt}` with 25s ping/pong heartbeats and exponential backoff.
-- **Channels Repo**: `MacroChatRepository` fetches real channels via `GET storageHost/comms/channels` and channel messages via `GET storageHost/channels/{id}/messages`.
+- **Channels Repo**: `MacroChatRepository` fetches real channels via `GET storageHost/comms/channels`, message pages via `GET storageHost/channels/{id}/messages`, and sends with `POST storageHost/channels/{id}/message`.
 
 ### 4. **AI Copilot & Cognition**:
-- **Streamed Copilot**: `AiChatController` calls `MacroAgentRepository.streamChatMessage()` hitting `POST cognitionHost/stream/chat/message` and `GET cognitionHost/memory`.
+- **Streamed Copilot**: `MacroAgentRepository.startCopilotStream()` posts `content` to `POST cognitionHost/stream/chat/message` and parses `stream_id` metadata. Gateway event assembly is still partial, not production PASS.

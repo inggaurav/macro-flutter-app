@@ -21,6 +21,7 @@ class SidebarNavigation extends StatelessWidget {
     final appConfig = Provider.of<AppConfig>(context);
     final authRepo = Provider.of<AuthRepository>(context);
     final user = authRepo.currentUser;
+    final avatarUrl = user?.avatarUrl.trim() ?? '';
     final flags = appConfig.featureFlags;
 
     return Container(
@@ -229,11 +230,11 @@ class SidebarNavigation extends StatelessWidget {
                 contentPadding: EdgeInsets.zero,
                 leading: CircleAvatar(
                   radius: 16,
-                  backgroundImage: user?.avatarUrl != null
-                      ? NetworkImage(user!.avatarUrl)
+                  backgroundImage: avatarUrl.isNotEmpty
+                      ? NetworkImage(avatarUrl)
                       : null,
                   backgroundColor: appConfig.primaryColor,
-                  child: user?.avatarUrl == null
+                  child: avatarUrl.isEmpty
                       ? Text(
                           user?.name[0] ?? 'A',
                           style: const TextStyle(color: Colors.white),

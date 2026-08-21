@@ -56,6 +56,7 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => WorkspaceProvider()),
         ChangeNotifierProvider.value(value: authRepo),
+        Provider.value(value: serviceConfig),
         ChangeNotifierProvider(
           create: (_) => GoogleService(
             config: serviceConfig,

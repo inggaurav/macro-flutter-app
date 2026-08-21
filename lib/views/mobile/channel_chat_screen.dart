@@ -108,6 +108,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                     itemCount: messages.length,
                     itemBuilder: (context, index) {
                       final msg = messages[index];
+                      final avatarUrl = msg.senderAvatar.trim();
                       return Container(
                         margin: const EdgeInsets.only(bottom: 16),
                         child: Row(
@@ -115,7 +116,16 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                           children: [
                             CircleAvatar(
                               radius: 16,
-                              backgroundImage: NetworkImage(msg.senderAvatar),
+                              backgroundImage: avatarUrl.isNotEmpty
+                                  ? NetworkImage(avatarUrl)
+                                  : null,
+                              child: avatarUrl.isEmpty
+                                  ? Text(
+                                      msg.senderName.isNotEmpty
+                                          ? msg.senderName[0].toUpperCase()
+                                          : 'M',
+                                    )
+                                  : null,
                             ),
                             const SizedBox(width: 10),
                             Expanded(

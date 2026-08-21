@@ -114,7 +114,10 @@ class MacroEmailMapper {
     final senderEmail = raw['senderEmail'] ?? raw['sender_email'];
     final senderName = raw['senderName'] ?? raw['sender_name'];
     final sortTs = raw['sortTs'] ?? raw['sort_ts'] ?? raw['timestamp'];
-    if (id == null || senderEmail == null || senderName == null || sortTs == null) {
+    if (id == null ||
+        senderEmail == null ||
+        senderName == null ||
+        sortTs == null) {
       throw const FormatException('Inbox preview required fields missing.');
     }
 
@@ -127,9 +130,7 @@ class MacroEmailMapper {
         ? (raw['labels'] as List).map((item) => item.toString()).toList()
         : <String>[];
     final attachments = raw['attachments'] is List
-        ? (raw['attachments'] as List)
-              .map((item) => item.toString())
-              .toList()
+        ? (raw['attachments'] as List).map((item) => item.toString()).toList()
         : <String>[];
 
     return EmailThread(
@@ -159,10 +160,9 @@ class MacroInboxRepository implements InboxRepository {
 
   MacroInboxRepository({
     MacroServiceConfig? config,
-    required String? Function() tokenProvider,
+    required this._tokenProvider,
     http.Client? client,
   }) : _config = config ?? MacroServiceConfig.production(),
-       _tokenProvider = tokenProvider,
        _client = client ?? http.Client();
 
   String? get nextCursor => _nextCursor;
@@ -175,14 +175,15 @@ class MacroInboxRepository implements InboxRepository {
 
   Future<MacroInboxPage> fetchInboxPage({String? cursor}) async {
     final token = _requireToken();
-    final uri = Uri.parse(
-      '${_config.emailHost}/email/threads/previews/cursor/inbox',
-    ).replace(
-      queryParameters: {
-        'limit': '25',
-        if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
-      },
-    );
+    final uri =
+        Uri.parse(
+          '${_config.emailHost}/email/threads/previews/cursor/inbox',
+        ).replace(
+          queryParameters: {
+            'limit': '25',
+            if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
+          },
+        );
 
     final response = await _client
         .get(

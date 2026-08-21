@@ -28,8 +28,12 @@ class _TasksViewState extends State<TasksView> {
   void initState() {
     super.initState();
     final authRepo = Provider.of<AuthRepository>(context, listen: false);
+    final serviceConfig = Provider.of<MacroServiceConfig>(
+      context,
+      listen: false,
+    );
     _repository = MacroTasksRepository(
-      config: MacroServiceConfig.production(),
+      config: serviceConfig,
       tokenProvider: () => authRepo.authToken,
     );
     _loadTasks();

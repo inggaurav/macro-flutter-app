@@ -28,15 +28,24 @@ class _AiMemoryViewState extends State<AiMemoryView> {
   void initState() {
     super.initState();
     final authRepo = Provider.of<AuthRepository>(context, listen: false);
+    final serviceConfig = Provider.of<MacroServiceConfig>(
+      context,
+      listen: false,
+    );
     _repository = MacroAgentRepository(
-      config: MacroServiceConfig.production(),
+      config: serviceConfig,
       tokenProvider: () => authRepo.authToken,
     );
     _loadMemories();
   }
 
   Future<void> _loadMemories() async {
-    final memories = await _repository.fetchMemories();
+    List<AiMemoryItem> memories = [];
+    try {
+      memories = await _repository.fetchMemories();
+    } catch (_) {
+      memories = [];
+    }
     if (mounted) {
       setState(() {
         _memories = memories;

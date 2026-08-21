@@ -55,21 +55,21 @@ These files were already modified before the Phase 4.0 audit/repair pass began:
 | Area | Status | Current Evidence | Production Gap |
 | --- | --- | --- | --- |
 | Authentication: password/token | `PARTIAL` | `AuthRepositoryImpl` has password login, token validation, restore, logout. Local dev auth exists. | Real auth endpoints are not traced to upstream OpenAPI/backend evidence. Refresh rotation, revoke semantics, and failure UX need verification. |
-| Authentication: Google | `PARTIAL` | `GoogleService.initiateGoogleSso()` and Gmail link methods exist. | Mobile OAuth PKCE/deep link callback, one-time code exchange, cancellation, malformed callback, and session code expiry are not implemented end-to-end. |
-| Authentication: refresh | `PARTIAL` | `refreshSession()` validates current token. | No refresh token storage, rotation, or refresh endpoint contract is implemented. |
+| Authentication: Google | `PARTIAL` | SSO now builds `GET /login/sso` redirect URL, Android/iOS URL schemes are registered, and `macro://login?token=` is routed into session-code redemption. | Real S24 remote callback receipt and upstream smoke test are still pending. |
+| Authentication: refresh | `PARTIAL` | `POST /jwt/refresh` stores and rotates access/refresh tokens with a contract test. | Real upstream refresh smoke test and logout/revoke semantics are still pending. |
 | Authentication: logout | `IMPLEMENTED_UNVERIFIED` | Local token/user storage is cleared. | Backend revoke/logout is not called or verified. |
 | Workspace | `PARTIAL` | `WorkspaceProvider` stores selected UI tab and drawer state. Cache keys include a hardcoded/default workspace id in controllers. | No real workspace lifecycle, memberships, roles, invites, workspace switcher, permissions, or current workspace persistence. |
-| Gmail accounts | `PARTIAL` | Gmail status and link calls exist. | Multiple accounts, account filter, reauth, labels, attachments, and real account discovery are not verified. |
-| Gmail threads/messages | `IMPLEMENTED_UNVERIFIED` | `MacroInboxRepository.fetchEmails()` calls thread preview route. | Full message load, pagination, reply/send/forward, read state persistence, attachment handling, and smoke tests are pending. |
+| Gmail accounts | `PARTIAL` | Account discovery now reads `GET /email/links`; Gmail status is limited to `reauthentication_required`; link requests include `scopes=gmail_and_calendar`. | Multiple account filter UI, reauth UX, labels, attachments, and real smoke test are pending. |
+| Gmail threads/messages | `IMPLEMENTED_UNVERIFIED` | Inbox preview cursor pages now map `items`/`next_cursor` explicitly with `MacroEmailMapper`. | Full message load, reply/send/forward, read state persistence, attachment handling, and smoke tests are pending. |
 | Gmail drafts/send | `PLANNED` | AI reply draft endpoint exists. | No production compose/send/draft lifecycle verified. |
-| Calendar | `PARTIAL` | `GoogleService.fetchCalendarEvents()` fetches event list. | Calendar list, create/update/delete, attendees, RSVP, reminders, recurrence, and account grouping are missing. |
+| Calendar | `PARTIAL` | Calendar list uses `GET /calendar/calendars`; occurrences use `GET /calendar-events`; malformed dates now fail mapping instead of becoming `DateTime.now()`. | Mutations, attendees, RSVP, reminders, recurrence, and real smoke test are missing. |
 | Contacts | `PLANNED` | Contacts host is configured. | No connected Google contacts repository/UI verified. |
-| Chat | `IMPLEMENTED_UNVERIFIED` | Channels/messages/send repository methods exist. | Pagination, channel membership, group admin controls, and smoke tests are not verified. |
+| Chat | `IMPLEMENTED_UNVERIFIED` | Channels/messages now decode paginated envelopes; send uses singular `/message` route with `content` and nonce. | Channel membership, group admin controls, and real smoke tests are not verified. |
 | Realtime | `PARTIAL` | `MacroRealtimeClient` exists with heartbeat/reconnect and controller event hooks. | Actual subscription auth, event schemas, channel/doc/inbox integration, and resync are not verified. |
 | Docs | `PARTIAL` | Document list/create/simple save exists. | Real collaboration, CRDT/Yjs websocket protocol, conflict handling, and rich editor persistence are not done. |
 | Tasks | `PARTIAL` | Fetch, create, and status update methods exist. | Full CRUD, assignee model, filters, custom fields, permissions, and smoke tests are pending. |
 | CRM | `PARTIAL` | Deals fetch/update exists. | Contacts/companies, full pipeline CRUD, field definitions, and Google contacts integration are missing. |
-| AI | `PARTIAL` | Memory fetch and chat message endpoint exist. | Streaming token handling, contextual source attribution, cancellation, retry, and real smoke tests are missing. |
+| AI | `PARTIAL` | AI request now sends `content` and parses `stream_id` metadata. | Gateway event subscription, progressive assembly, contextual sources, cancellation, retry, and real smoke tests are missing. |
 | Memory | `IMPLEMENTED_UNVERIFIED` | Memory repository endpoint exists. | Persistence contract and source ownership are not verified. |
 | Calls | `PARTIAL` | Calls list endpoint exists. | Rooms, live audio, recording, transcripts, permissions, and storage are missing. |
 | Files | `PLANNED` | Static file host is configured. | Upload/download/cache, permissions, previews, and attachment integration are not implemented. |
@@ -84,7 +84,7 @@ These files were already modified before the Phase 4.0 audit/repair pass began:
 | --- | --- |
 | Format | `dart format --output=none --set-exit-if-changed .` passed |
 | Analyze | `flutter analyze` passed with 0 issues |
-| Test | `flutter test` passed, 25/25 |
+| Test | `flutter test` passed, 34/34 after Phase 4.0B contract repair |
 | Debug APK | `flutter build apk --debug` passed |
 | CI workflow | Java setup corrected to `actions/setup-java@v4` |
 

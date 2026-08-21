@@ -157,10 +157,9 @@ class GoogleService extends ChangeNotifier {
 
   GoogleService({
     MacroServiceConfig? config,
-    required String? Function() tokenProvider,
+    required this._tokenProvider,
     http.Client? client,
   }) : _config = config ?? MacroServiceConfig.production(),
-       _tokenProvider = tokenProvider,
        _client = client ?? http.Client();
 
   GoogleConnectionState get state => _state;

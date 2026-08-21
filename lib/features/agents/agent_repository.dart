@@ -1,6 +1,9 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
+
 import '../../config/macro_service_config.dart';
+import '../../core/networking/macro_api_exception.dart';
 import '../../models/models.dart';
 
 abstract interface class AgentRepository {
@@ -23,9 +26,7 @@ class MockAgentRepository implements AgentRepository {
   ];
 
   @override
-  Future<List<AiMemoryItem>> fetchMemories() async {
-    return _memories;
-  }
+  Future<List<AiMemoryItem>> fetchMemories() async => _memories;
 
   @override
   Future<String> queryCopilot(String prompt) async {
@@ -33,74 +34,115 @@ class MockAgentRepository implements AgentRepository {
   }
 }
 
+class MacroAiStreamStart {
+  final String streamId;
+  final String? chatId;
+  final String? messageId;
+
+  const MacroAiStreamStart({
+    required this.streamId,
+    this.chatId,
+    this.messageId,
+  });
+
+  factory MacroAiStreamStart.fromJson(Map<String, dynamic> json) {
+    final streamId = json['stream_id'] ?? json['streamId'];
+    if (streamId == null || streamId.toString().isEmpty) {
+      throw const FormatException('AI stream response missing stream_id.');
+    }
+    return MacroAiStreamStart(
+      streamId: streamId.toString(),
+      chatId: json['chat_id']?.toString() ?? json['chatId']?.toString(),
+      messageId:
+          json['message_id']?.toString() ?? json['messageId']?.toString(),
+    );
+  }
+}
+
 class MacroAgentRepository implements AgentRepository {
   final MacroServiceConfig _config;
   final String? Function() _tokenProvider;
+  final http.Client _client;
 
   MacroAgentRepository({
     MacroServiceConfig? config,
     required this._tokenProvider,
-  }) : _config = config ?? MacroServiceConfig.production();
+    http.Client? client,
+  }) : _config = config ?? MacroServiceConfig.production(),
+       _client = client ?? http.Client();
 
   @override
   Future<List<AiMemoryItem>> fetchMemories() async {
-    final token = _tokenProvider();
-    if (token == null || token.isEmpty) return [];
+    final token = _requireToken();
+    final response = await _client
+        .get(
+          Uri.parse('${_config.cognitionHost}/memory'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Accept': 'application/json',
+          },
+        )
+        .timeout(const Duration(seconds: 4));
 
-    try {
-      // Verified Upstream Route: GET cognitionHost/memory
-      final response = await http
-          .get(
-            Uri.parse('${_config.cognitionHost}/memory'),
-            headers: {
-              'Authorization': 'Bearer $token',
-              'Content-Type': 'application/json',
-            },
-          )
-          .timeout(const Duration(seconds: 4));
+    if (response.statusCode != 200) {
+      throw MacroApiException(
+        'Failed to load AI memory.',
+        statusCode: response.statusCode,
+      );
+    }
 
-      if (response.statusCode == 200) {
-        final List data = jsonDecode(response.body);
-        return data.map((item) => AiMemoryItem.fromJson(item)).toList();
-      }
-    } catch (_) {}
-
-    return [];
+    final decoded = jsonDecode(response.body);
+    final List items = decoded is Map<String, dynamic>
+        ? decoded['items'] as List? ?? decoded['memories'] as List? ?? []
+        : decoded as List;
+    return items.map((item) => AiMemoryItem.fromJson(item)).toList();
   }
 
   @override
   Future<String> queryCopilot(String prompt) async {
-    final token = _tokenProvider();
-    if (token == null || token.isEmpty) {
-      throw Exception(
-        'Unauthenticated: Cannot query AI without active session token',
+    final stream = await startCopilotStream(content: prompt);
+    return 'AI stream started: stream=${stream.streamId} chat=${stream.chatId ?? "new"} message=${stream.messageId ?? "pending"}';
+  }
+
+  Future<MacroAiStreamStart> startCopilotStream({
+    required String content,
+    String? chatId,
+    List<Object> attachments = const [],
+  }) async {
+    final token = _requireToken();
+    final response = await _client
+        .post(
+          Uri.parse('${_config.cognitionHost}/stream/chat/message'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: jsonEncode({
+            'content': content,
+            if (chatId != null && chatId.isNotEmpty) 'chat_id': chatId,
+            'attachments': attachments,
+          }),
+        )
+        .timeout(const Duration(seconds: 6));
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw MacroApiException(
+        'Cognition service rejected AI message.',
+        statusCode: response.statusCode,
       );
     }
 
-    try {
-      // Verified Upstream Route: POST cognitionHost/stream/chat/message
-      final response = await http
-          .post(
-            Uri.parse('${_config.cognitionHost}/stream/chat/message'),
-            headers: {
-              'Authorization': 'Bearer $token',
-              'Content-Type': 'application/json',
-            },
-            body: jsonEncode({'prompt': prompt}),
-          )
-          .timeout(const Duration(seconds: 6));
+    return MacroAiStreamStart.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
+  }
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return data['text'] ??
-            data['response'] ??
-            data['stream_id'] ??
-            'Query processed.';
-      } else {
-        throw Exception('HTTP ${response.statusCode} from cognition service');
-      }
-    } catch (e) {
-      throw Exception('AI Cognition service unavailable: $e');
+  String _requireToken() {
+    final token = _tokenProvider();
+    if (token == null || token.isEmpty) {
+      throw const MacroApiException('No active session token.');
     }
+    return token;
   }
 }

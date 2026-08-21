@@ -28,8 +28,12 @@ class _CallRoomViewState extends State<CallRoomView> {
   void initState() {
     super.initState();
     final authRepo = Provider.of<AuthRepository>(context, listen: false);
+    final serviceConfig = Provider.of<MacroServiceConfig>(
+      context,
+      listen: false,
+    );
     _repository = MacroCallsRepository(
-      config: MacroServiceConfig.production(),
+      config: serviceConfig,
       tokenProvider: () => authRepo.authToken,
     );
     _loadCalls();

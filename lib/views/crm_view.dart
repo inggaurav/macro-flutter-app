@@ -28,8 +28,12 @@ class _CrmViewState extends State<CrmView> {
   void initState() {
     super.initState();
     final authRepo = Provider.of<AuthRepository>(context, listen: false);
+    final serviceConfig = Provider.of<MacroServiceConfig>(
+      context,
+      listen: false,
+    );
     _repository = MacroCrmRepository(
-      config: MacroServiceConfig.production(),
+      config: serviceConfig,
       tokenProvider: () => authRepo.authToken,
     );
     _loadDeals();

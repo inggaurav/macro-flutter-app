@@ -29,8 +29,12 @@ class _DocsViewState extends State<DocsView> {
   void initState() {
     super.initState();
     final authRepo = Provider.of<AuthRepository>(context, listen: false);
+    final serviceConfig = Provider.of<MacroServiceConfig>(
+      context,
+      listen: false,
+    );
     _repository = MacroDocsRepository(
-      config: MacroServiceConfig.production(),
+      config: serviceConfig,
       tokenProvider: () => authRepo.authToken,
     );
     _loadDocs();
