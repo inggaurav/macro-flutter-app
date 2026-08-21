@@ -1,39 +1,40 @@
+import 'dart:async';
+
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import 'config/app_config.dart';
+import 'config/macro_service_config.dart';
+import 'core/google/google_service.dart';
+import 'core/networking/macro_realtime_client.dart';
+import 'core/persistence/local_cache.dart';
+import 'features/agents/agent_repository.dart';
+import 'features/agents/ai_chat_controller.dart';
+import 'features/chat/chat_repository.dart';
+import 'features/chat/controllers/chat_controller.dart';
+import 'features/inbox/controllers/inbox_controller.dart';
+import 'features/inbox/inbox_repository.dart';
 import 'providers/workspace_provider.dart';
 import 'repositories/auth_repository.dart';
 import 'theme/app_theme.dart';
-import 'views/auth/splash_screen.dart';
-import 'views/auth/onboarding_screen.dart';
-import 'views/auth/login_screen.dart';
-import 'views/auth/signup_screen.dart';
+import 'views/ai_memory_view.dart';
 import 'views/auth/forgot_password_screen.dart';
+import 'views/auth/login_screen.dart';
+import 'views/auth/onboarding_screen.dart';
+import 'views/auth/signup_screen.dart';
+import 'views/auth/splash_screen.dart';
+import 'views/call_room_view.dart';
+import 'views/chat_view.dart';
+import 'views/crm_view.dart';
+import 'views/dashboard_view.dart';
+import 'views/docs_view.dart';
+import 'views/inbox_view.dart';
 import 'views/profile_screen.dart';
+import 'views/tasks_view.dart';
+import 'widgets/ai_copilot_drawer.dart';
 import 'widgets/sidebar_navigation.dart';
 import 'widgets/top_app_header.dart';
-import 'widgets/ai_copilot_drawer.dart';
-import 'views/dashboard_view.dart';
-import 'views/inbox_view.dart';
-import 'views/chat_view.dart';
-import 'views/docs_view.dart';
-import 'views/tasks_view.dart';
-import 'views/crm_view.dart';
-import 'views/ai_memory_view.dart';
-import 'views/call_room_view.dart';
-
-import 'features/chat/chat_repository.dart';
-import 'features/chat/controllers/chat_controller.dart';
-import 'features/inbox/inbox_repository.dart';
-import 'features/inbox/controllers/inbox_controller.dart';
-import 'core/persistence/local_cache.dart';
-import 'core/realtime/realtime_client.dart';
-
-import 'config/macro_service_config.dart';
-import 'core/networking/macro_realtime_client.dart';
-import 'core/google/google_service.dart';
-import 'features/agents/agent_repository.dart';
-import 'features/agents/ai_chat_controller.dart';
 
 void main() {
   final serviceConfig = MacroServiceConfig.production();
@@ -52,7 +53,7 @@ void main() {
           create: (_) => GoogleService(
             config: serviceConfig,
             tokenProvider: () => authRepo.authToken,
-          )..checkConnectionStatus(),
+          ),
         ),
         ChangeNotifierProvider(
           create: (_) => AiChatController(
@@ -70,7 +71,7 @@ void main() {
             ),
             cacheStore: SharedPreferencesLocalCacheStore(),
             realtimeClient: realtimeClient,
-          )..loadChannels(),
+          ),
         ),
         ChangeNotifierProvider(
           create: (_) => InboxController(
@@ -79,7 +80,7 @@ void main() {
               tokenProvider: () => authRepo.authToken,
             ),
             cacheStore: SharedPreferencesLocalCacheStore(),
-          )..loadEmails(),
+          ),
         ),
         Provider.value(value: AppConfig.defaultConfig),
       ],
@@ -97,15 +98,56 @@ class MacroApp extends StatefulWidget {
 
 class _MacroAppState extends State<MacroApp> {
   bool _isAppInitialized = false;
-  String _authSubRoute = 'login'; // 'login', 'signup', 'forgot'
+  String _authSubRoute = 'login';
+  late final AppLinks _appLinks;
+  StreamSubscription<Uri>? _appLinkSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _appLinks = AppLinks();
+    _appLinkSubscription = _appLinks.uriLinkStream.listen(
+      _handleAppLink,
+      onError: (_) {},
+    );
+  }
+
+  @override
+  void dispose() {
+    _appLinkSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _handleAppLink(Uri uri) async {
+    if (!mounted || uri.scheme != 'macro') return;
+
+    final authRepo = context.read<AuthRepository>();
+    final googleService = context.read<GoogleService>();
+
+    if (uri.host == 'login' || uri.path == '/login') {
+      final result = await authRepo.completeMobileGoogleSignIn(uri);
+      if (result is AuthSuccess) {
+        await googleService.checkConnectionStatus();
+        if (mounted) {
+          setState(() {
+            _isAppInitialized = true;
+            _authSubRoute = 'login';
+          });
+        }
+      }
+      return;
+    }
+
+    if (uri.host == 'google-link-callback' ||
+        uri.path == '/google-link-callback') {
+      await googleService.handleOAuthCallback(uri);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final appConfig = Provider.of<AppConfig>(context);
     final authRepo = Provider.of<AuthRepository>(context);
-    final unreadCount = Provider.of<InboxController>(
-      context,
-    ).emails.where((e) => e.isUnread).length;
 
     return MaterialApp(
       title: appConfig.appName,
@@ -115,10 +157,13 @@ class _MacroAppState extends State<MacroApp> {
           ? SplashScreen(
               appConfig: appConfig,
               authRepository: authRepo,
-              onInitComplete: (result) {
-                setState(() {
-                  _isAppInitialized = true;
-                });
+              onInitComplete: (result) async {
+                if (authRepo.isAuthenticated) {
+                  await context.read<GoogleService>().checkConnectionStatus();
+                }
+                if (mounted) {
+                  setState(() => _isAppInitialized = true);
+                }
               },
             )
           : !authRepo.hasCompletedOnboarding
@@ -184,7 +229,6 @@ class MacroMainScreen extends StatelessWidget {
         return 7;
       case WorkspaceTab.settings:
       case WorkspaceTab.profile:
-      default:
         return 8;
     }
   }
@@ -201,7 +245,6 @@ class MacroMainScreen extends StatelessWidget {
           return _buildMobileShell(context, provider, appConfig, authRepo);
         }
 
-        // Desktop Widescreen Layout
         return Scaffold(
           backgroundColor: AppTheme.bgDark,
           body: Row(
@@ -242,7 +285,6 @@ class MacroMainScreen extends StatelessWidget {
     );
   }
 
-  // Native Mobile Shell with Top AppBar and Bottom Navigation Bar
   Widget _buildMobileShell(
     BuildContext context,
     WorkspaceProvider provider,
@@ -252,6 +294,7 @@ class MacroMainScreen extends StatelessWidget {
     final unreadCount = Provider.of<InboxController>(
       context,
     ).emails.where((e) => e.isUnread).length;
+
     int getBottomIndex() {
       switch (provider.activeTab) {
         case WorkspaceTab.dashboard:
@@ -301,40 +344,26 @@ class MacroMainScreen extends StatelessWidget {
                 color: appConfig.primaryColor,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Center(
-                child: Text(
-                  appConfig.logoText,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              appConfig.appName.split(' ')[0],
-              style: const TextStyle(
-                color: AppTheme.textPrimary,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: appConfig.primaryColor.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(10),
-              ),
+              alignment: Alignment.center,
               child: Text(
-                'AI',
-                style: TextStyle(
-                  color: appConfig.primaryColor,
-                  fontSize: 10,
+                appConfig.logoText,
+                style: const TextStyle(
+                  color: Colors.white,
                   fontWeight: FontWeight.bold,
+                  fontSize: 16,
                 ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                appConfig.appName.split(' ')[0],
+                style: const TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -367,8 +396,6 @@ class MacroMainScreen extends StatelessWidget {
               ProfileScreen(appConfig: appConfig, authRepository: authRepo),
             ],
           ),
-
-          // Mobile Copilot Drawer Overlay
           if (provider.isCopilotDrawerOpen)
             Positioned.fill(
               child: Container(
@@ -439,81 +466,84 @@ class MacroMainScreen extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppTheme.borderDark,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                '${appConfig.appName} Tools',
-                style: const TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-              const SizedBox(height: 16),
-              GridView.count(
-                shrinkWrap: true,
-                crossAxisCount: 3,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                children: [
-                  _buildMoreTile(
-                    context,
-                    provider,
-                    appConfig,
-                    WorkspaceTab.docs,
-                    Icons.description_outlined,
-                    'Docs & Wiki',
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppTheme.borderDark,
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  if (flags['enableCrm'] ?? true)
-                    _buildMoreTile(
-                      context,
-                      provider,
-                      appConfig,
-                      WorkspaceTab.crm,
-                      Icons.pie_chart_outline,
-                      'CRM & Deals',
-                    ),
-                  if (flags['enableAiCopilot'] ?? true)
-                    _buildMoreTile(
-                      context,
-                      provider,
-                      appConfig,
-                      WorkspaceTab.aiMemory,
-                      Icons.auto_awesome_outlined,
-                      'AI Memory',
-                    ),
-                  if (flags['enableCalls'] ?? true)
-                    _buildMoreTile(
-                      context,
-                      provider,
-                      appConfig,
-                      WorkspaceTab.calls,
-                      Icons.videocam_outlined,
-                      'Calls & Notes',
-                    ),
-                  _buildMoreTile(
-                    context,
-                    provider,
-                    appConfig,
-                    WorkspaceTab.settings,
-                    Icons.person_outline,
-                    'Profile',
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  '${appConfig.appName} Tools',
+                  style: const TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
                   ),
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(height: 16),
+                GridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: 3,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  children: [
+                    _buildMoreTile(
+                      context,
+                      provider,
+                      appConfig,
+                      WorkspaceTab.docs,
+                      Icons.description_outlined,
+                      'Docs & Wiki',
+                    ),
+                    if (flags['enableCrm'] ?? true)
+                      _buildMoreTile(
+                        context,
+                        provider,
+                        appConfig,
+                        WorkspaceTab.crm,
+                        Icons.pie_chart_outline,
+                        'CRM & Deals',
+                      ),
+                    if (flags['enableAiCopilot'] ?? true)
+                      _buildMoreTile(
+                        context,
+                        provider,
+                        appConfig,
+                        WorkspaceTab.aiMemory,
+                        Icons.auto_awesome_outlined,
+                        'AI Memory',
+                      ),
+                    if (flags['enableCalls'] ?? true)
+                      _buildMoreTile(
+                        context,
+                        provider,
+                        appConfig,
+                        WorkspaceTab.calls,
+                        Icons.videocam_outlined,
+                        'Calls & Notes',
+                      ),
+                    _buildMoreTile(
+                      context,
+                      provider,
+                      appConfig,
+                      WorkspaceTab.settings,
+                      Icons.person_outline,
+                      'Profile',
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -545,14 +575,19 @@ class MacroMainScreen extends StatelessWidget {
           children: [
             Icon(icon, color: appConfig.primaryColor, size: 24),
             const SizedBox(height: 6),
-            Text(
-              label,
-              style: const TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              textAlign: TextAlign.center,
             ),
           ],
         ),
