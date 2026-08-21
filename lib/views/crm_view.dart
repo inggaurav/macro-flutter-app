@@ -34,19 +34,23 @@ class CrmView extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'CRM & Enterprise Pipeline',
-                      style: AppTypography.title(context),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${deals.length} active enterprise deals',
-                      style: AppTypography.caption(context),
-                    ),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'CRM & Enterprise Pipeline',
+                        style: AppTypography.title(context),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${deals.length} active enterprise deals',
+                        style: AppTypography.caption(context),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

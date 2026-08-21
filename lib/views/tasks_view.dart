@@ -32,20 +32,25 @@ class TasksView extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Engineering Tasks & Kanban',
-                      style: AppTypography.title(context),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${tasks.length} tasks in active sprint',
-                      style: AppTypography.caption(context),
-                    ),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Engineering Tasks & Kanban',
+                        style: AppTypography.title(context),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${tasks.length} tasks in active sprint',
+                        style: AppTypography.caption(context),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: AppSpacing.sm),
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.md,

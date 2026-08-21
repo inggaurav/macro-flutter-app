@@ -44,20 +44,25 @@ class DashboardView extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Welcome back, ${user?.name ?? 'Alex'}',
-                      style: AppTypography.titleLarge(context),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${appConfig.workspaceName} • Unified Workspace Overview',
-                      style: AppTypography.bodySmall(context),
-                    ),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Welcome back, ${user?.name ?? 'Alex'}',
+                        style: AppTypography.titleLarge(context),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${appConfig.workspaceName} • Unified Workspace Overview',
+                        style: AppTypography.bodySmall(context),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: AppSpacing.sm),
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.md,
@@ -94,7 +99,7 @@ class DashboardView extends StatelessWidget {
             // 2. Metrics Bar (Asymmetric Information Density)
             LayoutBuilder(
               builder: (context, constraints) {
-                final isCompact = constraints.maxWidth < 600;
+                final isCompact = constraints.maxWidth < 700;
                 final cards = [
                   _buildMetricTile(
                     context,
@@ -464,17 +469,20 @@ class DashboardView extends StatelessWidget {
             child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(width: AppSpacing.md),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: AppTypography.caption(context)),
-              Text(
-                value,
-                style: AppTypography.sectionTitle(
-                  context,
-                ).copyWith(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: AppTypography.caption(context), overflow: TextOverflow.ellipsis),
+                Text(
+                  value,
+                  style: AppTypography.sectionTitle(
+                    context,
+                  ).copyWith(fontSize: 18, fontWeight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
         ],
       ),
