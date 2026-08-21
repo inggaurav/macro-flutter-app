@@ -32,6 +32,8 @@ import 'core/realtime/realtime_client.dart';
 import 'config/macro_service_config.dart';
 import 'core/networking/macro_realtime_client.dart';
 
+import 'core/google/google_service.dart';
+
 void main() {
   final serviceConfig = MacroServiceConfig.production();
   final authRepo = AuthRepository();
@@ -45,6 +47,9 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => WorkspaceProvider()),
         ChangeNotifierProvider.value(value: authRepo),
+        ChangeNotifierProvider(
+          create: (_) => GoogleService(config: serviceConfig)..restoreGoogleSession(),
+        ),
         ChangeNotifierProvider(
           create: (_) => ChatController(
             repository: MacroChatRepository(

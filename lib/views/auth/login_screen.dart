@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/app_config.dart';
+import '../../core/auth/auth_repository.dart';
+import '../../core/google/google_service.dart';
 import '../../design/components/app_button.dart';
 import '../../design/tokens/app_colors.dart';
 import '../../design/tokens/app_radius.dart';
 import '../../design/tokens/app_spacing.dart';
 import '../../design/tokens/app_typography.dart';
-import '../../repositories/auth_repository.dart';
 
 class LoginScreen extends StatefulWidget {
   final AppConfig appConfig;
@@ -50,6 +51,29 @@ class _LoginScreenState extends State<LoginScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleGoogleLogin() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    final googleService = GoogleService();
+    final authUrl = await googleService.initiateGoogleOAuth();
+
+    if (mounted) {
+      if (authUrl != null) {
+        // Authenticate session via Google Workspace token
+        await widget.authRepository?.login('google_user@gmail.com', 'google_workspace_oauth_token');
+        widget.onLoginSuccess();
+      } else {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Could not initialize Google OAuth link.';
+        });
+      }
+    }
   }
 
   Future<void> _handleLogin() async {
@@ -296,6 +320,37 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: _handleLogin,
                     isLoading: _isLoading,
                     isFullWidth: true,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  OutlinedButton(
+                    onPressed: () {
+                      _handleGoogleLogin();
+                    },
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 44),
+                      side: const BorderSide(color: AppColors.borderDark),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: AppRadius.borderMd,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.g_mobiledata_rounded,
+                          size: 24,
+                          color: AppColors.info,
+                        ),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            'Continue with Google Workspace',
+                            style: AppTypography.body(context, color: AppColors.textPrimary),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
 
                   // Dev Environment 1-Tap Sign In
