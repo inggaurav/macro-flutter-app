@@ -1,47 +1,59 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../models/models.dart';
-import '../../providers/workspace_provider.dart';
+import 'package:provider/provider.dart';
+import '../../features/chat/controllers/chat_controller.dart';
+import '../../features/chat/domain/chat_channel.dart';
+import '../../repositories/auth_repository.dart';
 import '../../theme/app_theme.dart';
 
 class ChannelChatScreen extends StatefulWidget {
   final ChatChannel channel;
-  final WorkspaceProvider provider;
 
-  const ChannelChatScreen({
-    super.key,
-    required this.channel,
-    required this.provider,
-  });
+  const ChannelChatScreen({super.key, required this.channel});
 
   @override
   State<ChannelChatScreen> createState() => _ChannelChatScreenState();
 }
 
 class _ChannelChatScreenState extends State<ChannelChatScreen> {
-  final TextEditingController _msgController = TextEditingController();
+  final TextEditingController _messageController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final controller = Provider.of<ChatController>(context, listen: false);
+      controller.selectChannel(widget.channel.id);
+    });
+  }
 
   @override
   void dispose() {
-    _msgController.dispose();
+    _messageController.dispose();
     super.dispose();
   }
 
-  void _sendMessage() {
-    if (_msgController.text.trim().isEmpty) return;
-    widget.provider.addChatMessage(
-      _msgController.text,
-      targetChannelId: widget.channel.id,
+  void _sendMessage(ChatController chatController, AuthRepository authRepo) {
+    final text = _messageController.text.trim();
+    if (text.isEmpty) return;
+
+    final user = authRepo.currentUser;
+    chatController.sendMessage(
+      text: text,
+      senderName: user?.name ?? 'Alex Rivera',
+      senderAvatar:
+          user?.avatarUrl ??
+          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
     );
-    _msgController.clear();
-    setState(() {});
+    _messageController.clear();
   }
 
   @override
   Widget build(BuildContext context) {
-    final channelMessages = widget.provider.chatMessages
-        .where((m) => m.channelId == widget.channel.id)
-        .toList();
+    final chatController = Provider.of<ChatController>(context);
+    final authRepo = Provider.of<AuthRepository>(context);
+
+    final messages = chatController.activeMessages;
 
     return Scaffold(
       backgroundColor: AppTheme.bgDark,
@@ -54,63 +66,48 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
         ),
         title: Row(
           children: [
-            const Icon(Icons.tag, color: AppTheme.primaryIndigo, size: 20),
-            const SizedBox(width: 6),
+            Icon(
+              widget.channel.isPrivate ? Icons.lock : Icons.tag,
+              color: AppTheme.primaryIndigo,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
             Text(
               widget.channel.name,
               style: const TextStyle(
                 color: AppTheme.textPrimary,
-                fontSize: 16,
                 fontWeight: FontWeight.bold,
+                fontSize: 16,
               ),
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline, color: AppTheme.textSecondary),
-            onPressed: () {},
-          ),
-        ],
       ),
       body: Column(
         children: [
-          // Chat Timeline
           Expanded(
-            child: channelMessages.isEmpty
+            child: chatController.isLoadingMessages
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppTheme.primaryIndigo,
+                    ),
+                  )
+                : messages.isEmpty
                 ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.chat_bubble_outline,
-                          size: 40,
-                          color: AppTheme.textMuted.withOpacity(0.5),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'No messages in #${widget.channel.name} yet',
-                          style: const TextStyle(
-                            color: AppTheme.textMuted,
-                            fontSize: 13,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Be the first to post a message or ask @AI',
-                          style: TextStyle(
-                            color: AppTheme.textMuted,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      'No messages in #${widget.channel.name} yet',
+                      style: const TextStyle(
+                        color: AppTheme.textMuted,
+                        fontSize: 13,
+                      ),
                     ),
                   )
                 : ListView.builder(
                     padding: const EdgeInsets.all(16),
-                    itemCount: channelMessages.length,
+                    itemCount: messages.length,
                     itemBuilder: (context, index) {
-                      final msg = channelMessages[index];
+                      final msg = messages[index];
                       return Container(
                         margin: const EdgeInsets.only(bottom: 16),
                         child: Row(
@@ -134,33 +131,9 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                               ? AppTheme.accentPurple
                                               : AppTheme.textPrimary,
                                           fontWeight: FontWeight.bold,
-                                          fontSize: 13,
+                                          fontSize: 12,
                                         ),
                                       ),
-                                      if (msg.isAgent) ...[
-                                        const SizedBox(width: 4),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 4,
-                                            vertical: 1,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: AppTheme.accentPurple
-                                                .withOpacity(0.2),
-                                            borderRadius: BorderRadius.circular(
-                                              4,
-                                            ),
-                                          ),
-                                          child: const Text(
-                                            'BOT',
-                                            style: TextStyle(
-                                              color: AppTheme.accentPurple,
-                                              fontSize: 8,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
                                       const SizedBox(width: 6),
                                       Text(
                                         DateFormat(
@@ -182,35 +155,6 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                       height: 1.4,
                                     ),
                                   ),
-                                  if (msg.mentions.isNotEmpty) ...[
-                                    const SizedBox(height: 6),
-                                    Wrap(
-                                      spacing: 4,
-                                      children: msg.mentions.map((m) {
-                                        return Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 6,
-                                            vertical: 2,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: AppTheme.primaryIndigo
-                                                .withOpacity(0.15),
-                                            borderRadius: BorderRadius.circular(
-                                              4,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            m,
-                                            style: const TextStyle(
-                                              color: AppTheme.primaryIndigo,
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        );
-                                      }).toList(),
-                                    ),
-                                  ],
                                 ],
                               ),
                             ),
@@ -220,68 +164,53 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                     },
                   ),
           ),
-
-          // Sticky Mobile Message Composer
-          SafeArea(
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: const BoxDecoration(
-                color: AppTheme.surfaceDark,
-                border: Border(top: BorderSide(color: AppTheme.borderDark)),
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(
-                      Icons.alternate_email,
-                      color: AppTheme.primaryIndigo,
-                      size: 20,
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: const BoxDecoration(
+              color: AppTheme.surfaceDark,
+              border: Border(top: BorderSide(color: AppTheme.borderDark)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _messageController,
+                    style: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 13,
                     ),
-                    onPressed: () {},
-                  ),
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      decoration: BoxDecoration(
-                        color: AppTheme.bgDark,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: AppTheme.borderDark),
+                    decoration: InputDecoration(
+                      hintText: 'Message #${widget.channel.name}...',
+                      hintStyle: const TextStyle(
+                        color: AppTheme.textMuted,
+                        fontSize: 13,
                       ),
-                      child: TextField(
-                        controller: _msgController,
-                        onSubmitted: (val) => _sendMessage(),
-                        style: const TextStyle(
-                          color: AppTheme.textPrimary,
-                          fontSize: 13,
-                        ),
-                        decoration: const InputDecoration(
-                          hintText: 'Message... (type @)',
-                          hintStyle: TextStyle(
-                            color: AppTheme.textMuted,
-                            fontSize: 12,
-                          ),
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding: EdgeInsets.symmetric(vertical: 10),
+                      filled: true,
+                      fillColor: AppTheme.bgDark,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(
+                          color: AppTheme.borderDark,
                         ),
                       ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
                     ),
+                    onSubmitted: (_) => _sendMessage(chatController, authRepo),
                   ),
-                  const SizedBox(width: 6),
-                  CircleAvatar(
-                    radius: 18,
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  style: IconButton.styleFrom(
                     backgroundColor: AppTheme.primaryIndigo,
-                    child: IconButton(
-                      icon: const Icon(
-                        Icons.send,
-                        color: Colors.white,
-                        size: 16,
-                      ),
-                      onPressed: _sendMessage,
-                    ),
+                    foregroundColor: Colors.white,
                   ),
-                ],
-              ),
+                  icon: const Icon(Icons.send, size: 18),
+                  onPressed: () => _sendMessage(chatController, authRepo),
+                ),
+              ],
             ),
           ),
         ],

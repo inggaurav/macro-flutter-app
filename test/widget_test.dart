@@ -7,6 +7,12 @@ import 'package:macro_app/main.dart';
 import 'package:macro_app/providers/workspace_provider.dart';
 import 'package:macro_app/repositories/auth_repository.dart';
 import 'package:macro_app/core/storage/secure_key_value_store.dart';
+import 'package:macro_app/core/persistence/local_cache.dart';
+import 'package:macro_app/core/realtime/realtime_client.dart';
+import 'package:macro_app/features/chat/chat_repository.dart';
+import 'package:macro_app/features/chat/controllers/chat_controller.dart';
+import 'package:macro_app/features/inbox/inbox_repository.dart';
+import 'package:macro_app/features/inbox/controllers/inbox_controller.dart';
 
 class _TestHttpOverrides extends HttpOverrides {}
 
@@ -23,8 +29,7 @@ void main() {
 
       final originalOnError = FlutterError.onError;
       FlutterError.onError = (FlutterErrorDetails details) {
-        if (details.exception is NetworkImageLoadException ||
-            details.exceptionAsString().contains('ListTile')) {
+        if (details.exception is NetworkImageLoadException) {
           return;
         }
         originalOnError?.call(details);
@@ -34,45 +39,57 @@ void main() {
       await testStore.clear();
 
       final authRepo = AuthRepository(storage: testStore);
+      final cacheStore = InMemoryLocalCacheStore();
+      final realtimeClient = MockRealtimeClient();
 
       await tester.pumpWidget(
         MultiProvider(
           providers: [
             ChangeNotifierProvider(create: (_) => WorkspaceProvider()),
             ChangeNotifierProvider.value(value: authRepo),
+            ChangeNotifierProvider(
+              create: (_) => ChatController(
+                repository: MockChatRepository(),
+                cacheStore: cacheStore,
+                realtimeClient: realtimeClient,
+              )..loadChannels(),
+            ),
+            ChangeNotifierProvider(
+              create: (_) => InboxController(
+                repository: MockInboxRepository(),
+                cacheStore: cacheStore,
+              )..loadEmails(),
+            ),
             Provider.value(value: AppConfig.defaultConfig),
           ],
           child: const MacroApp(),
         ),
       );
 
-      // 1. Verify Splash Screen initializes
+      // 1. Splash Screen
       expect(find.text('MACRO UNIFIED WORKSPACE'), findsOneWidget);
 
-      // Pump until Splash completes
       await tester.pump(const Duration(seconds: 2));
       await tester.pump();
 
-      // 2. Verify Onboarding Wizard appears on fresh install
+      // 2. Onboarding
       if (find.text('Unified Communication').evaluate().isNotEmpty) {
         expect(find.text('Skip'), findsOneWidget);
         await tester.tap(find.text('Skip'));
         await tester.pump(const Duration(milliseconds: 300));
       }
 
-      // 3. Verify Login Screen appears
+      // 3. Login Screen
       expect(find.text('Sign in to Macro Unified Workspace'), findsOneWidget);
       expect(find.text('Continue to Workspace'), findsOneWidget);
 
-      // Tap Continue to Workspace
       await tester.tap(find.text('Continue to Workspace'));
       await tester.pump(const Duration(milliseconds: 800));
       await tester.pump();
 
-      // 4. Verify Main Workspace renders
+      // 4. Main Workspace
       expect(find.text('Macro Unified Workspace'), findsWidgets);
 
-      // Drain pending network timers
       await tester.pump(const Duration(seconds: 1));
 
       addTearDown(() {

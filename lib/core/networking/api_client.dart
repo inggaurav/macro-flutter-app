@@ -107,7 +107,7 @@ class ApiClient {
   final http.Client client;
   final Duration timeout;
 
-  bool _isRefreshing = false;
+  Future<bool>? _refreshFuture;
 
   ApiClient({
     required this.appConfig,
@@ -162,6 +162,16 @@ class ApiClient {
     }, isRefreshPath: path.contains('/auth/refresh'));
   }
 
+  Future<ApiResponse<dynamic>> patch(String path, {dynamic body}) async {
+    final uri = Uri.parse('${appConfig.apiBaseUrl}$path');
+    return _executeWithRefresh(() async {
+      final headers = await _buildHeaders();
+      return await client
+          .patch(uri, headers: headers, body: jsonEncode(body))
+          .timeout(timeout);
+    }, isRefreshPath: path.contains('/auth/refresh'));
+  }
+
   Future<ApiResponse<dynamic>> delete(String path) async {
     final uri = Uri.parse('${appConfig.apiBaseUrl}$path');
     return _executeWithRefresh(() async {
@@ -176,37 +186,51 @@ class ApiClient {
   }) async {
     final initialResponse = await _request(call);
 
-    // If initial response is 401 Unauthorized and not already refreshing or executing refresh path
+    // If initial response is 401 Unauthorized and not executing refresh path
     if (initialResponse.statusCode == 401 &&
         !isRefreshPath &&
-        tokenProvider != null &&
-        !_isRefreshing) {
-      _isRefreshing = true;
-      try {
-        final refreshSuccess = await tokenProvider!.refreshSession();
-        _isRefreshing = false;
+        tokenProvider != null) {
+      final refreshSuccess = await _performSingleFlightRefresh();
 
-        if (refreshSuccess) {
-          // Retry original request ONCE with new access token
-          return await _request(call);
-        } else {
-          await tokenProvider!.clearSession();
-          return const ApiResponse.failure(
-            UnauthorizedFailure('Session expired. Please log in again.'),
-            statusCode: 401,
-          );
-        }
-      } catch (e) {
-        _isRefreshing = false;
-        await tokenProvider!.clearSession();
-        return ApiResponse.failure(
-          UnauthorizedFailure('Session refresh exception: $e'),
+      if (refreshSuccess) {
+        // Retry original request ONCE with new access token
+        return await _request(call);
+      } else {
+        return const ApiResponse.failure(
+          UnauthorizedFailure('Session expired. Please log in again.'),
           statusCode: 401,
         );
       }
     }
 
     return initialResponse;
+  }
+
+  Future<bool> _performSingleFlightRefresh() async {
+    if (_refreshFuture != null) {
+      return await _refreshFuture!;
+    }
+
+    _refreshFuture = _executeRefreshCall();
+    try {
+      final result = await _refreshFuture!;
+      return result;
+    } finally {
+      _refreshFuture = null;
+    }
+  }
+
+  Future<bool> _executeRefreshCall() async {
+    try {
+      final success = await tokenProvider!.refreshSession();
+      if (!success) {
+        await tokenProvider!.clearSession();
+      }
+      return success;
+    } catch (e) {
+      await tokenProvider!.clearSession();
+      return false;
+    }
   }
 
   Future<ApiResponse<dynamic>> _request(
@@ -229,12 +253,11 @@ class ApiClient {
       try {
         decoded = jsonDecode(response.body);
       } catch (_) {
-        return ApiResponse.failure(
-          const SerializationFailure(),
-          statusCode: response.statusCode,
-        );
+        decoded = response.body;
       }
     }
+
+    final String? message = decoded is Map ? decoded['message']?.toString() : decoded?.toString();
 
     switch (response.statusCode) {
       case 200:
@@ -242,32 +265,20 @@ class ApiClient {
       case 204:
         return ApiResponse.success(decoded, statusCode: response.statusCode);
       case 401:
-        return ApiResponse.failure(
-          const UnauthorizedFailure(),
-          statusCode: 401,
-        );
+        return ApiResponse.failure(UnauthorizedFailure(message ?? 'Authentication token invalid or expired.'), statusCode: 401);
       case 403:
-        return ApiResponse.failure(const ForbiddenFailure(), statusCode: 403);
+        return ApiResponse.failure(ForbiddenFailure(message ?? 'Access forbidden.'), statusCode: 403);
       case 404:
-        return ApiResponse.failure(const NotFoundFailure(), statusCode: 404);
+        return ApiResponse.failure(NotFoundFailure(message ?? 'Resource not found.'), statusCode: 404);
       case 422:
-        return ApiResponse.failure(
-          ValidationFailure(decoded?['message'] ?? 'Validation error'),
-          statusCode: 422,
-        );
+        return ApiResponse.failure(ValidationFailure(message ?? 'Invalid request data.'), statusCode: 422);
       case 429:
-        return ApiResponse.failure(const RateLimitedFailure(), statusCode: 429);
+        return ApiResponse.failure(RateLimitedFailure(message ?? 'Rate limit exceeded.'), statusCode: 429);
       default:
         if (response.statusCode >= 500) {
-          return ApiResponse.failure(
-            ServerFailure(decoded?['message'] ?? 'Server error'),
-            statusCode: response.statusCode,
-          );
+          return ApiResponse.failure(ServerFailure(message ?? 'Internal server error.'), statusCode: response.statusCode);
         }
-        return ApiResponse.failure(
-          UnknownFailure(decoded?['message'] ?? 'Error occurred'),
-          statusCode: response.statusCode,
-        );
+        return ApiResponse.failure(UnknownFailure(message ?? 'An unknown error occurred.'), statusCode: response.statusCode);
     }
   }
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../features/inbox/controllers/inbox_controller.dart';
 import '../models/models.dart';
 import '../providers/workspace_provider.dart';
 import '../theme/app_theme.dart';
@@ -184,7 +186,7 @@ class DashboardView extends StatelessWidget {
                     child: _buildMetricCard(
                       title: 'Unread Emails',
                       value:
-                          '${provider.emails.where((e) => e.isUnread).length}',
+                          '${Provider.of<InboxController>(context).emails.where((e) => e.isUnread).length}',
                       icon: Icons.mail_outline,
                       color: AppTheme.primaryIndigo,
                       subtitle: 'Linked to CRM contacts',
@@ -235,51 +237,54 @@ class DashboardView extends StatelessWidget {
                         actionLabel: 'View All Emails',
                         onAction: () => provider.setTab(WorkspaceTab.inbox),
                         child: Column(
-                          children: provider.emails.take(2).map((email) {
-                            return ListTile(
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 4,
-                              ),
-                              leading: CircleAvatar(
-                                backgroundColor: AppTheme.primaryIndigo
-                                    .withOpacity(0.2),
-                                child: Text(
-                                  email.senderName[0],
-                                  style: const TextStyle(
-                                    color: AppTheme.primaryIndigo,
-                                    fontWeight: FontWeight.bold,
+                          children: Provider.of<InboxController>(context).emails.take(2).map((email) {
+                            return Material(
+                              color: Colors.transparent,
+                              child: ListTile(
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 4,
+                                ),
+                                leading: CircleAvatar(
+                                  backgroundColor: AppTheme.primaryIndigo
+                                      .withOpacity(0.2),
+                                  child: Text(
+                                    email.senderName[0],
+                                    style: const TextStyle(
+                                      color: AppTheme.primaryIndigo,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              title: Text(
-                                email.subject,
-                                style: const TextStyle(
-                                  color: AppTheme.textPrimary,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
+                                title: Text(
+                                  email.subject,
+                                  style: const TextStyle(
+                                    color: AppTheme.textPrimary,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
                                 ),
-                              ),
-                              subtitle: Text(
-                                email.preview,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: AppTheme.textSecondary,
-                                  fontSize: 12,
+                                subtitle: Text(
+                                  email.preview,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: AppTheme.textSecondary,
+                                    fontSize: 12,
+                                  ),
                                 ),
-                              ),
-                              trailing: Text(
-                                DateFormat('h:mm a').format(email.timestamp),
-                                style: const TextStyle(
-                                  color: AppTheme.textMuted,
-                                  fontSize: 11,
+                                trailing: Text(
+                                  DateFormat('h:mm a').format(email.timestamp),
+                                  style: const TextStyle(
+                                    color: AppTheme.textMuted,
+                                    fontSize: 11,
+                                  ),
                                 ),
+                                onTap: () {
+                                  Provider.of<InboxController>(context, listen: false).selectEmail(email.id);
+                                  provider.setTab(WorkspaceTab.inbox);
+                                },
                               ),
-                              onTap: () {
-                                provider.selectEmail(email.id);
-                                provider.setTab(WorkspaceTab.inbox);
-                              },
                             );
                           }).toList(),
                         ),
@@ -381,35 +386,38 @@ class DashboardView extends StatelessWidget {
                         onAction: () => provider.setTab(WorkspaceTab.crm),
                         child: Column(
                           children: provider.deals.map((deal) {
-                            return ListTile(
-                              leading: const Icon(
-                                Icons.business,
-                                color: AppTheme.primaryIndigo,
-                              ),
-                              title: Text(
-                                deal.companyName,
-                                style: const TextStyle(
-                                  color: AppTheme.textPrimary,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
+                            return Material(
+                              color: Colors.transparent,
+                              child: ListTile(
+                                leading: const Icon(
+                                  Icons.business,
+                                  color: AppTheme.primaryIndigo,
                                 ),
-                              ),
-                              subtitle: Text(
-                                deal.title,
-                                style: const TextStyle(
-                                  color: AppTheme.textSecondary,
-                                  fontSize: 12,
+                                title: Text(
+                                  deal.companyName,
+                                  style: const TextStyle(
+                                    color: AppTheme.textPrimary,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
                                 ),
-                              ),
-                              trailing: Text(
-                                currencyFormatter.format(deal.value),
-                                style: const TextStyle(
-                                  color: AppTheme.accentEmerald,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
+                                subtitle: Text(
+                                  deal.title,
+                                  style: const TextStyle(
+                                    color: AppTheme.textSecondary,
+                                    fontSize: 12,
+                                  ),
                                 ),
+                                trailing: Text(
+                                  currencyFormatter.format(deal.value),
+                                  style: const TextStyle(
+                                    color: AppTheme.accentEmerald,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                onTap: () => provider.setTab(WorkspaceTab.crm),
                               ),
-                              onTap: () => provider.setTab(WorkspaceTab.crm),
                             );
                           }).toList(),
                         ),
@@ -421,32 +429,35 @@ class DashboardView extends StatelessWidget {
                         onAction: () => provider.setTab(WorkspaceTab.docs),
                         child: Column(
                           children: provider.documents.map((doc) {
-                            return ListTile(
-                              leading: const Icon(
-                                Icons.article_outlined,
-                                color: AppTheme.accentCyan,
-                              ),
-                              title: Text(
-                                doc.title,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: AppTheme.textPrimary,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
+                            return Material(
+                              color: Colors.transparent,
+                              child: ListTile(
+                                leading: const Icon(
+                                  Icons.article_outlined,
+                                  color: AppTheme.accentCyan,
                                 ),
-                              ),
-                              subtitle: Text(
-                                'Author: ${doc.authorName} • v${doc.versionCount}',
-                                style: const TextStyle(
-                                  color: AppTheme.textMuted,
-                                  fontSize: 11,
+                                title: Text(
+                                  doc.title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: AppTheme.textPrimary,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
+                                subtitle: Text(
+                                  'Author: ${doc.authorName} • v${doc.versionCount}',
+                                  style: const TextStyle(
+                                    color: AppTheme.textMuted,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                                onTap: () {
+                                  provider.selectDoc(doc.id);
+                                  provider.setTab(WorkspaceTab.docs);
+                                },
                               ),
-                              onTap: () {
-                                provider.selectDoc(doc.id);
-                                provider.setTab(WorkspaceTab.docs);
-                              },
                             );
                           }).toList(),
                         ),

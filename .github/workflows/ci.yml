@@ -1,4 +1,4 @@
-name: Flutter CI Pipeline
+name: Macro Flutter App CI Pipeline
 
 on:
   push:
@@ -7,30 +7,35 @@ on:
     branches: [ main ]
 
 jobs:
-  analyze_and_test:
+  build_and_test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Codebase
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Java JDK
-        uses: actions/setup-java@v4
+      - name: Set up Java JDK
+        uses: actions/checkout@v4
         with:
-          distribution: 'zulu'
           java-version: '17'
+          distribution: 'temurin'
 
-      - name: Setup Flutter SDK (Stable Channel)
+      - name: Set up Flutter SDK
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          cache: true
 
       - name: Install Dependencies
         run: flutter pub get
 
-      - name: Analyze Static Code
+      - name: Verify Code Format
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analyze Project Source
         run: flutter analyze
 
-      - name: Run Widget & Unit Tests
+      - name: Run Unit & Widget Tests
         run: flutter test
+
+      - name: Build Debug APK
+        run: flutter build apk --debug

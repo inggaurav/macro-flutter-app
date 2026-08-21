@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../config/app_config.dart';
 import '../models/models.dart';
+import '../features/chat/controllers/chat_controller.dart';
+import '../features/inbox/controllers/inbox_controller.dart';
 import '../providers/workspace_provider.dart';
 import '../repositories/auth_repository.dart';
 import '../theme/app_theme.dart';
@@ -108,10 +110,12 @@ class SidebarNavigation extends StatelessWidget {
                 _buildNavItem(
                   context,
                   tab: WorkspaceTab.inbox,
-                  icon: Icons.mail_outline,
-                  selectedIcon: Icons.mail,
+                  icon: Icons.inbox_outlined,
+                  selectedIcon: Icons.inbox,
                   label: 'Inbox',
-                  badgeCount: provider.emails.where((e) => e.isUnread).length,
+                  badgeCount: Provider.of<InboxController>(
+                    context,
+                  ).emails.where((e) => e.isUnread).length,
                 ),
                 _buildNavItem(
                   context,
@@ -119,10 +123,9 @@ class SidebarNavigation extends StatelessWidget {
                   icon: Icons.chat_bubble_outline,
                   selectedIcon: Icons.chat_bubble,
                   label: 'Channels & Chat',
-                  badgeCount: provider.channels.fold(
-                    0,
-                    (sum, c) => sum + c.unreadCount,
-                  ),
+                  badgeCount: Provider.of<ChatController>(
+                    context,
+                  ).channels.fold(0, (sum, c) => sum + c.unreadCount),
                 ),
                 _buildNavItem(
                   context,

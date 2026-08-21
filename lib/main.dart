@@ -70,6 +70,9 @@ class _MacroAppState extends State<MacroApp> {
   Widget build(BuildContext context) {
     final appConfig = Provider.of<AppConfig>(context);
     final authRepo = Provider.of<AuthRepository>(context);
+    final unreadCount = Provider.of<InboxController>(
+      context,
+    ).emails.where((e) => e.isUnread).length;
 
     return MaterialApp(
       title: appConfig.appName,
@@ -188,6 +191,7 @@ class MacroMainScreen extends StatelessWidget {
     AppConfig appConfig,
     AuthRepository authRepo,
   ) {
+    final unreadCount = Provider.of<InboxController>(context).emails.where((e) => e.isUnread).length;
     int getBottomIndex() {
       switch (provider.activeTab) {
         case WorkspaceTab.dashboard:
@@ -333,10 +337,12 @@ class MacroMainScreen extends StatelessWidget {
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Badge(
-              label: Text('${provider.emails.where((e) => e.isUnread).length}'),
-              child: const Icon(Icons.mail_outline),
-            ),
+            icon: unreadCount > 0
+                ? Badge(
+                    label: Text('$unreadCount'),
+                    child: const Icon(Icons.mail_outline),
+                  )
+                : const Icon(Icons.mail_outline),
             activeIcon: const Icon(Icons.mail),
             label: 'Inbox',
           ),

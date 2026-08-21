@@ -20,4 +20,32 @@ class ChatMessage {
     this.mentions = const [],
     this.codeSnippet,
   });
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'channelId': channelId,
+    'senderName': senderName,
+    'senderAvatar': senderAvatar,
+    'text': text,
+    'timestamp': timestamp.toIso8601String(),
+    'isAgent': isAgent,
+    'mentions': mentions,
+    'codeSnippet': codeSnippet,
+  };
+
+  factory ChatMessage.fromJson(Map<String, dynamic> json) => ChatMessage(
+    id: json['id'] as String,
+    channelId: json['channelId'] as String,
+    senderName: json['senderName'] as String,
+    senderAvatar: json['senderAvatar'] as String,
+    text: json['text'] as String,
+    timestamp: DateTime.parse(json['timestamp'] as String),
+    isAgent: json['isAgent'] as bool? ?? false,
+    mentions:
+        (json['mentions'] as List<dynamic>?)
+            ?.map((e) => e.toString())
+            .toList() ??
+        [],
+    codeSnippet: json['codeSnippet'] as String?,
+  );
 }

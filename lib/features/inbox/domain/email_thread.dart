@@ -24,4 +24,34 @@ class EmailThread {
     required this.tags,
     this.linkedCompanyName,
   });
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'subject': subject,
+    'senderName': senderName,
+    'senderEmail': senderEmail,
+    'preview': preview,
+    'body': body,
+    'timestamp': timestamp.toIso8601String(),
+    'isUnread': isUnread,
+    'isStarred': isStarred,
+    'tags': tags,
+    'linkedCompanyName': linkedCompanyName,
+  };
+
+  factory EmailThread.fromJson(Map<String, dynamic> json) => EmailThread(
+    id: json['id'] as String,
+    subject: json['subject'] as String,
+    senderName: json['senderName'] as String,
+    senderEmail: json['senderEmail'] as String,
+    preview: json['preview'] as String,
+    body: json['body'] as String,
+    timestamp: DateTime.parse(json['timestamp'] as String),
+    isUnread: json['isUnread'] as bool? ?? false,
+    isStarred: json['isStarred'] as bool? ?? false,
+    tags:
+        (json['tags'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
+        [],
+    linkedCompanyName: json['linkedCompanyName'] as String?,
+  );
 }
