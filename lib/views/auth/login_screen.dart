@@ -77,8 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (email.isEmpty || password.isEmpty) {
       setState(
-        () => _errorMessage =
-            'Please enter both work email and password/API token.',
+        () => _errorMessage = 'Please enter both work email and password.',
       );
       return;
     }
@@ -92,10 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
         widget.authRepository ??
         Provider.of<AuthRepository>(context, listen: false);
 
-    // If input looks like an API bearer token, use token validation; otherwise use password login.
-    final AuthResult result = password.length > 20 || email.contains('bearer_')
-        ? await authRepo.login(email, password)
-        : await authRepo.loginWithPassword(email, password);
+    final AuthResult result = await authRepo.loginWithPassword(email, password);
 
     if (mounted) {
       setState(() => _isLoading = false);
@@ -187,7 +183,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  'Enter your Macro credentials or Bearer API token',
+                  'Continue with Google or enter verified Macro credentials',
                   style: AppTypography.bodySmall(
                     context,
                     color: AppColors.textMuted,
@@ -244,7 +240,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: AppSpacing.lg),
 
-                // Password / Token Input
+                // Password Input
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -267,7 +263,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   obscureText: !_isPasswordVisible,
                   style: AppTypography.body(context),
                   decoration: InputDecoration(
-                    hintText: 'Enter password or bearer token',
+                    hintText: 'Enter password',
                     hintStyle: AppTypography.bodySmall(
                       context,
                       color: AppColors.textMuted,

@@ -166,7 +166,7 @@ class ProfileScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Last synced: 2 min ago • Gmail Inbox & Workspace Calendar active',
+                      'Gmail Inbox & Workspace Calendar integration active.',
                       style: AppTypography.caption(context),
                     ),
                     const SizedBox(height: 12),

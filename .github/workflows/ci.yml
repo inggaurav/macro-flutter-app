@@ -2,9 +2,9 @@ name: Macro Flutter App CI Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, "real-integrations-*" ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, "real-integrations-*" ]
 
 jobs:
   build_and_test:

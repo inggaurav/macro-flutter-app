@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:macro_app/core/persistence/local_cache.dart';
 import 'package:macro_app/core/realtime/realtime_client.dart';
-import 'package:macro_app/features/chat/chat_repository.dart';
+import '../../fixtures/mock_chat_repository.dart';
 import 'package:macro_app/features/chat/controllers/chat_controller.dart';
 import 'package:macro_app/features/chat/domain/chat_message.dart';
 

@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'config/app_config.dart';
@@ -40,7 +43,7 @@ void main() {
     defaultValue: true,
   );
   final serviceConfig = useRemoteServices
-      ? MacroServiceConfig.liveHostinger()
+      ? MacroServiceConfig.production()
       : MacroServiceConfig.localDevelopment();
   final authRepo = AuthRepository(config: serviceConfig);
   final realtimeClient = MacroRealtimeClient(
@@ -103,6 +106,32 @@ class MacroApp extends StatefulWidget {
 class _MacroAppState extends State<MacroApp> {
   bool _isAppInitialized = false;
   String _authSubRoute = 'login'; // 'login', 'signup', 'forgot'
+  final AppLinks _appLinks = AppLinks();
+  StreamSubscription<Uri>? _linkSubscription;
+  bool _linksInitialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_linksInitialized) return;
+    _linksInitialized = true;
+
+    final authRepo = Provider.of<AuthRepository>(context, listen: false);
+    _appLinks.getInitialLink().then((uri) {
+      if (uri != null) {
+        authRepo.redeemMobileSessionUri(uri);
+      }
+    });
+    _linkSubscription = _appLinks.uriLinkStream.listen(
+      authRepo.redeemMobileSessionUri,
+    );
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

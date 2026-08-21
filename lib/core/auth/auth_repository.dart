@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+
 import '../../config/macro_service_config.dart';
 import '../../models/models.dart';
 import '../storage/secure_key_value_store.dart';
@@ -27,7 +29,7 @@ class AuthSuccess extends AuthResult {
 
 class AuthInvalidCredentials extends AuthResult {
   const AuthInvalidCredentials({
-    String message = 'Invalid credentials or expired API token.',
+    String message = 'Invalid credentials or expired session.',
   }) : super(isSuccess: false, message: message);
 }
 
@@ -74,11 +76,17 @@ class PasswordResetFailure extends PasswordResetResult {
     : super(isSuccess: false);
 }
 
-abstract interface class AuthRepository {
+abstract class AuthRepository extends ChangeNotifier {
+  factory AuthRepository({
+    SecureKeyValueStore? storage,
+    MacroServiceConfig? config,
+  }) = AuthRepositoryImpl;
+
   UserProfile? get currentUser;
   bool get isAuthenticated;
   bool get hasCompletedOnboarding;
   String? get authToken;
+  String? get refreshToken;
 
   Future<AuthResult> restoreSession();
   Future<void> completeOnboarding();
@@ -90,24 +98,34 @@ abstract interface class AuthRepository {
     required String password,
   });
   Future<PasswordResetResult> requestPasswordReset(String email);
+  Future<AuthResult> redeemMobileSessionUri(Uri uri);
+  Future<AuthResult> redeemMobileSessionCode(String sessionCode);
   Future<AuthResult> refreshSession();
   Future<void> logout();
 }
 
 class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
   static const _localAuthHost = 'http://127.0.0.1:8080';
+  static const _authTokenKey = 'auth_token';
+  static const _refreshTokenKey = 'refresh_token';
 
   final SecureKeyValueStore _storage;
   final MacroServiceConfig _config;
+  final http.Client _client;
 
   bool _isAuthenticated = false;
   bool _hasCompletedOnboarding = false;
   String? _authToken;
+  String? _refreshToken;
   UserProfile? _currentUser;
 
-  AuthRepositoryImpl({SecureKeyValueStore? storage, MacroServiceConfig? config})
-    : _storage = storage ?? PlatformSecureStorageService(),
-      _config = config ?? MacroServiceConfig.production();
+  AuthRepositoryImpl({
+    SecureKeyValueStore? storage,
+    MacroServiceConfig? config,
+    http.Client? client,
+  }) : _storage = storage ?? PlatformSecureStorageService(),
+       _config = config ?? MacroServiceConfig.production(),
+       _client = client ?? http.Client();
 
   @override
   UserProfile? get currentUser => _currentUser;
@@ -122,8 +140,12 @@ class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
   String? get authToken => _authToken;
 
   @override
+  String? get refreshToken => _refreshToken;
+
+  @override
   Future<AuthResult> restoreSession() async {
-    final storedToken = await _storage.read('auth_token');
+    final storedToken = await _storage.read(_authTokenKey);
+    final storedRefreshToken = await _storage.read(_refreshTokenKey);
     final storedOnboarded = await _storage.read('has_onboarded');
 
     _hasCompletedOnboarding = storedOnboarded == 'true';
@@ -135,15 +157,15 @@ class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
     final validationResult = await _validateTokenWithServer(storedToken.trim());
     if (validationResult is AuthSuccess) {
       _authToken = storedToken.trim();
+      _refreshToken = storedRefreshToken?.trim();
       _isAuthenticated = true;
       _currentUser = validationResult.user;
       notifyListeners();
       return validationResult;
-    } else {
-      // FAIL CLOSED: Purge invalid token from storage
-      await logout();
-      return validationResult;
     }
+
+    await logout();
+    return validationResult;
   }
 
   @override
@@ -165,21 +187,14 @@ class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
     }
 
     final validationResult = await _validateTokenWithServer(tokenCandidate);
-    if (validationResult is AuthSuccess) {
-      await _storage.write('auth_token', tokenCandidate);
-      await _storage.write('user_name', validationResult.user!.name);
-      await _storage.write('user_email', validationResult.user!.email);
+    if (validationResult is! AuthSuccess) return validationResult;
 
-      _authToken = tokenCandidate;
-      _isAuthenticated = true;
-      _currentUser = validationResult.user;
-
-      notifyListeners();
-      return validationResult;
-    } else {
-      // FAIL CLOSED: Do not store token or authenticate session
-      return validationResult;
-    }
+    await _persistRemoteSession(
+      accessToken: tokenCandidate,
+      refreshToken: null,
+      user: validationResult.user!,
+    );
+    return validationResult;
   }
 
   @override
@@ -190,12 +205,10 @@ class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
       );
     }
 
-    if (_usesLocalAuth) {
-      return _loginWithLocalPassword(email, password);
-    }
+    if (_usesLocalAuth) return _loginWithLocalPassword(email, password);
 
     try {
-      final response = await http
+      final response = await _client
           .post(
             Uri.parse('${_config.authHost}/login/password'),
             headers: {'Content-Type': 'application/json'},
@@ -204,19 +217,22 @@ class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
           .timeout(const Duration(seconds: 4));
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final token =
-            data['token']?.toString() ?? data['access_token']?.toString();
-        if (token != null && token.isNotEmpty) {
-          return login(email, token);
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final accessToken =
+            data['access_token']?.toString() ?? data['token']?.toString();
+        final refreshToken = data['refresh_token']?.toString();
+        if (accessToken != null && accessToken.isNotEmpty) {
+          return _acceptRemoteTokenPair(accessToken, refreshToken);
         }
-      } else if (response.statusCode == 401 || response.statusCode == 403) {
-        return const AuthInvalidCredentials();
-      } else {
-        return AuthServerFailure(
-          message: 'Server returned HTTP ${response.statusCode}',
-        );
       }
+
+      if (response.statusCode == 401 || response.statusCode == 403) {
+        return const AuthInvalidCredentials();
+      }
+
+      return AuthServerFailure(
+        message: 'Server returned HTTP ${response.statusCode}',
+      );
     } on TimeoutException {
       return const AuthNetworkFailure(
         message: 'Connection timed out calling auth-service.',
@@ -224,8 +240,6 @@ class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
     } catch (e) {
       return AuthNetworkFailure(message: 'Network error: $e');
     }
-
-    return const AuthInvalidCredentials();
   }
 
   @override
@@ -247,7 +261,7 @@ class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
     }
 
     try {
-      final response = await http
+      final response = await _client
           .post(
             Uri.parse('${_config.authHost}/signup'),
             headers: {'Content-Type': 'application/json'},
@@ -260,24 +274,23 @@ class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
           .timeout(const Duration(seconds: 4));
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final data = jsonDecode(response.body);
-        final token =
-            data['token']?.toString() ?? data['access_token']?.toString();
-        if (token != null && token.isNotEmpty) {
-          return login(email, token);
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final accessToken =
+            data['access_token']?.toString() ?? data['token']?.toString();
+        final refreshToken = data['refresh_token']?.toString();
+        if (accessToken != null && accessToken.isNotEmpty) {
+          return _acceptRemoteTokenPair(accessToken, refreshToken);
         }
-      } else {
-        return AuthServerFailure(
-          message: 'Signup failed: HTTP ${response.statusCode}',
-        );
       }
+
+      return AuthServerFailure(
+        message: 'Signup failed: HTTP ${response.statusCode}',
+      );
+    } on TimeoutException {
+      return const AuthNetworkFailure(message: 'Signup request timed out.');
     } catch (e) {
       return AuthNetworkFailure(message: 'Network error: $e');
     }
-
-    return const AuthServerFailure(
-      message: 'Signup endpoint unverified or failed.',
-    );
   }
 
   @override
@@ -291,30 +304,148 @@ class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
   }
 
   @override
+  Future<AuthResult> redeemMobileSessionUri(Uri uri) async {
+    if (uri.scheme != 'macro' || uri.host != 'login') {
+      return const AuthValidationFailure(
+        message: 'Unsupported authentication callback.',
+      );
+    }
+
+    final sessionCode =
+        uri.queryParameters['token'] ?? uri.queryParameters['session_code'];
+    if (sessionCode == null || sessionCode.trim().isEmpty) {
+      return const AuthValidationFailure(
+        message: 'Missing mobile session code in authentication callback.',
+      );
+    }
+
+    return redeemMobileSessionCode(sessionCode);
+  }
+
+  @override
+  Future<AuthResult> redeemMobileSessionCode(String sessionCode) async {
+    if (sessionCode.trim().isEmpty) {
+      return const AuthValidationFailure(message: 'Session code is required.');
+    }
+
+    try {
+      final response = await _client
+          .get(
+            Uri.parse(
+              '${_config.authHost}/session/login/${Uri.encodeComponent(sessionCode.trim())}',
+            ),
+            headers: {'Accept': 'application/json'},
+          )
+          .timeout(const Duration(seconds: 6));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final accessToken = data['access_token']?.toString();
+        final refreshToken = data['refresh_token']?.toString();
+        if (accessToken == null ||
+            accessToken.isEmpty ||
+            refreshToken == null ||
+            refreshToken.isEmpty) {
+          return const AuthServerFailure(
+            message: 'Session login response did not include both tokens.',
+          );
+        }
+        return _acceptRemoteTokenPair(accessToken, refreshToken);
+      }
+
+      if (response.statusCode == 401 || response.statusCode == 403) {
+        return const AuthInvalidCredentials(
+          message: 'Mobile session code is invalid or expired.',
+        );
+      }
+
+      return AuthServerFailure(
+        message: 'Session login failed with HTTP ${response.statusCode}.',
+      );
+    } on TimeoutException {
+      return const AuthNetworkFailure(
+        message: 'Session login request timed out.',
+      );
+    } catch (e) {
+      return AuthNetworkFailure(message: 'Session login network error: $e');
+    }
+  }
+
+  @override
   Future<AuthResult> refreshSession() async {
-    if (_authToken == null) return const AuthInvalidCredentials();
-    return _validateTokenWithServer(_authToken!);
+    final accessToken = _authToken ?? await _storage.read(_authTokenKey);
+    final refreshToken = _refreshToken ?? await _storage.read(_refreshTokenKey);
+
+    if (accessToken == null ||
+        accessToken.isEmpty ||
+        refreshToken == null ||
+        refreshToken.isEmpty) {
+      return const AuthInvalidCredentials(
+        message: 'No refresh token available.',
+      );
+    }
+
+    try {
+      final response = await _client
+          .post(
+            Uri.parse('${_config.authHost}/jwt/refresh'),
+            headers: {
+              'Authorization': 'Bearer $accessToken',
+              'x-macro-refresh-token': refreshToken,
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 6));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final rotatedAccessToken = data['access_token']?.toString();
+        final rotatedRefreshToken = data['refresh_token']?.toString();
+        if (rotatedAccessToken == null ||
+            rotatedAccessToken.isEmpty ||
+            rotatedRefreshToken == null ||
+            rotatedRefreshToken.isEmpty) {
+          return const AuthServerFailure(
+            message: 'Refresh response did not include rotated tokens.',
+          );
+        }
+        return _acceptRemoteTokenPair(rotatedAccessToken, rotatedRefreshToken);
+      }
+
+      if (response.statusCode == 401 || response.statusCode == 403) {
+        await logout();
+        return const AuthInvalidCredentials(message: 'Refresh token expired.');
+      }
+
+      return AuthServerFailure(
+        message: 'Refresh failed with HTTP ${response.statusCode}.',
+      );
+    } on TimeoutException {
+      return const AuthNetworkFailure(message: 'Refresh request timed out.');
+    } catch (e) {
+      return AuthNetworkFailure(message: 'Refresh network error: $e');
+    }
   }
 
   @override
   Future<void> logout() async {
-    await _storage.delete('auth_token');
+    await _storage.delete(_authTokenKey);
+    await _storage.delete(_refreshTokenKey);
     await _storage.delete('user_name');
     await _storage.delete('user_email');
     _isAuthenticated = false;
     _authToken = null;
+    _refreshToken = null;
     _currentUser = null;
     notifyListeners();
   }
 
   Future<AuthResult> _validateTokenWithServer(String token) async {
-    if (_usesLocalAuth) {
-      return _validateLocalToken(token);
-    }
+    if (_usesLocalAuth) return _validateLocalToken(token);
 
     try {
-      // Verified Upstream Endpoint: GET authHost/user/me
-      final response = await http
+      final response = await _client
           .get(
             Uri.parse('${_config.authHost}/user/me'),
             headers: {
@@ -325,7 +456,7 @@ class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
           .timeout(const Duration(seconds: 4));
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
         final user = UserProfile(
           id: data['id']?.toString() ?? 'u_me',
           name: data['name']?.toString() ?? 'Workspace Member',
@@ -334,13 +465,15 @@ class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
           role: data['role']?.toString() ?? 'Member',
         );
         return AuthSuccess(user: user, token: token);
-      } else if (response.statusCode == 401 || response.statusCode == 403) {
-        return const AuthInvalidCredentials();
-      } else {
-        return AuthServerFailure(
-          message: 'Auth service error HTTP ${response.statusCode}',
-        );
       }
+
+      if (response.statusCode == 401 || response.statusCode == 403) {
+        return const AuthInvalidCredentials();
+      }
+
+      return AuthServerFailure(
+        message: 'Auth service error HTTP ${response.statusCode}',
+      );
     } on TimeoutException {
       return const AuthNetworkFailure(
         message: 'Auth server request timed out.',
@@ -353,9 +486,46 @@ class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
   AuthResult _failClosed(String reason) {
     _isAuthenticated = false;
     _authToken = null;
+    _refreshToken = null;
     _currentUser = null;
     notifyListeners();
     return AuthInvalidCredentials(message: reason);
+  }
+
+  Future<AuthResult> _acceptRemoteTokenPair(
+    String accessToken,
+    String? refreshToken,
+  ) async {
+    final validationResult = await _validateTokenWithServer(accessToken);
+    if (validationResult is! AuthSuccess) return validationResult;
+
+    await _persistRemoteSession(
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+      user: validationResult.user!,
+    );
+    return validationResult;
+  }
+
+  Future<void> _persistRemoteSession({
+    required String accessToken,
+    required String? refreshToken,
+    required UserProfile user,
+  }) async {
+    await _storage.write(_authTokenKey, accessToken);
+    if (refreshToken != null && refreshToken.isNotEmpty) {
+      await _storage.write(_refreshTokenKey, refreshToken);
+    }
+    await _storage.write('user_name', user.name);
+    await _storage.write('user_email', user.email);
+    await _storage.write('has_onboarded', 'true');
+
+    _authToken = accessToken;
+    _refreshToken = refreshToken;
+    _isAuthenticated = true;
+    _hasCompletedOnboarding = true;
+    _currentUser = user;
+    notifyListeners();
   }
 
   bool get _usesLocalAuth => _config.authHost == _localAuthHost;
@@ -389,12 +559,13 @@ class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
     required UserProfile user,
     required String token,
   }) async {
-    await _storage.write('auth_token', token);
+    await _storage.write(_authTokenKey, token);
     await _storage.write('user_name', user.name);
     await _storage.write('user_email', user.email);
     await _storage.write('has_onboarded', 'true');
 
     _authToken = token;
+    _refreshToken = null;
     _isAuthenticated = true;
     _hasCompletedOnboarding = true;
     _currentUser = user;
@@ -492,6 +663,7 @@ class AuthRepositoryImpl extends ChangeNotifier implements AuthRepository {
 
     final user = _userFromStoredJson(userJson);
     _authToken = token;
+    _refreshToken = null;
     _isAuthenticated = true;
     _currentUser = user;
     notifyListeners();

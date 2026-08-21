@@ -54,4 +54,38 @@ class EmailThread {
         [],
     linkedCompanyName: json['linkedCompanyName'] as String?,
   );
+
+  factory EmailThread.fromUpstreamJson(
+    Map<String, dynamic> json,
+  ) => EmailThread(
+    id: json['id']?.toString() ?? '',
+    subject: json['subject']?.toString() ?? '(No Subject)',
+    senderName:
+        json['sender_name']?.toString() ??
+        json['senderName']?.toString() ??
+        'Sender',
+    senderEmail:
+        json['sender_email']?.toString() ??
+        json['senderEmail']?.toString() ??
+        '',
+    preview: json['snippet']?.toString() ?? json['preview']?.toString() ?? '',
+    body:
+        (json['messages'] as List?)?.first?['content']?.toString() ??
+        json['body']?.toString() ??
+        json['snippet']?.toString() ??
+        '',
+    timestamp:
+        DateTime.tryParse(
+          json['updated_at']?.toString() ?? json['timestamp']?.toString() ?? '',
+        ) ??
+        DateTime.now(),
+    isUnread: json['is_unread'] == true || json['isUnread'] == true,
+    isStarred: json['is_starred'] == true || json['isStarred'] == true,
+    tags:
+        (json['tags'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
+        ['Inbox'],
+    linkedCompanyName:
+        json['linked_company']?.toString() ??
+        json['linkedCompanyName']?.toString(),
+  );
 }

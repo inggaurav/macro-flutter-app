@@ -23,21 +23,6 @@ class MacroServiceConfig {
     required this.scheduledActionsHost,
   });
 
-  factory MacroServiceConfig.liveHostinger() {
-    return const MacroServiceConfig(
-      authHost: 'https://mrfox.hiddenleafagency.com',
-      storageHost: 'https://mrfox.hiddenleafagency.com',
-      emailHost: 'https://mrfox.hiddenleafagency.com',
-      cognitionHost: 'https://mrfox.hiddenleafagency.com',
-      notificationHost: 'https://mrfox.hiddenleafagency.com',
-      connectionGateway: 'wss://mrfox.hiddenleafagency.com',
-      contactsHost: 'https://mrfox.hiddenleafagency.com',
-      searchHost: 'https://mrfox.hiddenleafagency.com',
-      staticFilesHost: 'https://mrfox.hiddenleafagency.com',
-      scheduledActionsHost: 'https://mrfox.hiddenleafagency.com',
-    );
-  }
-
   factory MacroServiceConfig.production() {
     return const MacroServiceConfig(
       authHost: String.fromEnvironment(

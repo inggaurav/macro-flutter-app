@@ -9,10 +9,10 @@ import 'package:macro_app/repositories/auth_repository.dart';
 import 'package:macro_app/core/storage/secure_key_value_store.dart';
 import 'package:macro_app/core/persistence/local_cache.dart';
 import 'package:macro_app/core/realtime/realtime_client.dart';
-import 'package:macro_app/features/chat/chat_repository.dart';
+import 'fixtures/mock_chat_repository.dart';
 import 'package:macro_app/features/chat/controllers/chat_controller.dart';
 import 'package:macro_app/core/google/google_service.dart';
-import 'package:macro_app/features/inbox/inbox_repository.dart';
+import 'fixtures/mock_inbox_repository.dart';
 import 'package:macro_app/features/inbox/controllers/inbox_controller.dart';
 
 class _TestHttpOverrides extends HttpOverrides {}

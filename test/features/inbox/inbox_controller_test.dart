@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:macro_app/core/persistence/local_cache.dart';
 import 'package:macro_app/features/inbox/controllers/inbox_controller.dart';
-import 'package:macro_app/features/inbox/inbox_repository.dart';
+import '../../fixtures/mock_inbox_repository.dart';
 
 void main() {
   group('InboxController Unit Tests', () {
