@@ -49,8 +49,10 @@ void main() {
         ChangeNotifierProvider(create: (_) => WorkspaceProvider()),
         ChangeNotifierProvider.value(value: authRepo),
         ChangeNotifierProvider(
-          create: (_) =>
-              GoogleService(config: serviceConfig)..restoreGoogleSession(),
+          create: (_) => GoogleService(
+            config: serviceConfig,
+            tokenProvider: () => authRepo.authToken,
+          )..checkConnectionStatus(),
         ),
         ChangeNotifierProvider(
           create: (_) => AiChatController(
@@ -149,11 +151,11 @@ class _MacroAppState extends State<MacroApp> {
       case 'login':
       default:
         return LoginScreen(
-          appConfig: appConfig,
           authRepository: authRepo,
           onLoginSuccess: () {},
-          onNavToSignup: () => setState(() => _authSubRoute = 'signup'),
-          onNavToForgotPassword: () => setState(() => _authSubRoute = 'forgot'),
+          onNavigateToSignup: () => setState(() => _authSubRoute = 'signup'),
+          onNavigateToForgotPassword: () =>
+              setState(() => _authSubRoute = 'forgot'),
         );
     }
   }

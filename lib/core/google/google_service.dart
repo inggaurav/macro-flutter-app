@@ -1,149 +1,192 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import '../../config/macro_service_config.dart';
-import '../../models/models.dart';
-import '../storage/secure_key_value_store.dart';
 
-class GoogleCalendarEvent {
+enum GoogleConnectionState {
+  notConnected,
+  linking,
+  connected,
+  needsReauth,
+  error,
+}
+
+class MacroCalendarEvent {
   final String id;
-  final String summary;
-  final String? description;
+  final String title;
   final DateTime startTime;
   final DateTime endTime;
-  final String? hangoutsLink;
+  final String? meetingUrl;
 
-  GoogleCalendarEvent({
+  MacroCalendarEvent({
     required this.id,
-    required this.summary,
-    this.description,
+    required this.title,
     required this.startTime,
     required this.endTime,
-    this.hangoutsLink,
+    this.meetingUrl,
   });
 
-  factory GoogleCalendarEvent.fromJson(Map<String, dynamic> json) {
-    return GoogleCalendarEvent(
+  factory MacroCalendarEvent.fromJson(Map<String, dynamic> json) {
+    return MacroCalendarEvent(
       id: json['id']?.toString() ?? '',
-      summary: json['summary']?.toString() ?? 'Workspace Meeting',
-      description: json['description']?.toString(),
+      title:
+          json['title']?.toString() ??
+          json['summary']?.toString() ??
+          'Workspace Meeting',
       startTime:
-          DateTime.tryParse(json['start']?['dateTime']?.toString() ?? '') ??
+          DateTime.tryParse(
+            json['start_time']?.toString() ??
+                json['start']?['dateTime']?.toString() ??
+                '',
+          ) ??
           DateTime.now(),
       endTime:
-          DateTime.tryParse(json['end']?['dateTime']?.toString() ?? '') ??
+          DateTime.tryParse(
+            json['end_time']?.toString() ??
+                json['end']?['dateTime']?.toString() ??
+                '',
+          ) ??
           DateTime.now().add(const Duration(hours: 1)),
-      hangoutsLink: json['hangoutLink']?.toString(),
+      meetingUrl:
+          json['meeting_url']?.toString() ?? json['hangoutLink']?.toString(),
     );
   }
 }
 
 class GoogleService extends ChangeNotifier {
   final MacroServiceConfig _config;
-  final SecureKeyValueStore _storage;
+  final String? Function() _tokenProvider;
 
-  bool _isGoogleConnected = false;
-  String? _googleEmail;
-  String? _googleAccessToken;
-  List<GoogleCalendarEvent> _calendarEvents = [];
+  GoogleConnectionState _state = GoogleConnectionState.notConnected;
+  String? _connectedEmail;
+  List<MacroCalendarEvent> _calendarEvents = [];
+  String? _errorMessage;
 
-  GoogleService({MacroServiceConfig? config, SecureKeyValueStore? storage})
-    : _config = config ?? MacroServiceConfig.production(),
-      _storage = storage ?? PlatformSecureStorageService();
+  GoogleService({
+    MacroServiceConfig? config,
+    required String? Function() tokenProvider,
+  }) : _config = config ?? MacroServiceConfig.production(),
+       _tokenProvider = tokenProvider;
 
-  bool get isConnected => _isGoogleConnected;
-  String? get googleEmail => _googleEmail;
-  List<GoogleCalendarEvent> get calendarEvents =>
+  GoogleConnectionState get state => _state;
+  bool get isConnected => _state == GoogleConnectionState.connected;
+  String? get connectedEmail => _connectedEmail;
+  List<MacroCalendarEvent> get calendarEvents =>
       List.unmodifiable(_calendarEvents);
+  String? get errorMessage => _errorMessage;
 
-  Future<void> restoreGoogleSession() async {
-    final email = await _storage.read('google_user_email');
-    final token = await _storage.read('google_access_token');
+  Future<void> checkConnectionStatus() async {
+    final token = _tokenProvider();
+    if (token == null || token.isEmpty) {
+      _setState(GoogleConnectionState.notConnected, null);
+      return;
+    }
 
-    if (token != null && token.isNotEmpty) {
-      _googleAccessToken = token;
-      _googleEmail = email;
-      _isGoogleConnected = true;
-      notifyListeners();
-      await fetchCalendarEvents();
+    try {
+      // Verified Upstream Route: GET authHost/link/gmail/status
+      final response = await http
+          .get(
+            Uri.parse('${_config.authHost}/link/gmail/status'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 4));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final bool isLinked =
+            data['connected'] == true || data['status'] == 'connected';
+        final email = data['email']?.toString();
+
+        if (isLinked && email != null && email.isNotEmpty) {
+          _connectedEmail = email;
+          _setState(GoogleConnectionState.connected, null);
+          await fetchCalendarEvents();
+        } else {
+          _setState(GoogleConnectionState.notConnected, null);
+        }
+      } else {
+        _setState(GoogleConnectionState.notConnected, null);
+      }
+    } catch (e) {
+      if (kDebugMode) print('checkConnectionStatus exception: $e');
+      _setState(GoogleConnectionState.notConnected, null);
     }
   }
 
-  Future<String?> initiateGoogleOAuth() async {
+  Future<bool> initiateGoogleOAuth() async {
+    final token = _tokenProvider();
+    if (token == null || token.isEmpty) {
+      _setState(
+        GoogleConnectionState.error,
+        'Unauthenticated: Must sign in to Macro before connecting Google.',
+      );
+      return false;
+    }
+
+    _setState(GoogleConnectionState.linking, null);
+
     try {
+      // Verified Upstream Route: POST authHost/link/gmail
       final response = await http
           .post(
-            Uri.parse('${_config.emailHost}/v1/link/gmail'),
-            headers: {'Content-Type': 'application/json'},
+            Uri.parse('${_config.authHost}/link/gmail'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
           )
           .timeout(const Duration(seconds: 4));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final authUrl = data['authorization_url']?.toString();
-        if (authUrl != null) {
+        if (authUrl != null && authUrl.isNotEmpty) {
           final uri = Uri.parse(authUrl);
           if (await canLaunchUrl(uri)) {
             await launchUrl(uri, mode: LaunchMode.externalApplication);
+            return true;
           }
-          return authUrl;
         }
       }
+      _setState(
+        GoogleConnectionState.error,
+        'Failed to obtain Gmail authorization link from auth-service.',
+      );
+      return false;
     } catch (e) {
-      if (kDebugMode) print('GoogleOAuth Exception: $e');
+      _setState(
+        GoogleConnectionState.error,
+        'Network error initiating Google OAuth: $e',
+      );
+      return false;
     }
-
-    // Direct Google OAuth authorization endpoint fallback
-    const directAuthUrl =
-        'https://accounts.google.com/o/oauth2/v2/auth'
-        '?response_type=code'
-        '&client_id=macro-google-workspace.apps.googleusercontent.com'
-        '&redirect_uri=https://auth-service.macro.com/oauth/google/callback'
-        '&scope=openid%20email%20profile%20https://www.googleapis.com/auth/gmail.readonly%20https://www.googleapis.com/auth/calendar.readonly'
-        '&access_type=offline';
-
-    final uri = Uri.parse(directAuthUrl);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
-    return directAuthUrl;
   }
 
-  Future<bool> saveGoogleSession({
-    required String email,
-    required String accessToken,
-  }) async {
-    _googleEmail = email;
-    _googleAccessToken = accessToken;
-    _isGoogleConnected = true;
-
-    await _storage.write('google_user_email', email);
-    await _storage.write('google_access_token', accessToken);
-
-    notifyListeners();
-    await fetchCalendarEvents();
-    return true;
-  }
-
-  Future<List<GoogleCalendarEvent>> fetchCalendarEvents() async {
-    if (_googleAccessToken == null) return [];
+  Future<List<MacroCalendarEvent>> fetchCalendarEvents() async {
+    final token = _tokenProvider();
+    if (token == null || token.isEmpty) return [];
 
     try {
+      // Verified Upstream Route: GET emailHost/email/calendar/events
       final response = await http
           .get(
-            Uri.parse(
-              'https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${DateTime.now().toIso8601String()}',
-            ),
-            headers: {'Authorization': 'Bearer $_googleAccessToken'},
+            Uri.parse('${_config.emailHost}/email/calendar/events'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
           )
           .timeout(const Duration(seconds: 4));
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final List items = data['items'] ?? [];
-        _calendarEvents = items
-            .map((item) => GoogleCalendarEvent.fromJson(item))
+        final List data = jsonDecode(response.body);
+        _calendarEvents = data
+            .map((item) => MacroCalendarEvent.fromJson(item))
             .toList();
         notifyListeners();
         return _calendarEvents;
@@ -154,13 +197,28 @@ class GoogleService extends ChangeNotifier {
   }
 
   Future<void> disconnectGoogle() async {
-    _isGoogleConnected = false;
-    _googleEmail = null;
-    _googleAccessToken = null;
+    final token = _tokenProvider();
+    if (token != null && token.isNotEmpty) {
+      try {
+        await http
+            .delete(
+              Uri.parse('${_config.authHost}/link/gmail'),
+              headers: {
+                'Authorization': 'Bearer $token',
+                'Content-Type': 'application/json',
+              },
+            )
+            .timeout(const Duration(seconds: 3));
+      } catch (_) {}
+    }
+    _connectedEmail = null;
     _calendarEvents = [];
+    _setState(GoogleConnectionState.notConnected, null);
+  }
 
-    await _storage.delete('google_user_email');
-    await _storage.delete('google_access_token');
+  void _setState(GoogleConnectionState newState, String? error) {
+    _state = newState;
+    _errorMessage = error;
     notifyListeners();
   }
 }

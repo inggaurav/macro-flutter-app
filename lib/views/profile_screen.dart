@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import '../config/app_config.dart';
-import '../repositories/auth_repository.dart';
+import '../core/auth/auth_repository.dart';
+import '../core/google/google_service.dart';
 import '../design/tokens/app_colors.dart';
 import '../design/tokens/app_typography.dart';
 import '../theme/app_theme.dart';
@@ -18,6 +21,7 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = authRepository.currentUser;
+    final googleService = Provider.of<GoogleService>(context);
 
     return Scaffold(
       backgroundColor: AppTheme.bgDark,
@@ -56,9 +60,14 @@ class ProfileScreen extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 30,
-                    backgroundImage: NetworkImage(
-                      user?.avatarUrl ??
-                          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+                    backgroundColor: appConfig.primaryColor,
+                    child: Text(
+                      (user?.name ?? 'U').substring(0, 1).toUpperCase(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 22,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -67,7 +76,7 @@ class ProfileScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          user?.name ?? 'Alex Rivera',
+                          user?.name ?? 'Workspace Member',
                           style: const TextStyle(
                             color: AppTheme.textPrimary,
                             fontSize: 18,
@@ -76,7 +85,7 @@ class ProfileScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          user?.email ?? 'alex@macro.inc',
+                          user?.email ?? 'Unauthenticated',
                           style: const TextStyle(
                             color: AppTheme.textMuted,
                             fontSize: 12,
@@ -89,11 +98,13 @@ class ProfileScreen extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: appConfig.primaryColor.withOpacity(0.2),
+                            color: appConfig.primaryColor.withValues(
+                              alpha: 0.2,
+                            ),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            user?.role.toUpperCase() ?? 'LEAD ARCHITECT',
+                            (user?.role ?? 'MEMBER').toUpperCase(),
                             style: TextStyle(
                               color: appConfig.primaryColor,
                               fontSize: 10,
@@ -107,8 +118,9 @@ class ProfileScreen extends StatelessWidget {
                 ],
               ),
             ),
+            const SizedBox(height: 24),
 
-            // Google Workspace & Calendar Integration Card
+            // Google Workspace Integration Card (Live Server State)
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -137,37 +149,59 @@ class ProfileScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.success.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          'Connected',
-                          style: AppTypography.caption(
-                            context,
-                            color: AppColors.success,
-                          ),
-                        ),
-                      ),
+
+                      // Live Status Badge
+                      _buildGoogleStatusBadge(context, googleService.state),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  Text(
-                    'Gmail Inbox Sync, Google Calendar Events & Google Drive Document links active.',
-                    style: AppTypography.caption(context),
-                  ),
+
+                  if (googleService.isConnected) ...[
+                    Text(
+                      'Account: ${googleService.connectedEmail ?? "Linked"}',
+                      style: AppTypography.body(
+                        context,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Gmail Inbox Sync and Workspace Calendar Events active.',
+                      style: AppTypography.caption(context),
+                    ),
+                    const SizedBox(height: 12),
+                    OutlinedButton(
+                      onPressed: () => googleService.disconnectGoogle(),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppColors.danger),
+                      ),
+                      child: const Text(
+                        'Disconnect Account',
+                        style: TextStyle(color: AppColors.danger, fontSize: 12),
+                      ),
+                    ),
+                  ] else ...[
+                    Text(
+                      googleService.errorMessage ??
+                          'No Google Workspace account is linked to this Macro session.',
+                      style: AppTypography.caption(context),
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.open_in_browser, size: 16),
+                      label: const Text('Connect Google Workspace'),
+                      onPressed: () => googleService.initiateGoogleOAuth(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: appConfig.primaryColor,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
-
             const SizedBox(height: 24),
 
-            // Session Security Telemetry Card (NO raw JWT token displayed)
+            // Session Security Telemetry Card
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -197,43 +231,43 @@ class ProfileScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
-
-                  _buildInfoRow(
-                    'Session State',
-                    'Active & Encrypted',
-                    AppTheme.accentEmerald,
+                  _buildTelemetryRow(
+                    'Authentication State',
+                    authRepository.isAuthenticated
+                        ? 'AUTHENTICATED'
+                        : 'UNAUTHENTICATED',
+                    authRepository.isAuthenticated
+                        ? AppTheme.accentEmerald
+                        : AppColors.danger,
                   ),
-                  const Divider(height: 20),
-                  _buildInfoRow(
-                    'Token Storage',
-                    'Secure System Keyring',
+                  _buildTelemetryRow(
+                    'Key Store Provider',
+                    'PlatformSecureStorageService',
                     AppTheme.textPrimary,
                   ),
-                  const Divider(height: 20),
-                  _buildInfoRow(
-                    'Environment',
-                    appConfig.environment.name.toUpperCase(),
-                    AppTheme.primaryIndigo,
-                  ),
-                  const Divider(height: 20),
-                  _buildInfoRow(
-                    'API Endpoint',
-                    appConfig.apiBaseUrl,
+                  _buildTelemetryRow(
+                    'Onboarding Status',
+                    authRepository.hasCompletedOnboarding
+                        ? 'COMPLETED'
+                        : 'PENDING',
                     AppTheme.textSecondary,
                   ),
-
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
+                      icon: const Icon(Icons.logout, color: AppColors.danger),
+                      label: const Text(
+                        'Sign Out of Workspace',
+                        style: TextStyle(color: AppColors.danger),
+                      ),
+                      onPressed: () async {
+                        await authRepository.logout();
+                      },
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppTheme.accentRose,
-                        side: const BorderSide(color: AppTheme.accentRose),
+                        side: const BorderSide(color: AppColors.danger),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
-                      icon: const Icon(Icons.logout, size: 18),
-                      label: const Text('Log Out of Workspace'),
-                      onPressed: () => authRepository.logout(),
                     ),
                   ),
                 ],
@@ -245,23 +279,72 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(String label, String value, Color valueColor) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            color: valueColor,
-            fontWeight: FontWeight.bold,
-            fontSize: 13,
+  Widget _buildGoogleStatusBadge(
+    BuildContext context,
+    GoogleConnectionState state,
+  ) {
+    Color bg;
+    Color fg;
+    String text;
+
+    switch (state) {
+      case GoogleConnectionState.connected:
+        bg = AppColors.success.withValues(alpha: 0.15);
+        fg = AppColors.success;
+        text = 'Connected';
+        break;
+      case GoogleConnectionState.linking:
+        bg = AppColors.warning.withValues(alpha: 0.15);
+        fg = AppColors.warning;
+        text = 'Linking...';
+        break;
+      case GoogleConnectionState.needsReauth:
+        bg = AppColors.warning.withValues(alpha: 0.15);
+        fg = AppColors.warning;
+        text = 'Needs Reauth';
+        break;
+      case GoogleConnectionState.error:
+        bg = AppColors.danger.withValues(alpha: 0.15);
+        fg = AppColors.danger;
+        text = 'Sync Error';
+        break;
+      case GoogleConnectionState.notConnected:
+        bg = AppColors.surfaceElevated;
+        fg = AppColors.textMuted;
+        text = 'Not Connected';
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(text, style: AppTypography.caption(context, color: fg)),
+    );
+  }
+
+  Widget _buildTelemetryRow(String label, String value, Color valueColor) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
           ),
-        ),
-      ],
+          Text(
+            value,
+            style: TextStyle(
+              color: valueColor,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

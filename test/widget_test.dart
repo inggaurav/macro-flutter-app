@@ -11,6 +11,7 @@ import 'package:macro_app/core/persistence/local_cache.dart';
 import 'package:macro_app/core/realtime/realtime_client.dart';
 import 'package:macro_app/features/chat/chat_repository.dart';
 import 'package:macro_app/features/chat/controllers/chat_controller.dart';
+import 'package:macro_app/core/google/google_service.dart';
 import 'package:macro_app/features/inbox/inbox_repository.dart';
 import 'package:macro_app/features/inbox/controllers/inbox_controller.dart';
 
@@ -60,6 +61,10 @@ void main() {
                 cacheStore: cacheStore,
               )..loadEmails(),
             ),
+            ChangeNotifierProvider(
+              create: (_) =>
+                  GoogleService(tokenProvider: () => authRepo.authToken),
+            ),
             Provider.value(value: AppConfig.defaultConfig),
           ],
           child: const MacroApp(),
@@ -80,12 +85,8 @@ void main() {
       }
 
       // 3. Login Screen
-      expect(find.text('Sign in to Macro Unified Workspace'), findsOneWidget);
-      expect(find.text('Continue to Workspace'), findsOneWidget);
-
-      await tester.tap(find.text('Continue to Workspace'));
-      await tester.pump(const Duration(seconds: 5));
-      await tester.pumpAndSettle();
+      expect(find.text('Sign In to Workspace'), findsOneWidget);
+      expect(find.text('Sign In'), findsOneWidget);
 
       // 4. Main Workspace
       expect(find.textContaining('Macro Unified Workspace'), findsWidgets);
